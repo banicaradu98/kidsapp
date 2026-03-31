@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import ListingCard, { Listing, formatAge } from "@/app/components/ListingCard";
+import { Listing, formatAge } from "@/app/components/ListingCard";
 import EmptyState from "@/app/components/EmptyState";
 
 const FILTER_BTN = "px-4 py-2.5 rounded-xl text-sm font-bold border transition-colors";
