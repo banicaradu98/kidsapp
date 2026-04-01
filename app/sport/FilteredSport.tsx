@@ -10,24 +10,25 @@ const INACTIVE = "bg-white text-gray-600 border-gray-200 hover:border-[#ff5a2e] 
 
 const FILTERS = [
   { value: "toate",         label: "✨ Toate" },
-  { value: "robotica-it",   label: "🤖 Robotică & IT" },
-  { value: "limbi-straine", label: "🌍 Limbi Străine" },
-  { value: "arte-creatie",  label: "🎨 Arte & Creație" },
-  { value: "natura-sport",  label: "🌿 Natură & Sport" },
+  { value: "fotbal",        label: "⚽ Fotbal" },
+  { value: "baschet",       label: "🏀 Baschet" },
+  { value: "inot",          label: "🏊 Înot" },
+  { value: "dans-balet",    label: "💃 Dans & Balet" },
+  { value: "arte-martiale", label: "🥋 Arte Marțiale" },
 ];
 
 // Mapare din valorile din DB → grupul de filtre
 const SUBCAT_TO_GROUP: Record<string, string> = {
-  "Robotică":        "robotica-it",
-  "Programare":      "robotica-it",
-  "Limbi Străine":   "limbi-straine",
-  "Arte+Dezvoltare": "arte-creatie",
-  "Arte":            "arte-creatie",
-  "Atelier natură":  "natura-sport",
-  // 'Mixt' și orice altceva → apare doar la Toate
+  "Fotbal":        "fotbal",
+  "Baschet":       "baschet",
+  "Înot":          "inot",
+  "Dans+Balet":    "dans-balet",
+  "Balet":         "dans-balet",
+  "Taekwon-Do":    "arte-martiale",
+  "Arte Marțiale": "arte-martiale",
 };
 
-export default function FilteredCursuri({ listings }: { listings: Listing[] }) {
+export default function FilteredSport({ listings }: { listings: Listing[] }) {
   const [filter, setFilter] = useState("toate");
 
   const filtered = listings.filter((l) => {
@@ -51,11 +52,11 @@ export default function FilteredCursuri({ listings }: { listings: Listing[] }) {
       </div>
 
       <p className="text-sm font-semibold text-gray-400 mb-4">
-        {filtered.length} {filtered.length === 1 ? "curs găsit" : "cursuri găsite"}
+        {filtered.length} {filtered.length === 1 ? "club găsit" : "cluburi găsite"}
       </p>
 
       {filtered.length === 0 ? (
-        <EmptyState title="Niciun curs găsit" subtitle="Încearcă altă categorie." />
+        <EmptyState title="Niciun club găsit" subtitle="Încearcă altă disciplină sportivă." />
       ) : (
         <div className="flex flex-col gap-4 sm:grid sm:grid-cols-2">
           {filtered.map((l) => <ListingCard key={l.id} listing={l} />)}

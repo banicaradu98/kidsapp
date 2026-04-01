@@ -6,9 +6,11 @@ import { createPortal } from "react-dom";
 const LINKS = [
   { icon: "🏠", label: "Acasă",              href: "/"                 },
   { icon: "🛝", label: "Locuri de joacă",    href: "/locuri-de-joaca"  },
+  { icon: "🎓", label: "Educație",           href: "/educatie"         },
   { icon: "🎨", label: "Cursuri & Ateliere", href: "/cursuri-ateliere" },
-  { icon: "🌱", label: "Grădinițe",          href: "/gradinite"        },
-  { icon: "🎉", label: "Evenimente",         href: "/evenimente"       },
+  { icon: "⚽", label: "Sport",             href: "/sport"            },
+  { icon: "🎭", label: "Spectacole",         href: "/spectacole"       },
+  { icon: "🎪", label: "Evenimente",         href: "/evenimente"       },
   { icon: "📩", label: "Newsletter",         href: "/#newsletter"      },
 ];
 

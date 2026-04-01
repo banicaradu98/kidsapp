@@ -4,10 +4,11 @@ import MobileMenu from "./MobileMenu";
 
 const CATEGORY_META: Record<string, { emoji: string; label: string; tagColor: string; gradientFrom: string; gradientTo: string }> = {
   "loc-de-joaca": { emoji: "🛝", label: "Loc de joacă",   tagColor: "bg-orange-100 text-orange-700", gradientFrom: "from-orange-50", gradientTo: "to-orange-100" },
-  "curs":         { emoji: "🎨", label: "Curs & Atelier", tagColor: "bg-purple-100 text-purple-700", gradientFrom: "from-purple-50", gradientTo: "to-purple-100" },
-  "gradinita":    { emoji: "🌱", label: "Grădiniță",      tagColor: "bg-green-100 text-green-700",   gradientFrom: "from-green-50",  gradientTo: "to-green-100"  },
-  "eveniment":    { emoji: "🎉", label: "Eveniment",      tagColor: "bg-pink-100 text-pink-700",     gradientFrom: "from-pink-50",   gradientTo: "to-pink-100"   },
-  "natura-sport": { emoji: "⛰️", label: "Natură & Sport", tagColor: "bg-sky-100 text-sky-700",       gradientFrom: "from-sky-50",    gradientTo: "to-sky-100"    },
+  "educatie":     { emoji: "🎓", label: "Educație",        tagColor: "bg-green-100 text-green-700",   gradientFrom: "from-green-50",  gradientTo: "to-green-100"  },
+  "curs-atelier": { emoji: "🎨", label: "Curs & Atelier", tagColor: "bg-purple-100 text-purple-700", gradientFrom: "from-purple-50", gradientTo: "to-purple-100" },
+  "sport":        { emoji: "⚽", label: "Sport",          tagColor: "bg-sky-100 text-sky-700",       gradientFrom: "from-sky-50",    gradientTo: "to-sky-100"    },
+  "spectacol":    { emoji: "🎭", label: "Spectacol",       tagColor: "bg-rose-100 text-rose-700",     gradientFrom: "from-rose-50",   gradientTo: "to-rose-100"   },
+  "eveniment":    { emoji: "🎪", label: "Eveniment",       tagColor: "bg-pink-100 text-pink-700",     gradientFrom: "from-pink-50",   gradientTo: "to-pink-100"   },
 };
 const DEFAULT_META = { emoji: "📍", label: "Activitate", tagColor: "bg-gray-100 text-gray-700", gradientFrom: "from-gray-50", gradientTo: "to-gray-100" };
 
@@ -19,12 +20,12 @@ function formatAge(min: number | null, max: number | null) {
 }
 
 const categories = [
-  { icon: "🛝", label: "Locuri de joacă", bg: "bg-orange-50", border: "border-orange-200" },
-  { icon: "🎨", label: "Cursuri & Ateliere", bg: "bg-purple-50", border: "border-purple-200" },
-  { icon: "🌱", label: "Grădinițe", bg: "bg-green-50", border: "border-green-200" },
-  { icon: "🎉", label: "Evenimente", bg: "bg-pink-50", border: "border-pink-200" },
-  { icon: "⛰️", label: "Natură & Sport", bg: "bg-sky-50", border: "border-sky-200" },
-  { icon: "🎁", label: "Gratuit", bg: "bg-yellow-50", border: "border-yellow-200" },
+  { icon: "🛝", label: "Locuri de joacă",   href: "/locuri-de-joaca",  bg: "bg-orange-50", border: "border-orange-200" },
+  { icon: "🎓", label: "Educație",           href: "/educatie",         bg: "bg-green-50",  border: "border-green-200"  },
+  { icon: "🎨", label: "Cursuri & Ateliere", href: "/cursuri-ateliere", bg: "bg-purple-50", border: "border-purple-200" },
+  { icon: "⚽", label: "Sport",             href: "/sport",            bg: "bg-sky-50",    border: "border-sky-200"    },
+  { icon: "🎭", label: "Spectacole",         href: "/spectacole",       bg: "bg-rose-50",   border: "border-rose-200"   },
+  { icon: "🎪", label: "Evenimente",         href: "/evenimente",       bg: "bg-pink-50",   border: "border-pink-200"   },
 ];
 
 export default async function Home() {
@@ -59,11 +60,13 @@ export default async function Home() {
           >
             <span>📩</span> Newsletter
           </a>
-          <nav className="hidden md:flex items-center gap-5 text-base font-semibold text-gray-500">
-            <a href="/locuri-de-joaca"   className="hover:text-[#ff5a2e] transition-colors">🛝 Locuri de joacă</a>
-            <a href="/cursuri-ateliere"  className="hover:text-[#ff5a2e] transition-colors">🎨 Cursuri</a>
-            <a href="/gradinite"         className="hover:text-[#ff5a2e] transition-colors">🌱 Grădinițe</a>
-            <a href="/evenimente"        className="hover:text-[#ff5a2e] transition-colors">🎉 Evenimente</a>
+          <nav className="hidden md:flex items-center gap-3 text-sm font-semibold text-gray-500">
+            <a href="/locuri-de-joaca"  className="hover:text-[#ff5a2e] transition-colors">🛝 Joacă</a>
+            <a href="/educatie"         className="hover:text-[#ff5a2e] transition-colors">🎓 Educație</a>
+            <a href="/cursuri-ateliere" className="hover:text-[#ff5a2e] transition-colors">🎨 Cursuri</a>
+            <a href="/sport"            className="hover:text-[#ff5a2e] transition-colors">⚽ Sport</a>
+            <a href="/spectacole"       className="hover:text-[#ff5a2e] transition-colors">🎭 Spectacole</a>
+            <a href="/evenimente"       className="hover:text-[#ff5a2e] transition-colors">🎪 Evenimente</a>
           </nav>
           <button className="hidden md:block bg-[#ff5a2e] hover:bg-[#f03d12] text-white text-base font-bold px-5 py-2.5 rounded-full transition-colors shadow-sm whitespace-nowrap">
             + Adaugă locația ta
@@ -124,26 +127,28 @@ export default async function Home() {
           {/* Mobile: horizontal scroll */}
           <div className="flex gap-3 overflow-x-auto scrollbar-hide px-4 sm:px-6 pb-2 md:hidden">
             {categories.map((cat) => (
-              <button
+              <a
                 key={cat.label}
+                href={cat.href}
                 className={`flex-none ${cat.bg} border ${cat.border} rounded-2xl px-5 py-4 flex flex-col items-center gap-2 min-w-[100px] active:scale-95 transition-transform`}
               >
                 <span className="text-3xl">{cat.icon}</span>
                 <span className="text-sm font-bold text-gray-700 text-center leading-tight whitespace-nowrap">{cat.label}</span>
-              </button>
+              </a>
             ))}
           </div>
 
           {/* Desktop: grid */}
           <div className="hidden md:grid grid-cols-3 lg:grid-cols-6 gap-3 px-6">
             {categories.map((cat) => (
-              <button
+              <a
                 key={cat.label}
+                href={cat.href}
                 className={`${cat.bg} border ${cat.border} rounded-2xl p-4 flex flex-col items-center gap-2 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group`}
               >
                 <span className="text-3xl group-hover:scale-110 transition-transform duration-200">{cat.icon}</span>
                 <span className="text-sm font-bold text-gray-700 text-center leading-tight">{cat.label}</span>
-              </button>
+              </a>
             ))}
           </div>
         </div>

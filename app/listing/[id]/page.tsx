@@ -5,10 +5,11 @@ import DescriptionCollapse from "./DescriptionCollapse";
 
 const CATEGORY_META: Record<string, { emoji: string; label: string; tagColor: string; gradientFrom: string; gradientTo: string }> = {
   "loc-de-joaca": { emoji: "🛝", label: "Loc de joacă",   tagColor: "bg-orange-100 text-orange-700", gradientFrom: "from-orange-100", gradientTo: "to-orange-200" },
-  "curs":         { emoji: "🎨", label: "Curs & Atelier", tagColor: "bg-purple-100 text-purple-700", gradientFrom: "from-purple-100", gradientTo: "to-purple-200" },
-  "gradinita":    { emoji: "🌱", label: "Grădiniță",      tagColor: "bg-green-100 text-green-700",   gradientFrom: "from-green-100",  gradientTo: "to-green-200"  },
-  "eveniment":    { emoji: "🎉", label: "Eveniment",      tagColor: "bg-pink-100 text-pink-700",     gradientFrom: "from-pink-100",   gradientTo: "to-pink-200"   },
-  "natura-sport": { emoji: "⛰️", label: "Natură & Sport", tagColor: "bg-sky-100 text-sky-700",       gradientFrom: "from-sky-100",    gradientTo: "to-sky-200"    },
+  "educatie":     { emoji: "🎓", label: "Educație",        tagColor: "bg-green-100 text-green-700",   gradientFrom: "from-green-100",  gradientTo: "to-green-200"  },
+  "curs-atelier": { emoji: "🎨", label: "Curs & Atelier", tagColor: "bg-purple-100 text-purple-700", gradientFrom: "from-purple-100", gradientTo: "to-purple-200" },
+  "sport":        { emoji: "⚽", label: "Sport",          tagColor: "bg-sky-100 text-sky-700",       gradientFrom: "from-sky-100",    gradientTo: "to-sky-200"    },
+  "spectacol":    { emoji: "🎭", label: "Spectacol",       tagColor: "bg-rose-100 text-rose-700",     gradientFrom: "from-rose-100",   gradientTo: "to-rose-200"   },
+  "eveniment":    { emoji: "🎪", label: "Eveniment",       tagColor: "bg-pink-100 text-pink-700",     gradientFrom: "from-pink-100",   gradientTo: "to-pink-200"   },
 };
 const DEFAULT_META = { emoji: "📍", label: "Activitate", tagColor: "bg-gray-100 text-gray-700", gradientFrom: "from-gray-100", gradientTo: "to-gray-200" };
 
@@ -164,6 +165,18 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
               <section className="mb-6">
                 <h3 className="text-lg font-black text-[#1a1a2e] mb-2">Despre loc</h3>
                 <DescriptionCollapse text={listing.description} />
+              </section>
+            )}
+
+            {/* Price details */}
+            {listing.price_details && (
+              <section className="mb-6">
+                <h3 className="text-lg font-black text-[#1a1a2e] mb-3">💰 Prețuri</h3>
+                <div className="bg-orange-50 border border-orange-100 rounded-2xl p-5">
+                  <p className="text-sm font-semibold text-gray-700 whitespace-pre-line leading-relaxed">
+                    {listing.price_details}
+                  </p>
+                </div>
               </section>
             )}
 

@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { createClient } from "@/utils/supabase/server";
 import { deleteListing } from "./actions";
 import DeleteButton from "./_components/DeleteButton";
+import AdminShell from "./_components/AdminShell";
 
 const CATEGORY_LABELS: Record<string, string> = {
   "loc-de-joaca":  "🛝 Loc de joacă",
@@ -33,6 +34,7 @@ export default async function AdminDashboard() {
   }
 
   return (
+    <AdminShell>
     <div>
       <div className="flex items-center justify-between mb-8">
         <div>
@@ -142,5 +144,6 @@ export default async function AdminDashboard() {
         )}
       </div>
     </div>
+    </AdminShell>
   );
 }

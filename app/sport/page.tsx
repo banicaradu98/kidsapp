@@ -1,16 +1,16 @@
 import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
 import CategoryShell from "@/app/components/CategoryShell";
-import FilteredCursuri from "./FilteredCursuri";
+import FilteredSport from "./FilteredSport";
 
-export const metadata = { title: "Cursuri & Ateliere pentru Copii în Sibiu — KidsApp" };
+export const metadata = { title: "Sport pentru Copii în Sibiu — KidsApp" };
 
-export default async function CursuriAtelierePage() {
+export default async function SportPage() {
   const supabase = createClient(await cookies());
   const { data: listings } = await supabase
     .from("listings")
     .select("id, name, category, subcategory, description, address, price, age_min, age_max, schedule, is_verified")
-    .eq("category", "curs-atelier")
+    .eq("category", "sport")
     .order("is_featured", { ascending: false })
     .order("name");
 
@@ -18,12 +18,12 @@ export default async function CursuriAtelierePage() {
 
   return (
     <CategoryShell
-      title="Cursuri & Ateliere"
-      subtitle="Activități educative și creative pentru copii din Sibiu"
-      emoji="🎨"
+      title="Sport"
+      subtitle="Activități sportive și cluburi pentru copii din Sibiu"
+      emoji="⚽"
       count={items.length}
     >
-      <FilteredCursuri listings={items} />
+      <FilteredSport listings={items} />
     </CategoryShell>
   );
 }

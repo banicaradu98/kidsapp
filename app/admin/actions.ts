@@ -3,6 +3,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
+import { adminClient } from "@/utils/supabase/admin";
 
 // ── AUTH ──────────────────────────────────────────────────────────
 export async function loginAction(
@@ -36,7 +37,8 @@ function extractData(formData: FormData) {
     description: (formData.get("description") as string) || null,
     address:     (formData.get("address")     as string) || null,
     city:        (formData.get("city")        as string) || "Sibiu",
-    price:       (formData.get("price")       as string) || null,
+    price:         (formData.get("price")         as string) || null,
+    price_details: (formData.get("price_details") as string) || null,
     age_min:     formData.get("age_min")  ? Number(formData.get("age_min"))  : null,
     age_max:     formData.get("age_max")  ? Number(formData.get("age_max"))  : null,
     schedule:    (formData.get("schedule")    as string) || null,
@@ -47,15 +49,13 @@ function extractData(formData: FormData) {
 }
 
 export async function createListing(formData: FormData) {
-  const supabase = createClient(await cookies());
-  const { error } = await supabase.from("listings").insert(extractData(formData));
+  const { error } = await adminClient.from("listings").insert(extractData(formData));
   if (error) throw new Error(error.message);
   redirect("/admin");
 }
 
 export async function updateListing(id: string, formData: FormData) {
-  const supabase = createClient(await cookies());
-  const { error } = await supabase
+  const { error } = await adminClient
     .from("listings")
     .update(extractData(formData))
     .eq("id", id);
@@ -64,7 +64,6 @@ export async function updateListing(id: string, formData: FormData) {
 }
 
 export async function deleteListing(id: string) {
-  const supabase = createClient(await cookies());
-  await supabase.from("listings").delete().eq("id", id);
+  await adminClient.from("listings").delete().eq("id", id);
   redirect("/admin");
 }
