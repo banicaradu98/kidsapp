@@ -68,9 +68,12 @@ export default async function Home() {
             <a href="/spectacole"       className="hover:text-[#ff5a2e] transition-colors">🎭 Spectacole</a>
             <a href="/evenimente"       className="hover:text-[#ff5a2e] transition-colors">🎪 Evenimente</a>
           </nav>
-          <button className="hidden md:block bg-[#ff5a2e] hover:bg-[#f03d12] text-white text-base font-bold px-5 py-2.5 rounded-full transition-colors shadow-sm whitespace-nowrap">
+          <a
+            href="/adauga-locatia-ta"
+            className="hidden md:block bg-[#ff5a2e] hover:bg-[#f03d12] text-white text-base font-bold px-5 py-2.5 rounded-full transition-colors shadow-sm whitespace-nowrap"
+          >
             + Adaugă locația ta
-          </button>
+          </a>
 
           {/* Mobile: hamburger only */}
           <MobileMenu />
@@ -274,6 +277,28 @@ export default async function Home() {
         <button className="bg-white text-[#ff5a2e] font-black text-base px-8 py-4 rounded-full hover:bg-orange-50 transition-colors shadow-md">
           Înregistrează-te gratuit
         </button>
+      </section>
+
+      {/* ── CTA ADAUGĂ LOCAȚIA ── */}
+      <section className="py-12 px-4 bg-gradient-to-br from-[#fff4f0] to-white">
+        <div className="max-w-3xl mx-auto text-center">
+          <p className="text-4xl mb-4">🏠</p>
+          <h2 className="text-2xl sm:text-3xl font-black text-[#1a1a2e] mb-3">
+            Ai o locație pentru copii în Sibiu?
+          </h2>
+          <p className="text-gray-500 font-medium text-lg mb-6 max-w-lg mx-auto leading-relaxed">
+            Adaugă-o gratuit pe KidsApp și fii descoperit de mii de părinți din oraș.
+          </p>
+          <a
+            href="/adauga-locatia-ta"
+            className="inline-block bg-[#ff5a2e] hover:bg-[#f03d12] text-white font-black px-8 py-4 rounded-2xl text-base transition-colors shadow-[0_4px_16px_rgba(255,90,46,0.3)]"
+          >
+            + Adaugă locația ta gratuit
+          </a>
+          <p className="mt-4 text-sm text-gray-400 font-medium">
+            Fără cont. Publicare în maxim 48 ore.
+          </p>
+        </div>
       </section>
 
       {/* ── NEWSLETTER ── */}

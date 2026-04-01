@@ -10,7 +10,13 @@ function reorder(list: string[], from: number, to: number): string[] {
   return result;
 }
 
-export default function ImageUploader({ defaultImages = [] }: { defaultImages?: string[] }) {
+interface Props {
+  defaultImages?: string[];
+  endpoint?: string;
+  maxFiles?: number;
+}
+
+export default function ImageUploader({ defaultImages = [], endpoint = "/api/upload", maxFiles = 20 }: Props) {
   const [images, setImages] = useState<string[]>(defaultImages);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -25,14 +31,16 @@ export default function ImageUploader({ defaultImages = [] }: { defaultImages?: 
     setUploading(true);
     setError(null);
     const newUrls: string[] = [];
-    for (const file of Array.from(files)) {
+    const remaining = maxFiles - images.length;
+    const toUpload = Array.from(files).slice(0, remaining);
+    for (const file of toUpload) {
       if (file.size > 5 * 1024 * 1024) {
         setError(`"${file.name}" depășește 5MB`);
         continue;
       }
       const fd = new FormData();
       fd.append("file", file);
-      const res = await fetch("/api/upload", { method: "POST", body: fd });
+      const res = await fetch(endpoint, { method: "POST", body: fd });
       const data = await res.json();
       if (data.url) newUrls.push(data.url as string);
       else setError((data.error as string) ?? "Eroare la upload");
@@ -102,30 +110,38 @@ export default function ImageUploader({ defaultImages = [] }: { defaultImages?: 
         </p>
       )}
 
-      <label
-        className={`flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-xl p-6 cursor-pointer transition-colors ${
-          uploading
-            ? "opacity-50 cursor-not-allowed border-gray-200 bg-gray-50"
-            : "border-gray-300 hover:border-[#ff5a2e] hover:bg-orange-50/50"
-        }`}
-      >
-        <input
-          ref={inputRef}
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          multiple
-          className="hidden"
-          disabled={uploading}
-          onChange={(e) => e.target.files && handleFiles(e.target.files)}
-        />
-        <span className="text-3xl">{uploading ? "⏳" : "📷"}</span>
-        <p className="text-sm font-bold text-gray-600">
-          {uploading ? "Se încarcă..." : "Adaugă fotografii"}
+      {images.length < maxFiles && (
+        <label
+          className={`flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-xl p-6 cursor-pointer transition-colors ${
+            uploading
+              ? "opacity-50 cursor-not-allowed border-gray-200 bg-gray-50"
+              : "border-gray-300 hover:border-[#ff5a2e] hover:bg-orange-50/50"
+          }`}
+        >
+          <input
+            ref={inputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            multiple
+            className="hidden"
+            disabled={uploading}
+            onChange={(e) => e.target.files && handleFiles(e.target.files)}
+          />
+          <span className="text-3xl">{uploading ? "⏳" : "📷"}</span>
+          <p className="text-sm font-bold text-gray-600">
+            {uploading ? "Se încarcă..." : "Adaugă fotografii"}
+          </p>
+          <p className="text-xs text-gray-400 text-center">
+            JPG, PNG, WebP · max 5MB / fotografie
+            {maxFiles < 20 && ` · max ${maxFiles} poze`}
+          </p>
+        </label>
+      )}
+      {images.length >= maxFiles && (
+        <p className="text-xs font-bold text-gray-400 text-center py-3 border-2 border-dashed border-gray-100 rounded-xl">
+          Ai adăugat numărul maxim de fotografii ({maxFiles})
         </p>
-        <p className="text-xs text-gray-400 text-center">
-          JPG, PNG, WebP · max 5MB / fotografie · poți selecta mai multe deodată
-        </p>
-      </label>
+      )}
 
       {error && <p className="mt-2 text-xs font-bold text-red-500">{error}</p>}
     </div>

@@ -25,6 +25,7 @@ export default async function AdminDashboard() {
     .order("created_at", { ascending: false });
 
   const items = listings ?? [];
+  const pendingCount = items.filter((l) => !l.is_verified).length;
 
   // Count per category
   const counts: Record<string, number> = {};
@@ -48,6 +49,25 @@ export default async function AdminDashboard() {
           + Adaugă listing nou
         </a>
       </div>
+
+      {/* Pending alert */}
+      {pendingCount > 0 && (
+        <a
+          href="/admin/aprobare"
+          className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4 mb-6 hover:bg-amber-100 transition-colors"
+        >
+          <span className="text-2xl">⏳</span>
+          <div className="flex-1">
+            <p className="font-black text-amber-800">
+              {pendingCount} listing{pendingCount === 1 ? "" : "uri"} în așteptare
+            </p>
+            <p className="text-sm text-amber-600 font-medium">
+              Cereri trimise prin formularul public — necesită aprobare
+            </p>
+          </div>
+          <span className="text-amber-600 font-bold text-sm">Verifică →</span>
+        </a>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">

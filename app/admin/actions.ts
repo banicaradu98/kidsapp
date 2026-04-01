@@ -80,3 +80,17 @@ export async function deleteListing(id: string) {
   await adminClient.from("listings").delete().eq("id", id);
   redirect("/admin");
 }
+
+export async function approveListing(id: string) {
+  const { error } = await adminClient
+    .from("listings")
+    .update({ is_verified: true })
+    .eq("id", id);
+  if (error) throw new Error(error.message);
+  redirect("/admin/aprobare");
+}
+
+export async function rejectListing(id: string) {
+  await adminClient.from("listings").delete().eq("id", id);
+  redirect("/admin/aprobare");
+}

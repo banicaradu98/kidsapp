@@ -162,18 +162,25 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
                   <span className="mt-0.5">📍</span>
                   <span>{listing.address}{listing.city ? `, ${listing.city}` : ""}</span>
                 </div>
-                <div className="w-full h-52 bg-gradient-to-br from-green-50 to-emerald-100 rounded-2xl border border-green-200 flex flex-col items-center justify-center gap-2">
-                  <span className="text-3xl">🗺️</span>
-                  <p className="text-sm font-bold text-gray-500">Hartă Google Maps</p>
-                  <a
-                    href={`https://maps.google.com/?q=${encodeURIComponent((listing.address ?? "") + " " + (listing.city ?? ""))}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs font-bold text-[#ff5a2e] hover:underline"
-                  >
-                    Deschide în Google Maps →
-                  </a>
-                </div>
+                <iframe
+                  src={`https://maps.google.com/maps?q=${encodeURIComponent((listing.address ?? "") + ", Sibiu, Romania")}&output=embed&z=16`}
+                  width="100%"
+                  height="300"
+                  style={{ border: 0, borderRadius: 12 }}
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title="Hartă locație"
+                  className="w-full rounded-2xl"
+                />
+                <a
+                  href={`https://maps.google.com/maps?q=${encodeURIComponent((listing.address ?? "") + ", Sibiu, Romania")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block mt-2 text-xs font-bold text-[#ff5a2e] hover:underline"
+                >
+                  Deschide în Google Maps →
+                </a>
               </section>
             )}
 
