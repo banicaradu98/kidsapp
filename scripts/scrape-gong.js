@@ -159,6 +159,7 @@ async function scrape() {
       city: "Sibiu",
       price: detail.price || null,
       schedule,
+      event_date: ev.event_date || null,
       phone: "0269 211 349",
       website: "www.teatrulgong.ro",
       is_verified: true,

@@ -12,6 +12,7 @@ export interface Listing {
   price_details?: string | null;
   is_verified?: boolean;
   images?: string[] | null;
+  event_date?: string | null;
 }
 
 export function formatAge(min: number | null, max: number | null) {
