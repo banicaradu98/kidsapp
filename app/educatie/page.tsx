@@ -9,7 +9,7 @@ export default async function EducatiePage() {
   const supabase = createClient(await cookies());
   const { data: listings } = await supabase
     .from("listings")
-    .select("id, name, category, subcategory, description, address, price, age_min, age_max, schedule, is_verified")
+    .select("id, name, category, subcategory, description, address, price, age_min, age_max, schedule, is_verified, images")
     .eq("category", "educatie")
     .order("is_verified", { ascending: false })
     .order("name");

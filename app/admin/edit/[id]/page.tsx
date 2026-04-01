@@ -28,18 +28,22 @@ export default async function EditPage({ params }: { params: { id: string } }) {
 
         <form action={updateWithId} className="bg-white rounded-2xl border border-gray-200 p-6">
           <ListingFormFields d={{
-            name:        listing.name,
-            category:    listing.category,
-            description: listing.description,
-            address:     listing.address,
-            city:        listing.city,
-            price:       listing.price,
-            age_min:     listing.age_min,
-            age_max:     listing.age_max,
-            schedule:    listing.schedule,
-            phone:       listing.phone,
-            is_verified: listing.is_verified,
-            is_featured: listing.is_featured,
+            name:         listing.name,
+            category:     listing.category,
+            subcategory:  listing.subcategory,
+            description:  listing.description,
+            address:      listing.address,
+            city:         listing.city,
+            price:        listing.price,
+            price_details: listing.price_details,
+            age_min:      listing.age_min,
+            age_max:      listing.age_max,
+            schedule:     listing.schedule,
+            phone:        listing.phone,
+            website:      listing.website,
+            is_verified:  listing.is_verified,
+            is_featured:  listing.is_featured,
+            images:       listing.images ?? [],
           }} />
 
           <div className="flex items-center gap-3 mt-8 pt-6 border-t border-gray-100">

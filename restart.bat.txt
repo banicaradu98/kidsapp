@@ -1,0 +1,3 @@
+cd C:\Users\banic\proiecte\kidsapp
+rd /s /q .next
+npm run dev

@@ -2,6 +2,7 @@ import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import DescriptionCollapse from "./DescriptionCollapse";
+import ListingGallery from "./ListingGallery";
 
 const CATEGORY_META: Record<string, { emoji: string; label: string; tagColor: string; gradientFrom: string; gradientTo: string }> = {
   "loc-de-joaca": { emoji: "🛝", label: "Loc de joacă",   tagColor: "bg-orange-100 text-orange-700", gradientFrom: "from-orange-100", gradientTo: "to-orange-200" },
@@ -44,11 +45,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
   const isFree = listing.price?.toLowerCase() === "gratuit";
   const wa = whatsappLink(listing.phone);
 
-  const galleryColors = [
-    { from: meta.gradientFrom, to: meta.gradientTo },
-    { from: "from-purple-100", to: "to-purple-200" },
-    { from: "from-sky-100",    to: "to-sky-200"    },
-  ];
+  const photos: string[] = listing.images ?? [];
 
   return (
     <div className="min-h-screen bg-white">
@@ -67,39 +64,16 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
         </div>
       </header>
 
-      {/* ── MOBILE GALLERY (scroll horizontal) ── */}
-      <div className="lg:hidden">
-        <div className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide" style={{ height: 250 }}>
-          {galleryColors.map((g, i) => (
-            <div
-              key={i}
-              className={`flex-none w-full snap-center bg-gradient-to-br ${g.from} ${g.to} flex items-center justify-center relative`}
-              style={{ height: 250 }}
-            >
-              <span className="text-8xl">{meta.emoji}</span>
-              <span className="absolute bottom-3 right-4 bg-black/40 text-white text-xs font-bold px-2.5 py-1 rounded-full">
-                {i + 1} / {galleryColors.length}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
+      {/* ── GALLERY ── */}
+      <ListingGallery
+        images={photos}
+        emoji={meta.emoji}
+        gradientFrom={meta.gradientFrom}
+        gradientTo={meta.gradientTo}
+      />
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6">
 
-        {/* ── DESKTOP GALLERY (grid) ── */}
-        <div className="hidden lg:grid grid-cols-3 gap-2 rounded-3xl overflow-hidden my-6" style={{ height: 320 }}>
-          <div className={`col-span-2 bg-gradient-to-br ${galleryColors[0].from} ${galleryColors[0].to} flex items-center justify-center`}>
-            <span className="text-8xl">{meta.emoji}</span>
-          </div>
-          <div className="flex flex-col gap-2">
-            {galleryColors.slice(1).map((g, i) => (
-              <div key={i} className={`flex-1 bg-gradient-to-br ${g.from} ${g.to} flex items-center justify-center`}>
-                <span className="text-4xl">{meta.emoji}</span>
-              </div>
-            ))}
-          </div>
-        </div>
 
         <div className="flex flex-col lg:flex-row gap-8 pb-32 lg:pb-16">
 

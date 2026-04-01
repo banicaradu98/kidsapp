@@ -29,7 +29,19 @@ export async function logoutAction() {
 }
 
 // ── LISTINGS ──────────────────────────────────────────────────────
+function normalizeUrl(value: string | null): string | null {
+  if (!value) return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `https://${trimmed}`;
+}
+
 function extractData(formData: FormData) {
+  const imagesJson = formData.get("images_json") as string | null;
+  let images: string[] = [];
+  try { images = imagesJson ? JSON.parse(imagesJson) : []; } catch { images = []; }
+
   return {
     name:        (formData.get("name")        as string) || "",
     category:    (formData.get("category")    as string) || "",
@@ -42,8 +54,10 @@ function extractData(formData: FormData) {
     age_max:     formData.get("age_max")  ? Number(formData.get("age_max"))  : null,
     schedule:    (formData.get("schedule")    as string) || null,
     phone:       (formData.get("phone")       as string) || null,
+    website:     normalizeUrl(formData.get("website") as string),
     is_verified: formData.get("is_verified") === "on",
     is_featured: formData.get("is_featured") === "on",
+    images,
   };
 }
 

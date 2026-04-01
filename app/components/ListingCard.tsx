@@ -11,6 +11,7 @@ export interface Listing {
   schedule: string | null;
   price_details?: string | null;
   is_verified?: boolean;
+  images?: string[] | null;
 }
 
 export function formatAge(min: number | null, max: number | null) {
@@ -40,9 +41,20 @@ export default function ListingCard({ listing, variant = "default" }: { listing:
       href={`/listing/${listing.id}`}
       className="flex flex-col sm:flex-row bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.07)] hover:shadow-[0_6px_24px_rgba(0,0,0,0.12)] border border-gray-100 overflow-hidden transition-all duration-200 active:scale-[.99] group"
     >
-      {/* Thumb */}
-      <div className={`sm:w-32 sm:shrink-0 h-36 sm:h-auto bg-gradient-to-br ${meta.gradientFrom} ${meta.gradientTo} flex items-center justify-center`}>
-        <span className="text-5xl group-hover:scale-110 transition-transform duration-200">{meta.emoji}</span>
+      {/* Thumb — 4:3 pe mobil, w-32 full-height pe desktop */}
+      <div className="sm:w-32 sm:shrink-0 aspect-[4/3] sm:aspect-auto sm:h-auto overflow-hidden">
+        {listing.images?.[0] ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={listing.images[0]}
+            alt=""
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          />
+        ) : (
+          <div className={`w-full h-full bg-gradient-to-br ${meta.gradientFrom} ${meta.gradientTo} flex items-center justify-center`}>
+            <span className="text-5xl group-hover:scale-110 transition-transform duration-200">{meta.emoji}</span>
+          </div>
+        )}
       </div>
 
       {/* Content */}

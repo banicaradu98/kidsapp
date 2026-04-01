@@ -1,3 +1,5 @@
+import ImageUploader from "./ImageUploader";
+
 const CATEGORIES = [
   { value: "loc-de-joaca", label: "🛝 Loc de joacă" },
   { value: "educatie",     label: "🎓 Educație" },
@@ -23,6 +25,7 @@ interface DefaultValues {
   website?: string;
   is_verified?: boolean;
   is_featured?: boolean;
+  images?: string[];
 }
 
 const inputCls = "w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-700 outline-none focus:border-[#ff5a2e] focus:ring-2 focus:ring-[#ff5a2e]/20 transition-all bg-white";
@@ -120,8 +123,15 @@ export default function ListingFormFields({ d = {} }: { d?: DefaultValues }) {
       </Field>
 
       <Field label="Website (opțional)">
-        <input name="website" type="url" defaultValue={d.website} placeholder="https://..." className={inputCls} />
+        <input name="website" type="text" defaultValue={d.website} placeholder="ex: www.teatrulgong.ro" className={inputCls} />
       </Field>
+
+      {/* ── Fotografii ── */}
+      <SectionHeader title="Fotografii" />
+
+      <div className="sm:col-span-2">
+        <ImageUploader defaultImages={d.images ?? []} />
+      </div>
 
       {/* ── Setări ── */}
       <SectionHeader title="Setări" />
