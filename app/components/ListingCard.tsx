@@ -1,3 +1,5 @@
+import FavoriteButton from "./FavoriteButton";
+
 export interface Listing {
   id: string;
   name: string;
@@ -38,10 +40,12 @@ export default function ListingCard({ listing, variant = "default" }: { listing:
   const isFree = listing.price?.toLowerCase() === "gratuit";
 
   return (
-    <a
-      href={`/listing/${listing.id}`}
-      className="flex flex-col sm:flex-row bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.07)] hover:shadow-[0_6px_24px_rgba(0,0,0,0.12)] border border-gray-100 overflow-hidden transition-all duration-200 active:scale-[.99] group"
-    >
+    <div className="relative">
+      <FavoriteButton listingId={listing.id} />
+      <a
+        href={`/listing/${listing.id}`}
+        className="flex flex-col sm:flex-row bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.07)] hover:shadow-[0_6px_24px_rgba(0,0,0,0.12)] border border-gray-100 overflow-hidden transition-all duration-200 active:scale-[.99] group"
+      >
       {/* Thumb — 4:3 pe mobil, w-32 full-height pe desktop */}
       <div className="sm:w-32 sm:shrink-0 aspect-[4/3] sm:aspect-auto sm:h-auto overflow-hidden">
         {listing.images?.[0] ? (
@@ -96,5 +100,6 @@ export default function ListingCard({ listing, variant = "default" }: { listing:
         </div>
       </div>
     </a>
+    </div>
   );
 }

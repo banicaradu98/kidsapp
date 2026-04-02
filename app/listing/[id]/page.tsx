@@ -3,6 +3,8 @@ import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import DescriptionCollapse from "./DescriptionCollapse";
 import ListingGallery from "./ListingGallery";
+import ReviewSection from "./ReviewSection";
+import FavoriteButton from "@/app/components/FavoriteButton";
 
 const CATEGORY_META: Record<string, { emoji: string; label: string; tagColor: string; gradientFrom: string; gradientTo: string }> = {
   "loc-de-joaca": { emoji: "🛝", label: "Loc de joacă",   tagColor: "bg-orange-100 text-orange-700", gradientFrom: "from-orange-100", gradientTo: "to-orange-200" },
@@ -39,6 +41,18 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
     .single();
 
   if (!listing) notFound();
+
+  const { data: reviews } = await supabase
+    .from("reviews")
+    .select("id, user_name, rating, text, created_at")
+    .eq("listing_id", params.id)
+    .order("created_at", { ascending: false });
+
+  const reviewList = reviews ?? [];
+  const avgRating =
+    reviewList.length > 0
+      ? reviewList.reduce((s: number, r: { rating: number }) => s + r.rating, 0) / reviewList.length
+      : null;
 
   const meta = CATEGORY_META[listing.category ?? ""] ?? DEFAULT_META;
   const age = formatAge(listing.age_min, listing.age_max);
@@ -105,10 +119,18 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
             <h2 className="text-2xl sm:text-3xl font-black text-[#1a1a2e] leading-tight mb-2">
               {listing.name}
             </h2>
-            <div className="flex items-center gap-2 text-sm font-semibold text-gray-500 mb-5">
-              <span className="text-yellow-400">★★★★★</span>
-              <span className="text-gray-800 font-bold">4.8</span>
-              <span className="text-gray-400">(24 recenzii)</span>
+            <div className="flex items-center gap-2 text-sm font-semibold text-gray-500 mb-5 flex-wrap">
+              {avgRating !== null ? (
+                <>
+                  <span className="text-yellow-400">{"★".repeat(Math.round(avgRating))}</span>
+                  <span className="text-gray-800 font-bold">{avgRating.toFixed(1)}</span>
+                  <span className="text-gray-400">
+                    ({reviewList.length} {reviewList.length === 1 ? "recenzie" : "recenzii"})
+                  </span>
+                </>
+              ) : (
+                <span className="text-gray-400">Fără recenzii încă</span>
+              )}
               {listing.city && <span>· 📍 {listing.city}</span>}
             </div>
 
@@ -185,30 +207,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
             )}
 
             {/* Reviews */}
-            <section className="mb-6">
-              <h3 className="text-lg font-black text-[#1a1a2e] mb-3">Recenzii</h3>
-              {[
-                { name: "Maria P.", date: "Martie 2025", text: "Copiii s-au distrat extraordinar! Spațiu curat, personal amabil. Revenim cu siguranță.", stars: 5 },
-                { name: "Andrei T.", date: "Februarie 2025", text: "Locul ideal pentru o după-amiază ploioasă. Cafeteria pentru părinți este un bonus excelent.", stars: 5 },
-                { name: "Elena M.", date: "Ianuarie 2025", text: "Foarte ok, dar weekendurile sunt cam aglomerate. Recomand în cursul săptămânii.", stars: 4 },
-              ].map((r) => (
-                <div key={r.name} className="bg-gray-50 rounded-2xl p-4 border border-gray-100 mb-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-full bg-[#ff5a2e]/10 flex items-center justify-center font-black text-[#ff5a2e] text-sm shrink-0">
-                        {r.name[0]}
-                      </div>
-                      <div>
-                        <p className="font-bold text-gray-800 text-sm leading-none">{r.name}</p>
-                        <p className="text-xs text-gray-400 font-medium mt-0.5">{r.date}</p>
-                      </div>
-                    </div>
-                    <span className="text-yellow-400 text-sm">{"★".repeat(r.stars)}</span>
-                  </div>
-                  <p className="text-gray-600 text-sm font-medium leading-relaxed">{r.text}</p>
-                </div>
-              ))}
-            </section>
+            <ReviewSection listingId={listing.id} initialReviews={reviewList} />
 
           </div>
 
@@ -257,9 +256,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
                       💬 WhatsApp
                     </a>
                   )}
-                  <button className="w-full text-gray-400 hover:text-gray-600 font-semibold text-xs py-2 transition-colors">
-                    🔖 Salvează locul
-                  </button>
+                  <FavoriteButton listingId={listing.id} variant="detail" />
                 </div>
               </div>
 

@@ -1,0 +1,118 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import type { User } from "@supabase/supabase-js";
+import { createClient } from "@/utils/supabase/client";
+import { signOut } from "@/utils/supabase/auth";
+import AuthModal from "./AuthModal";
+
+export default function NavbarAuth() {
+  const [user, setUser] = useState<User | null>(null);
+  const [ready, setReady] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const supabase = createClient();
+
+    // Read session from cookies immediately (set server-side after OAuth callback)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      setReady(true);
+    });
+
+    // Keep listening for future sign-in / sign-out events
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      setReady(true);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  async function handleSignOut() {
+    await signOut();
+    setShowDropdown(false);
+    window.location.reload();
+  }
+
+  // Invisible placeholder while resolving auth state (avoids layout shift)
+  if (!ready) return <div className="hidden md:block w-28 h-9" />;
+
+  if (!user) {
+    return (
+      <>
+        <button
+          onClick={() => setShowModal(true)}
+          className="hidden md:block border-2 border-gray-200 hover:border-[#ff5a2e]/50 text-gray-700 hover:text-[#ff5a2e] font-bold text-sm px-4 py-2 rounded-full transition-all whitespace-nowrap"
+        >
+          Intră în cont
+        </button>
+        {showModal && <AuthModal onClose={() => setShowModal(false)} />}
+      </>
+    );
+  }
+
+  const displayName: string =
+    user.user_metadata?.full_name || user.email || "U";
+  const initials = displayName
+    .split(" ")
+    .map((n: string) => n[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+
+  return (
+    <div className="relative hidden md:block" ref={dropdownRef}>
+      <button
+        onClick={() => setShowDropdown((v) => !v)}
+        className="w-9 h-9 rounded-full bg-[#ff5a2e] text-white font-black text-sm flex items-center justify-center hover:bg-[#f03d12] transition-colors"
+        aria-label="Contul meu"
+        title={displayName}
+      >
+        {initials}
+      </button>
+
+      {showDropdown && (
+        <div className="absolute right-0 top-11 bg-white border border-gray-200 rounded-2xl shadow-xl w-48 py-2 z-[200]">
+          <p className="px-4 pt-1 pb-2 text-xs font-bold text-gray-400 truncate">
+            {user.email}
+          </p>
+          <div className="border-t border-gray-100 mb-1" />
+          <a
+            href="/contul-meu"
+            className="flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-orange-50 hover:text-[#ff5a2e] transition-colors"
+            onClick={() => setShowDropdown(false)}
+          >
+            👤 Contul meu
+          </a>
+          <a
+            href="/favorite"
+            className="flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-orange-50 hover:text-[#ff5a2e] transition-colors"
+            onClick={() => setShowDropdown(false)}
+          >
+            ❤️ Favorite
+          </a>
+          <div className="border-t border-gray-100 my-1" />
+          <button
+            onClick={handleSignOut}
+            className="w-full text-left flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-gray-500 hover:bg-gray-50 transition-colors"
+          >
+            Deconectare
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}

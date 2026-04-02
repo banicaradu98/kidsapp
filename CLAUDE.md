@@ -240,6 +240,15 @@ Clasele din `CATEGORY_META` sunt compuse la runtime prin lookup (`meta.gradientF
 
 ---
 
+## Auth utilizatori
+
+- **Email confirmation dezactivat în development.** Reactivează înainte de lansare în producție din Supabase → Authentication → Settings → "Enable email confirmations"
+- **Google OAuth:** configurat în Supabase → Authentication → Providers → Google; callback URL: `http://localhost:3000/auth/callback` (dev) + domeniu producție
+- **onAuthStateChange** este sursa primară de adevăr pentru starea auth în client components (navbarul ascultă `INITIAL_SESSION`, `SIGNED_IN`, `SIGNED_OUT`)
+- **Tabele necesare:** `user_favorites` și `reviews` cu RLS activ — SQL în istoricul sesiunii
+
+---
+
 ## Note importante
 
 - **Supabase client server** — `createClient` din `utils/supabase/server.ts` cere `cookieStore` ca parametru: `createClient(await cookies())`

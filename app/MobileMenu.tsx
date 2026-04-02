@@ -2,6 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import type { User } from "@supabase/supabase-js";
+import { createClient } from "@/utils/supabase/client";
+import { signOut } from "@/utils/supabase/auth";
+import AuthModal from "./components/AuthModal";
 
 const LINKS = [
   { icon: "🏠", label: "Acasă",              href: "/"                 },
@@ -14,7 +18,7 @@ const LINKS = [
   { icon: "📩", label: "Newsletter",         href: "/#newsletter"      },
 ];
 
-function MenuPanel({ onClose }: { onClose: () => void }) {
+function MenuPanel({ onClose, user, onSignOut, onOpenAuth }: { onClose: () => void; user: User | null; onSignOut: () => void; onOpenAuth: () => void }) {
   // Blochează scroll body
   useEffect(() => {
     const prev = document.body.style.overflow;
@@ -100,11 +104,86 @@ function MenuPanel({ onClose }: { onClose: () => void }) {
         ))}
       </nav>
 
-      {/* CTA */}
-      <div style={{ padding: "20px 20px", borderTop: "1px solid #f3f4f6", flexShrink: 0 }}>
-        <button
+      {/* Auth + CTA */}
+      <div style={{ padding: "16px 20px", borderTop: "1px solid #f3f4f6", flexShrink: 0, display: "flex", flexDirection: "column", gap: 12 }}>
+        {user ? (
+          <>
+            <a
+              href="/contul-meu"
+              onClick={onClose}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                padding: "14px 16px",
+                background: "#f9fafb",
+                borderRadius: 14,
+                textDecoration: "none",
+                color: "#1a1a2e",
+                fontWeight: 700,
+                fontSize: 16,
+              }}
+            >
+              👤 Contul meu
+            </a>
+            <a
+              href="/favorite"
+              onClick={onClose}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                padding: "14px 16px",
+                background: "#fff4f0",
+                borderRadius: 14,
+                textDecoration: "none",
+                color: "#ff5a2e",
+                fontWeight: 900,
+                fontSize: 16,
+              }}
+            >
+              ❤️ Favorite
+            </a>
+            <button
+              onClick={onSignOut}
+              style={{
+                width: "100%",
+                minHeight: 52,
+                background: "#f3f4f6",
+                color: "#6b7280",
+                border: "none",
+                borderRadius: 14,
+                fontSize: 16,
+                fontWeight: 700,
+                cursor: "pointer",
+              }}
+            >
+              Deconectare
+            </button>
+          </>
+        ) : (
+          <button
+            onClick={() => { onClose(); onOpenAuth(); }}
+            style={{
+              width: "100%",
+              minHeight: 52,
+              background: "#f3f4f6",
+              color: "#374151",
+              border: "none",
+              borderRadius: 14,
+              fontSize: 16,
+              fontWeight: 700,
+              cursor: "pointer",
+            }}
+          >
+            Intră în cont
+          </button>
+        )}
+        <a
+          href="/adauga-locatia-ta"
           onClick={onClose}
           style={{
+            display: "block",
             width: "100%",
             minHeight: 56,
             background: "#ff5a2e",
@@ -114,10 +193,13 @@ function MenuPanel({ onClose }: { onClose: () => void }) {
             fontSize: 17,
             fontWeight: 900,
             cursor: "pointer",
+            textAlign: "center",
+            lineHeight: "56px",
+            textDecoration: "none",
           }}
         >
           + Adaugă locația ta
-        </button>
+        </a>
       </div>
     </div>
   );
@@ -126,8 +208,31 @@ function MenuPanel({ onClose }: { onClose: () => void }) {
 export default function MobileMenu() {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    setMounted(true);
+    const supabase = createClient();
+
+    // Read session from cookies immediately (set server-side after OAuth callback)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    // Keep listening for future sign-in / sign-out events
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  async function handleSignOut() {
+    await signOut();
+    setOpen(false);
+    window.location.reload();
+  }
 
   return (
     <>
@@ -144,9 +249,16 @@ export default function MobileMenu() {
 
       {/* Portal — montat direct în document.body */}
       {mounted && open && createPortal(
-        <MenuPanel onClose={() => setOpen(false)} />,
+        <MenuPanel
+          onClose={() => setOpen(false)}
+          user={user}
+          onSignOut={handleSignOut}
+          onOpenAuth={() => setShowAuthModal(true)}
+        />,
         document.body
       )}
+
+      {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
     </>
   );
 }

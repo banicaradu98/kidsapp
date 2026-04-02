@@ -1,6 +1,9 @@
 import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
+import { Suspense } from "react";
 import MobileMenu from "./MobileMenu";
+import NavbarAuth from "./components/NavbarAuth";
+import AutoOpenAuth from "./components/AutoOpenAuth";
 
 const CATEGORY_META: Record<string, { emoji: string; label: string; tagColor: string; gradientFrom: string; gradientTo: string }> = {
   "loc-de-joaca": { emoji: "🛝", label: "Loc de joacă",   tagColor: "bg-orange-100 text-orange-700", gradientFrom: "from-orange-50", gradientTo: "to-orange-100" },
@@ -41,6 +44,7 @@ export default async function Home() {
 
   return (
     <div className="min-h-screen bg-white">
+      <Suspense><AutoOpenAuth /></Suspense>
 
       {/* ── HEADER ── */}
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-gray-100 shadow-sm">
@@ -68,6 +72,7 @@ export default async function Home() {
             <a href="/spectacole"       className="hover:text-[#ff5a2e] transition-colors">🎭 Spectacole</a>
             <a href="/evenimente"       className="hover:text-[#ff5a2e] transition-colors">🎪 Evenimente</a>
           </nav>
+          <NavbarAuth />
           <a
             href="/adauga-locatia-ta"
             className="hidden md:block bg-[#ff5a2e] hover:bg-[#f03d12] text-white text-base font-bold px-5 py-2.5 rounded-full transition-colors shadow-sm whitespace-nowrap"
@@ -267,18 +272,6 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* ── CTA BANNER ── */}
-      <section className="bg-[#ff5a2e] mx-4 sm:mx-6 lg:mx-auto lg:max-w-6xl rounded-3xl p-8 sm:p-12 mb-14 text-center text-white">
-        <div className="text-4xl mb-3">🏫</div>
-        <h2 className="text-2xl sm:text-3xl font-black mb-3">Ai un loc special pentru copii?</h2>
-        <p className="text-orange-100 text-base font-medium mb-6 max-w-md mx-auto leading-relaxed">
-          Adaugă grădinița, centrul de activități sau locul de joacă și ajunge la mii de părinți din Sibiu.
-        </p>
-        <button className="bg-white text-[#ff5a2e] font-black text-base px-8 py-4 rounded-full hover:bg-orange-50 transition-colors shadow-md">
-          Înregistrează-te gratuit
-        </button>
-      </section>
-
       {/* ── CTA ADAUGĂ LOCAȚIA ── */}
       <section className="py-12 px-4 bg-gradient-to-br from-[#fff4f0] to-white">
         <div className="max-w-3xl mx-auto text-center">
@@ -287,7 +280,7 @@ export default async function Home() {
             Ai o locație pentru copii în Sibiu?
           </h2>
           <p className="text-gray-500 font-medium text-lg mb-6 max-w-lg mx-auto leading-relaxed">
-            Adaugă-o gratuit pe KidsApp și fii descoperit de mii de părinți din oraș.
+            Adaugă grădinița, centrul de activități, locul de joacă, atelierul tău și nu numai și acesta ajunge la mii de părinți din Sibiu.
           </p>
           <a
             href="/adauga-locatia-ta"
