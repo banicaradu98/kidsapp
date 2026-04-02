@@ -42,13 +42,18 @@ export default function NavbarAuth() {
       if (event === "SIGNED_OUT") {
         setHasDashboard(false);
       } else if (event === "SIGNED_IN" && session?.user) {
-        supabase
-          .from("claims")
-          .select("id")
-          .eq("user_id", session.user.id)
-          .eq("status", "approved")
-          .maybeSingle()
-          .then(({ data }) => setHasDashboard(!!data));
+        const userId = session.user.id;
+        // Small delay for Google OAuth — ensures the session is fully propagated
+        // before querying, avoiding a race where auth.uid() isn't set yet.
+        setTimeout(() => {
+          supabase
+            .from("claims")
+            .select("id")
+            .eq("user_id", userId)
+            .eq("status", "approved")
+            .maybeSingle()
+            .then(({ data }) => setHasDashboard(!!data));
+        }, 500);
       }
     });
 
