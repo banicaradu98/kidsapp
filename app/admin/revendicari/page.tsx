@@ -1,16 +1,13 @@
-import { cookies } from "next/headers";
-import { createClient } from "@/utils/supabase/server";
 import AdminShell from "../_components/AdminShell";
 import { approveClaim, rejectClaim } from "../actions";
+import { adminClient } from "@/utils/supabase/admin";
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("ro-RO", { day: "numeric", month: "short", year: "numeric" });
 }
 
 export default async function RevendicariPage() {
-  const supabase = createClient(await cookies());
-
-  const { data: claims } = await supabase
+  const { data: claims } = await adminClient
     .from("claims")
     .select(`
       id, email, phone, message, status, created_at,

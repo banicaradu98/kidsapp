@@ -1,11 +1,9 @@
 import { logoutAction } from "../actions";
 import AdminNav from "./AdminNav";
-import { createClient } from "@/utils/supabase/server";
-import { cookies } from "next/headers";
+import { adminClient } from "@/utils/supabase/admin";
 
 export default async function AdminShell({ children }: { children: React.ReactNode }) {
-  const supabase = createClient(await cookies());
-  const { count } = await supabase
+  const { count } = await adminClient
     .from("claims")
     .select("id", { count: "exact", head: true })
     .eq("status", "pending");

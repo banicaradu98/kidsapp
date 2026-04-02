@@ -19,6 +19,7 @@ export default function NavbarAuth() {
   useEffect(() => {
     const supabase = createClient();
 
+    // Initial load: read session from cookies + check claims once
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setUser(session?.user ?? null);
       setReady(true);
@@ -33,19 +34,21 @@ export default function NavbarAuth() {
       }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    // Only re-check claims on explicit SIGNED_IN (OAuth redirect) or clear on SIGNED_OUT.
+    // Ignoring INITIAL_SESSION / TOKEN_REFRESHED to avoid race condition with getSession().
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
       setReady(true);
-      if (!session?.user) {
+      if (event === "SIGNED_OUT") {
         setHasDashboard(false);
-      } else {
-        const { data } = await supabase
+      } else if (event === "SIGNED_IN" && session?.user) {
+        supabase
           .from("claims")
           .select("id")
           .eq("user_id", session.user.id)
           .eq("status", "approved")
-          .maybeSingle();
-        setHasDashboard(!!data);
+          .maybeSingle()
+          .then(({ data }) => setHasDashboard(!!data));
       }
     });
 
@@ -63,9 +66,9 @@ export default function NavbarAuth() {
   }, []);
 
   async function handleSignOut() {
-    await signOut();
     setShowDropdown(false);
-    window.location.reload();
+    await signOut();
+    window.location.href = "/";
   }
 
   // Invisible placeholder while resolving auth state (avoids layout shift)
