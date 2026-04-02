@@ -17,6 +17,7 @@ export default function ClaimButton({ listingId, listingName }: Props) {
   const [showModal, setShowModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [contactEmail, setContactEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -47,12 +48,14 @@ export default function ClaimButton({ listingId, listingName }: Props) {
     setError(null);
 
     const supabase = createClient();
-    const { error: err } = await supabase.from("claims").insert({
+    const payload = {
       listing_id: listingId,
       user_id: userId,
       email: contactEmail,
+      phone: phone || null,
       message: message || null,
-    });
+    };
+    const { error: err } = await supabase.from("claims").insert(payload);
 
     if (err) {
       setError(err.message.includes("unique") ? "Ai trimis deja o cerere pentru acest listing." : "Eroare. Încearcă din nou.");
@@ -78,7 +81,7 @@ export default function ClaimButton({ listingId, listingName }: Props) {
   if (status === "pending") {
     return (
       <p className="text-xs font-semibold text-amber-600 text-center py-2">
-        ⏳ Cerere de revendicare în așteptare — te contactăm în 48 ore.
+        ⏳ Cerere de revendicare în așteptare — te contactăm în maxim 48 ore.
       </p>
     );
   }
@@ -142,6 +145,17 @@ export default function ClaimButton({ listingId, listingName }: Props) {
                       onChange={(e) => setContactEmail(e.target.value)}
                       required
                       placeholder="contact@locatia-ta.ro"
+                      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700 outline-none focus:border-[#ff5a2e] focus:ring-2 focus:ring-[#ff5a2e]/20"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 mb-1.5">Număr de telefon de contact *</label>
+                    <input
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      required
+                      placeholder="+40 7xx xxx xxx"
                       className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700 outline-none focus:border-[#ff5a2e] focus:ring-2 focus:ring-[#ff5a2e]/20"
                     />
                   </div>

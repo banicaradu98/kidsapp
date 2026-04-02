@@ -33,10 +33,20 @@ export default function NavbarAuth() {
       }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setUser(session?.user ?? null);
       setReady(true);
-      if (!session?.user) setHasDashboard(false);
+      if (!session?.user) {
+        setHasDashboard(false);
+      } else {
+        const { data } = await supabase
+          .from("claims")
+          .select("id")
+          .eq("user_id", session.user.id)
+          .eq("status", "approved")
+          .maybeSingle();
+        setHasDashboard(!!data);
+      }
     });
 
     return () => subscription.unsubscribe();

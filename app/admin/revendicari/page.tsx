@@ -13,7 +13,7 @@ export default async function RevendicariPage() {
   const { data: claims } = await supabase
     .from("claims")
     .select(`
-      id, email, message, status, created_at,
+      id, email, phone, message, status, created_at,
       listing_id, listings(id, name),
       user_id
     `)
@@ -49,6 +49,7 @@ export default async function RevendicariPage() {
                   <tr className="border-b border-gray-100 bg-gray-50">
                     <th className="text-left px-5 py-3 font-bold text-gray-500">Listing</th>
                     <th className="text-left px-4 py-3 font-bold text-gray-500">Email contact</th>
+                    <th className="text-left px-4 py-3 font-bold text-gray-500">Telefon</th>
                     <th className="text-left px-4 py-3 font-bold text-gray-500">Mesaj</th>
                     <th className="text-left px-4 py-3 font-bold text-gray-500">Data</th>
                     <th className="text-center px-4 py-3 font-bold text-gray-500">Status</th>
@@ -67,6 +68,12 @@ export default async function RevendicariPage() {
                           </a>
                         </td>
                         <td className="px-4 py-3.5 text-gray-600">{claim.email}</td>
+                        <td className="px-4 py-3.5 text-gray-600">
+                          {claim.phone
+                            ? <a href={`tel:${claim.phone}`} className="hover:text-[#ff5a2e] transition-colors">{claim.phone}</a>
+                            : <span className="text-gray-300">—</span>
+                          }
+                        </td>
                         <td className="px-4 py-3.5 text-gray-500 max-w-[200px] truncate">
                           {claim.message ?? <span className="text-gray-300">—</span>}
                         </td>
