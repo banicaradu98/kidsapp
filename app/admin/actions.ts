@@ -2,6 +2,7 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { adminClient } from "@/utils/supabase/admin";
 
 // ── AUTH ──────────────────────────────────────────────────────────
@@ -107,6 +108,7 @@ export async function approveClaim(claimId: string, listingId: string, userId: s
     .update({ claimed_by: userId, claimed_at: new Date().toISOString(), is_verified: true, package: "free" })
     .eq("id", listingId);
 
+  revalidatePath("/admin/revendicari");
   redirect("/admin/revendicari");
 }
 
@@ -115,5 +117,6 @@ export async function rejectClaim(claimId: string) {
     .from("claims")
     .update({ status: "rejected" })
     .eq("id", claimId);
+  revalidatePath("/admin/revendicari");
   redirect("/admin/revendicari");
 }

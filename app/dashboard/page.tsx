@@ -6,14 +6,18 @@ import ListingEditor from "./ListingEditor";
 import EventsManager from "./EventsManager";
 import ReviewsPanel from "./ReviewsPanel";
 import StatsPanel from "./StatsPanel";
+import { adminClient } from "@/utils/supabase/admin";
+
+export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   const supabase = createClient(await cookies());
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/?login=1");
 
-  // Check approved claim
-  const { data: claim } = await supabase
+  // Use adminClient to bypass RLS — JWT propagation can be unreliable for
+  // Google OAuth users on server components. We filter explicitly by user.id.
+  const { data: claim } = await adminClient
     .from("claims")
     .select("listing_id")
     .eq("user_id", user.id)
@@ -39,7 +43,7 @@ export default async function DashboardPage() {
   }
 
   // Fetch listing
-  const { data: listing } = await supabase
+  const { data: listing } = await adminClient
     .from("listings")
     .select("*")
     .eq("id", claim.listing_id)
@@ -48,27 +52,27 @@ export default async function DashboardPage() {
   if (!listing) redirect("/");
 
   // Fetch upcoming events
-  const { data: events } = await supabase
+  const { data: events } = await adminClient
     .from("organizer_events")
     .select("*")
     .eq("listing_id", claim.listing_id)
     .order("event_date", { ascending: true });
 
   // Fetch reviews
-  const { data: reviews } = await supabase
+  const { data: reviews } = await adminClient
     .from("reviews")
     .select("id, rating, text, created_at, user_name, review_replies(id, text, created_at)")
     .eq("listing_id", claim.listing_id)
     .order("created_at", { ascending: false });
 
   // Stats: total views + last 30 days
-  const { count: totalViews } = await supabase
+  const { count: totalViews } = await adminClient
     .from("listing_views")
     .select("id", { count: "exact", head: true })
     .eq("listing_id", claim.listing_id);
 
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-  const { data: recentViews } = await supabase
+  const { data: recentViews } = await adminClient
     .from("listing_views")
     .select("viewed_at")
     .eq("listing_id", claim.listing_id)
