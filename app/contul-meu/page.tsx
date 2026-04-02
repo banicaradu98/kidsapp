@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import ListingCard, { type Listing } from "@/app/components/ListingCard";
 import SignOutButton from "./SignOutButton";
+import AvatarUpload from "./AvatarUpload";
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("ro-RO", { month: "long", year: "numeric" });
@@ -85,9 +86,11 @@ export default async function ContulMeuPage() {
 
         {/* ── PROFIL ── */}
         <section className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 flex items-center gap-5">
-          <div className="w-20 h-20 rounded-full bg-[#ff5a2e] flex items-center justify-center text-white font-black text-3xl shrink-0 shadow-md">
-            {initials}
-          </div>
+          <AvatarUpload
+            userId={user.id}
+            initialAvatarUrl={user.user_metadata?.avatar_url ?? null}
+            initials={initials}
+          />
           <div className="min-w-0">
             <h1 className="text-xl font-black text-[#1a1a2e] leading-tight truncate">{displayName}</h1>
             <p className="text-sm text-gray-400 font-medium mt-0.5 truncate">{user.email}</p>

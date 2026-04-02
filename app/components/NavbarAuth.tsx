@@ -5,6 +5,7 @@ import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/utils/supabase/client";
 import { signOut } from "@/utils/supabase/auth";
 import AuthModal from "./AuthModal";
+import UserAvatar from "./UserAvatar";
 
 export default function NavbarAuth() {
   const [user, setUser] = useState<User | null>(null);
@@ -77,11 +78,11 @@ export default function NavbarAuth() {
     <div className="relative hidden md:block" ref={dropdownRef}>
       <button
         onClick={() => setShowDropdown((v) => !v)}
-        className="w-9 h-9 rounded-full bg-[#ff5a2e] text-white font-black text-sm flex items-center justify-center hover:bg-[#f03d12] transition-colors"
+        className="w-9 h-9 rounded-full overflow-hidden hover:opacity-90 transition-opacity shrink-0"
         aria-label="Contul meu"
         title={displayName}
       >
-        {initials}
+        <UserAvatar avatarUrl={user.user_metadata?.avatar_url} initials={initials} size={36} />
       </button>
 
       {showDropdown && (
