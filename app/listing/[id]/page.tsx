@@ -5,6 +5,7 @@ import DescriptionCollapse from "./DescriptionCollapse";
 import ListingGallery from "./ListingGallery";
 import ReviewSection from "./ReviewSection";
 import FavoriteButton from "@/app/components/FavoriteButton";
+import Navbar from "@/app/components/Navbar";
 
 const CATEGORY_META: Record<string, { emoji: string; label: string; tagColor: string; gradientFrom: string; gradientTo: string }> = {
   "loc-de-joaca": { emoji: "🛝", label: "Loc de joacă",   tagColor: "bg-orange-100 text-orange-700", gradientFrom: "from-orange-100", gradientTo: "to-orange-200" },
@@ -64,19 +65,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
   return (
     <div className="min-h-screen bg-white">
 
-      {/* ── HEADER ── */}
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-gray-100">
-        <div className="max-w-6xl mx-auto px-4 h-14 flex items-center gap-3">
-          <a
-            href="/"
-            className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 transition-colors text-gray-600 shrink-0"
-            aria-label="Înapoi"
-          >
-            ←
-          </a>
-          <h1 className="text-base font-bold text-[#1a1a2e] truncate">{listing.name}</h1>
-        </div>
-      </header>
+      <Navbar />
 
       {/* ── GALLERY ── */}
       <ListingGallery

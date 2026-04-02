@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Navbar from "./Navbar";
 
 export default function CategoryShell({
   title,
@@ -16,20 +16,7 @@ export default function CategoryShell({
   return (
     <div className="min-h-screen bg-gray-50">
 
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-gray-100 shadow-sm">
-        <div className="max-w-4xl mx-auto px-4 h-14 flex items-center gap-3">
-          <Link href="/" className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 transition-colors text-gray-600 text-lg shrink-0">
-            ←
-          </Link>
-          <Link href="/" className="flex items-center gap-1.5 shrink-0">
-            <span className="text-xl">🧡</span>
-            <span className="text-lg font-black text-[#ff5a2e]">KidsApp</span>
-          </Link>
-          <span className="text-gray-300 hidden sm:block">|</span>
-          <span className="text-base font-bold text-gray-600 truncate hidden sm:block">{title}</span>
-        </div>
-      </header>
+      <Navbar />
 
       {/* Page title */}
       <div className="bg-white border-b border-gray-100 px-4 py-6 sm:py-8">

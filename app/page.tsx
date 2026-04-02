@@ -1,8 +1,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
 import { Suspense } from "react";
-import MobileMenu from "./MobileMenu";
-import NavbarAuth from "./components/NavbarAuth";
+import Navbar from "./components/Navbar";
 import AutoOpenAuth from "./components/AutoOpenAuth";
 
 const CATEGORY_META: Record<string, { emoji: string; label: string; tagColor: string; gradientFrom: string; gradientTo: string }> = {
@@ -46,44 +45,7 @@ export default async function Home() {
     <div className="min-h-screen bg-white">
       <Suspense><AutoOpenAuth /></Suspense>
 
-      {/* ── HEADER ── */}
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-gray-100 shadow-sm">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
-
-          {/* Logo */}
-          <a href="/" className="flex items-center gap-2 shrink-0">
-            <span className="text-2xl">🧡</span>
-            <span className="text-xl font-black text-[#ff5a2e] tracking-tight">KidsApp</span>
-            <span className="hidden sm:inline text-base font-semibold text-gray-400 ml-0.5">Sibiu</span>
-          </a>
-
-          {/* Desktop: newsletter pill + nav + CTA */}
-          <a
-            href="#newsletter"
-            className="hidden md:inline-flex items-center gap-1.5 text-sm font-semibold text-gray-500 hover:text-[#ff5a2e] transition-colors border border-gray-200 hover:border-[#ff5a2e]/30 rounded-full px-3 py-1.5"
-          >
-            <span>📩</span> Newsletter
-          </a>
-          <nav className="hidden md:flex items-center gap-3 text-sm font-semibold text-gray-500">
-            <a href="/locuri-de-joaca"  className="hover:text-[#ff5a2e] transition-colors">🛝 Joacă</a>
-            <a href="/educatie"         className="hover:text-[#ff5a2e] transition-colors">🎓 Educație</a>
-            <a href="/cursuri-ateliere" className="hover:text-[#ff5a2e] transition-colors">🎨 Cursuri</a>
-            <a href="/sport"            className="hover:text-[#ff5a2e] transition-colors">⚽ Sport</a>
-            <a href="/spectacole"       className="hover:text-[#ff5a2e] transition-colors">🎭 Spectacole</a>
-            <a href="/evenimente"       className="hover:text-[#ff5a2e] transition-colors">🎪 Evenimente</a>
-          </nav>
-          <NavbarAuth />
-          <a
-            href="/adauga-locatia-ta"
-            className="hidden md:block bg-[#ff5a2e] hover:bg-[#f03d12] text-white text-base font-bold px-5 py-2.5 rounded-full transition-colors shadow-sm whitespace-nowrap"
-          >
-            + Adaugă locația ta
-          </a>
-
-          {/* Mobile: hamburger only */}
-          <MobileMenu />
-        </div>
-      </header>
+      <Navbar />
 
       {/* ── HERO ── */}
       <section className="bg-gradient-to-br from-[#fff4f0] via-[#fff8f5] to-white pt-10 pb-12 px-4 sm:pt-14 sm:pb-16">

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import ListingCard, { type Listing } from "@/app/components/ListingCard";
 import SignOutButton from "./SignOutButton";
 import AvatarUpload from "./AvatarUpload";
+import Navbar from "@/app/components/Navbar";
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("ro-RO", { month: "long", year: "numeric" });
@@ -63,24 +64,7 @@ export default async function ContulMeuPage() {
   return (
     <div className="min-h-screen bg-gray-50">
 
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-gray-100 shadow-sm">
-        <div className="max-w-4xl mx-auto px-4 h-14 flex items-center gap-3">
-          <a
-            href="/"
-            className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 transition-colors text-gray-600 text-lg shrink-0"
-            aria-label="Înapoi"
-          >
-            ←
-          </a>
-          <a href="/" className="flex items-center gap-1.5 shrink-0">
-            <span className="text-xl">🧡</span>
-            <span className="text-lg font-black text-[#ff5a2e]">KidsApp</span>
-          </a>
-          <span className="text-gray-300 hidden sm:block">|</span>
-          <span className="text-base font-bold text-gray-600 hidden sm:block">Contul meu</span>
-        </div>
-      </header>
+      <Navbar />
 
       <main className="max-w-4xl mx-auto px-4 py-8 flex flex-col gap-8">
 
