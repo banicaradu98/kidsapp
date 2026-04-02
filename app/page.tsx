@@ -41,6 +41,48 @@ export default async function Home() {
     .order("created_at", { ascending: false })
     .limit(6);
 
+  // Events this week
+  const weekStart = new Date();
+  weekStart.setHours(0, 0, 0, 0);
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekEnd.getDate() + 7);
+
+  const { data: weekListings } = await supabase
+    .from("listings")
+    .select("id, name, category, address, price, images, event_date")
+    .in("category", ["spectacol", "eveniment"])
+    .gte("event_date", weekStart.toISOString())
+    .lte("event_date", weekEnd.toISOString())
+    .order("event_date", { ascending: true })
+    .limit(8);
+
+  const { data: weekOrgEvents } = await supabase
+    .from("organizer_events")
+    .select("id, title, event_date, price, image_url, listing_id, listings(id, name, address)")
+    .gte("event_date", weekStart.toISOString())
+    .lte("event_date", weekEnd.toISOString())
+    .order("event_date", { ascending: true })
+    .limit(8);
+
+  type WeekEvent = {
+    id: string; title: string; event_date: string; price: string | null;
+    image_url: string | null; href: string; address: string | null;
+  };
+
+  const allWeekEvents: WeekEvent[] = [
+    ...(weekListings ?? []).map((l) => ({
+      id: `l-${l.id}`, title: l.name, event_date: l.event_date!,
+      price: l.price, image_url: l.images?.[0] ?? null,
+      href: `/listing/${l.id}`, address: l.address,
+    })),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ...(weekOrgEvents ?? []).map((e: any) => ({
+      id: `o-${e.id}`, title: e.title, event_date: e.event_date,
+      price: e.price, image_url: e.image_url,
+      href: `/listing/${e.listing_id}`, address: e.listings?.address ?? null,
+    })),
+  ].sort((a, b) => a.event_date.localeCompare(b.event_date)).slice(0, 8);
+
   return (
     <div className="min-h-screen bg-white">
       <Suspense><AutoOpenAuth /></Suspense>
@@ -233,6 +275,82 @@ export default async function Home() {
           </div>
         </div>
       </section>
+
+      {/* ── EVENTS THIS WEEK ── */}
+      {allWeekEvents.length > 0 && (
+        <section className="pb-14 sm:pb-16">
+          <div className="max-w-6xl mx-auto">
+            <div className="flex items-center justify-between mb-5 px-4 sm:px-6">
+              <h2 className="text-2xl font-black text-[#1a1a2e]">Ce se întâmplă săptămâna aceasta 📅</h2>
+              <a href="/calendar" className="text-base font-bold text-[#ff5a2e] hover:underline hidden sm:block shrink-0 ml-4">
+                Vezi tot calendarul →
+              </a>
+            </div>
+
+            {/* Mobile: horizontal scroll */}
+            <div className="flex gap-4 overflow-x-auto scrollbar-hide px-4 pb-3 md:hidden snap-x snap-mandatory">
+              {allWeekEvents.map((ev) => {
+                const d = new Date(ev.event_date);
+                return (
+                  <a key={ev.id} href={ev.href}
+                    className="flex-none w-56 snap-start bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.08)] border border-gray-100 overflow-hidden block active:scale-[.98] transition-transform"
+                  >
+                    <div className="h-28 bg-rose-50 overflow-hidden relative">
+                      {ev.image_url
+                        ? <img src={ev.image_url} alt="" className="w-full h-full object-cover" />
+                        : <div className="w-full h-full flex items-center justify-center text-4xl">🎭</div>
+                      }
+                      <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm rounded-lg px-2 py-1 text-center">
+                        <p className="text-xs font-black text-[#ff5a2e] leading-none">{d.getDate()}</p>
+                        <p className="text-[9px] font-bold text-gray-400 uppercase">{d.toLocaleDateString("ro-RO",{month:"short"})}</p>
+                      </div>
+                    </div>
+                    <div className="p-3">
+                      <p className="font-black text-[#1a1a2e] text-sm leading-snug line-clamp-2">{ev.title}</p>
+                      <p className="text-xs text-gray-400 font-semibold mt-1">{d.toLocaleTimeString("ro-RO",{hour:"2-digit",minute:"2-digit"})}</p>
+                      {ev.price && <p className="text-sm font-black text-[#ff5a2e] mt-1">{ev.price}</p>}
+                    </div>
+                  </a>
+                );
+              })}
+            </div>
+
+            {/* Desktop: grid */}
+            <div className="hidden md:grid grid-cols-2 lg:grid-cols-4 gap-4 px-6">
+              {allWeekEvents.map((ev) => {
+                const d = new Date(ev.event_date);
+                return (
+                  <a key={ev.id} href={ev.href}
+                    className="bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.07)] hover:shadow-[0_6px_24px_rgba(0,0,0,0.12)] border border-gray-100 overflow-hidden transition-all hover:-translate-y-0.5 group block"
+                  >
+                    <div className="h-32 bg-rose-50 overflow-hidden relative">
+                      {ev.image_url
+                        ? <img src={ev.image_url} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                        : <div className="w-full h-full flex items-center justify-center text-5xl">🎭</div>
+                      }
+                      <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm rounded-lg px-2.5 py-1.5 text-center">
+                        <p className="text-sm font-black text-[#ff5a2e] leading-none">{d.getDate()}</p>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase">{d.toLocaleDateString("ro-RO",{month:"short"})}</p>
+                      </div>
+                    </div>
+                    <div className="p-4">
+                      <p className="font-black text-[#1a1a2e] text-sm leading-snug line-clamp-2 mb-1">{ev.title}</p>
+                      <p className="text-xs text-gray-400 font-semibold">{d.toLocaleTimeString("ro-RO",{hour:"2-digit",minute:"2-digit"})}</p>
+                      {ev.price && <p className="text-sm font-black text-[#ff5a2e] mt-1">{ev.price}</p>}
+                    </div>
+                  </a>
+                );
+              })}
+            </div>
+
+            <div className="mt-4 text-center md:hidden px-4">
+              <a href="/calendar" className="inline-block w-full bg-rose-50 text-rose-600 font-black text-base py-4 rounded-2xl">
+                Vezi tot calendarul →
+              </a>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ── CTA ADAUGĂ LOCAȚIA ── */}
       <section className="py-12 px-4 bg-gradient-to-br from-[#fff4f0] to-white">

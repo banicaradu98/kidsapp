@@ -14,19 +14,29 @@ export default function NavbarAuth() {
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  const [hasDashboard, setHasDashboard] = useState(false);
+
   useEffect(() => {
     const supabase = createClient();
 
-    // Read session from cookies immediately (set server-side after OAuth callback)
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setUser(session?.user ?? null);
       setReady(true);
+      if (session?.user) {
+        const { data } = await supabase
+          .from("claims")
+          .select("id")
+          .eq("user_id", session.user.id)
+          .eq("status", "approved")
+          .maybeSingle();
+        setHasDashboard(!!data);
+      }
     });
 
-    // Keep listening for future sign-in / sign-out events
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       setReady(true);
+      if (!session?.user) setHasDashboard(false);
     });
 
     return () => subscription.unsubscribe();
@@ -105,6 +115,15 @@ export default function NavbarAuth() {
           >
             ❤️ Favorite
           </a>
+          {hasDashboard && (
+            <a
+              href="/dashboard"
+              className="flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-orange-50 hover:text-[#ff5a2e] transition-colors"
+              onClick={() => setShowDropdown(false)}
+            >
+              📊 Dashboard locație
+            </a>
+          )}
           <div className="border-t border-gray-100 my-1" />
           <button
             onClick={handleSignOut}

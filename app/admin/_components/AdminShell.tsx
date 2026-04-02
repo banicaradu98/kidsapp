@@ -1,7 +1,15 @@
 import { logoutAction } from "../actions";
 import AdminNav from "./AdminNav";
+import { createClient } from "@/utils/supabase/server";
+import { cookies } from "next/headers";
 
-export default function AdminShell({ children }: { children: React.ReactNode }) {
+export default async function AdminShell({ children }: { children: React.ReactNode }) {
+  const supabase = createClient(await cookies());
+  const { count } = await supabase
+    .from("claims")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "pending");
+  const claimsBadge = count ?? 0;
   return (
     <div className="min-h-screen bg-gray-50 flex" style={{ fontFamily: "Nunito, system-ui, sans-serif" }}>
 
@@ -22,7 +30,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
         {/* Nav */}
         <div className="flex-1 py-4 overflow-y-auto">
           <p className="px-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Meniu</p>
-          <AdminNav />
+          <AdminNav claimsBadge={claimsBadge} />
         </div>
 
         {/* Bottom: site link + logout */}

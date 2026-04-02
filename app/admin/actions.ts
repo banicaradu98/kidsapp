@@ -94,3 +94,26 @@ export async function rejectListing(id: string) {
   await adminClient.from("listings").delete().eq("id", id);
   redirect("/admin/aprobare");
 }
+
+// ── CLAIMS ────────────────────────────────────────────────────────
+export async function approveClaim(claimId: string, listingId: string, userId: string) {
+  await adminClient
+    .from("claims")
+    .update({ status: "approved" })
+    .eq("id", claimId);
+
+  await adminClient
+    .from("listings")
+    .update({ claimed_by: userId, claimed_at: new Date().toISOString(), is_verified: true, package: "free" })
+    .eq("id", listingId);
+
+  redirect("/admin/revendicari");
+}
+
+export async function rejectClaim(claimId: string) {
+  await adminClient
+    .from("claims")
+    .update({ status: "rejected" })
+    .eq("id", claimId);
+  redirect("/admin/revendicari");
+}

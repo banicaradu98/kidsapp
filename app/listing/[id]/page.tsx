@@ -6,6 +6,8 @@ import ListingGallery from "./ListingGallery";
 import ReviewSection from "./ReviewSection";
 import FavoriteButton from "@/app/components/FavoriteButton";
 import Navbar from "@/app/components/Navbar";
+import ClaimButton from "./ClaimButton";
+import ViewTracker from "./ViewTracker";
 
 const CATEGORY_META: Record<string, { emoji: string; label: string; tagColor: string; gradientFrom: string; gradientTo: string }> = {
   "loc-de-joaca": { emoji: "🛝", label: "Loc de joacă",   tagColor: "bg-orange-100 text-orange-700", gradientFrom: "from-orange-100", gradientTo: "to-orange-200" },
@@ -62,9 +64,20 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
 
   const photos: string[] = listing.images ?? [];
 
+  // Fetch organizer events for this listing
+  const { data: orgEvents } = await supabase
+    .from("organizer_events")
+    .select("id, title, description, event_date, price, image_url")
+    .eq("listing_id", params.id)
+    .gte("event_date", new Date().toISOString())
+    .order("event_date", { ascending: true })
+    .limit(5);
+
+  const upcomingEvents = orgEvents ?? [];
+
   return (
     <div className="min-h-screen bg-white">
-
+      <ViewTracker listingId={listing.id} />
       <Navbar />
 
       {/* ── GALLERY ── */}
@@ -195,6 +208,38 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
               </section>
             )}
 
+            {/* Upcoming organizer events */}
+            {upcomingEvents.length > 0 && (
+              <section className="mb-6">
+                <h3 className="text-lg font-black text-[#1a1a2e] mb-3">📅 Evenimente viitoare</h3>
+                <div className="flex flex-col gap-3">
+                  {upcomingEvents.map((ev) => {
+                    const d = new Date(ev.event_date);
+                    return (
+                      <div key={ev.id} className="flex items-start gap-4 bg-orange-50 border border-orange-100 rounded-2xl p-4">
+                        {ev.image_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={ev.image_url} alt="" className="w-16 h-16 rounded-xl object-cover shrink-0" />
+                        ) : (
+                          <div className="w-16 h-16 rounded-xl bg-orange-100 flex items-center justify-center text-2xl shrink-0">📅</div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-black text-[#1a1a2e] text-base leading-snug">{ev.title}</p>
+                          <p className="text-xs font-bold text-[#ff5a2e] mt-0.5">
+                            {d.toLocaleDateString("ro-RO", { weekday: "long", day: "numeric", month: "long" })}
+                            {" · "}
+                            {d.toLocaleTimeString("ro-RO", { hour: "2-digit", minute: "2-digit" })}
+                          </p>
+                          {ev.description && <p className="text-sm text-gray-500 font-medium mt-1 line-clamp-2">{ev.description}</p>}
+                          {ev.price && <p className="text-sm font-black text-[#ff5a2e] mt-1">{ev.price}</p>}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
+
             {/* Reviews */}
             <ReviewSection listingId={listing.id} initialReviews={reviewList} />
 
@@ -255,6 +300,10 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
                   {age      && <div className="flex items-center gap-2"><span>👶</span> Vârstă: {age}</div>}
                   {listing.address && <div className="flex items-center gap-2"><span>📍</span> {listing.address}</div>}
                 </div>
+              </div>
+
+              <div className="mt-4 text-center">
+                <ClaimButton listingId={listing.id} listingName={listing.name} />
               </div>
             </div>
           </aside>
