@@ -50,7 +50,7 @@ export default function ClaimButton({ listingId, listingName }: Props) {
     const { error: err } = await supabase.from("claims").insert({
       listing_id: listingId,
       user_id: userId,
-      contact_email: contactEmail,
+      email: contactEmail,
       message: message || null,
     });
 

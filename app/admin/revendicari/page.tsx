@@ -13,7 +13,7 @@ export default async function RevendicariPage() {
   const { data: claims } = await supabase
     .from("claims")
     .select(`
-      id, contact_email, message, status, created_at,
+      id, email, message, status, created_at,
       listing_id, listings(id, name),
       user_id
     `)
@@ -66,7 +66,7 @@ export default async function RevendicariPage() {
                             {claim.listings?.name ?? "—"}
                           </a>
                         </td>
-                        <td className="px-4 py-3.5 text-gray-600">{claim.contact_email}</td>
+                        <td className="px-4 py-3.5 text-gray-600">{claim.email}</td>
                         <td className="px-4 py-3.5 text-gray-500 max-w-[200px] truncate">
                           {claim.message ?? <span className="text-gray-300">—</span>}
                         </td>
