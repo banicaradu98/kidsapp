@@ -19,18 +19,14 @@ export default function NavbarAuth() {
   useEffect(() => {
     const supabase = createClient();
 
-    // Initial load: read session from cookies + check claims once
+    // Initial load: read session from cookies + check claims via API
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setUser(session?.user ?? null);
       setReady(true);
       if (session?.user) {
-        const { data } = await supabase
-          .from("claims")
-          .select("id")
-          .eq("user_id", session.user.id)
-          .eq("status", "approved")
-          .maybeSingle();
-        setHasDashboard(!!data);
+        fetch("/api/my-claims")
+          .then((r) => r.json())
+          .then(({ claims }) => setHasDashboard(claims.length > 0));
       }
     });
 
@@ -41,18 +37,13 @@ export default function NavbarAuth() {
       setReady(true);
       if (event === "SIGNED_OUT") {
         setHasDashboard(false);
-      } else if (event === "SIGNED_IN" && session?.user) {
-        const userId = session.user.id;
-        // Small delay for Google OAuth — ensures the session is fully propagated
-        // before querying, avoiding a race where auth.uid() isn't set yet.
+      } else if (event === "SIGNED_IN") {
+        // Small delay for Google OAuth — ensures the session cookie is fully
+        // written before the API route reads it server-side.
         setTimeout(() => {
-          supabase
-            .from("claims")
-            .select("id")
-            .eq("user_id", userId)
-            .eq("status", "approved")
-            .maybeSingle()
-            .then(({ data }) => setHasDashboard(!!data));
+          fetch("/api/my-claims")
+            .then((r) => r.json())
+            .then(({ claims }) => setHasDashboard(claims.length > 0));
         }, 500);
       }
     });
