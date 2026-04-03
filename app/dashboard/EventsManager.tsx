@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@/utils/supabase/client";
+import { addEvent, updateEvent, deleteEvent } from "./eventActions";
 
 interface Event {
   id: string;
@@ -74,7 +74,6 @@ export default function EventsManager({ listingId, initialEvents }: Props) {
     }
     setSaving(true);
     setError(null);
-    const supabase = createClient();
 
     const payload = {
       listing_id: listingId,
@@ -86,26 +85,25 @@ export default function EventsManager({ listingId, initialEvents }: Props) {
       price: form.price !== "" ? Number(form.price) : null,
     };
 
-    if (editingId) {
-      const { data, error: err } = await supabase
-        .from("events")
-        .update(payload)
-        .eq("id", editingId)
-        .select()
-        .single();
-      if (err) { setError("Eroare la salvare. Verifică că ești autentificat."); setSaving(false); return; }
-      setEvents((prev) =>
-        prev.map((e) => (e.id === editingId ? data : e))
-            .sort((a, b) => a.date.localeCompare(b.date))
-      );
-    } else {
-      const { data, error: err } = await supabase
-        .from("events")
-        .insert(payload)
-        .select()
-        .single();
-      if (err) { setError("Eroare la salvare. Verifică că ești autentificat."); setSaving(false); return; }
-      setEvents((prev) => [...prev, data].sort((a, b) => a.date.localeCompare(b.date)));
+    const result = editingId
+      ? await updateEvent(editingId, payload)
+      : await addEvent(payload);
+
+    if (result.error) {
+      setError(result.error);
+      setSaving(false);
+      return;
+    }
+
+    if (result.data) {
+      if (editingId) {
+        setEvents((prev) =>
+          prev.map((e) => (e.id === editingId ? result.data! : e))
+              .sort((a, b) => a.date.localeCompare(b.date))
+        );
+      } else {
+        setEvents((prev) => [...prev, result.data!].sort((a, b) => a.date.localeCompare(b.date)));
+      }
     }
 
     setShowForm(false);
@@ -114,9 +112,8 @@ export default function EventsManager({ listingId, initialEvents }: Props) {
 
   async function handleDelete(id: string) {
     if (!confirm("Ștergi evenimentul?")) return;
-    const supabase = createClient();
-    const { error: err } = await supabase.from("events").delete().eq("id", id);
-    if (!err) setEvents((prev) => prev.filter((e) => e.id !== id));
+    const { error } = await deleteEvent(id, listingId);
+    if (!error) setEvents((prev) => prev.filter((e) => e.id !== id));
   }
 
   const today = new Date().toISOString().split("T")[0];
