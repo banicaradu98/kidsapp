@@ -37,14 +37,14 @@ async function getVerifiedUser(listingId: string) {
 }
 
 export async function addEvent(payload: EventPayload) {
-  const { error: authError } = await getVerifiedUser(payload.listing_id);
-  if (authError) return { data: null, error: authError };
+  const { user, error: authError } = await getVerifiedUser(payload.listing_id);
+  if (authError || !user) return { data: null, error: authError ?? "Sesiune expirată." };
 
-  console.log("[eventActions] inserting event for listing:", payload.listing_id);
+  console.log("[eventActions] inserting event for listing:", payload.listing_id, "user:", user.id);
 
   const { data, error } = await adminClient
     .from("events")
-    .insert(payload)
+    .insert({ ...payload, user_id: user.id })
     .select()
     .single();
 
