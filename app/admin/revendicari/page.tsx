@@ -1,6 +1,8 @@
 import AdminShell from "../_components/AdminShell";
-import { approveClaim, rejectClaim } from "../actions";
 import { adminClient } from "@/utils/supabase/admin";
+import ClaimActions from "./ClaimActions";
+
+export const dynamic = "force-dynamic";
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("ro-RO", { day: "numeric", month: "short", year: "numeric" });
@@ -54,47 +56,40 @@ export default async function RevendicariPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.map((claim) => {
-                    const approveAction = approveClaim.bind(null, claim.id, claim.listing_id, claim.user_id);
-                    const rejectAction  = rejectClaim.bind(null, claim.id);
-                    return (
-                      <tr key={claim.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                        <td className="px-5 py-3.5 font-semibold text-gray-800 max-w-[160px] truncate">
-                          <a href={`/listing/${claim.listing_id}`} target="_blank" className="hover:text-[#ff5a2e] transition-colors">
-                            {claim.listings?.name ?? "—"}
-                          </a>
-                        </td>
-                        <td className="px-4 py-3.5 text-gray-600">{claim.email}</td>
-                        <td className="px-4 py-3.5 text-gray-600">
-                          {claim.phone
-                            ? <a href={`tel:${claim.phone}`} className="hover:text-[#ff5a2e] transition-colors">{claim.phone}</a>
-                            : <span className="text-gray-300">—</span>
-                          }
-                        </td>
-                        <td className="px-4 py-3.5 text-gray-500 max-w-[200px] truncate">
-                          {claim.message ?? <span className="text-gray-300">—</span>}
-                        </td>
-                        <td className="px-4 py-3.5 text-gray-500 whitespace-nowrap">{formatDate(claim.created_at)}</td>
-                        <td className="px-4 py-3.5 text-center">
-                          {claim.status === "pending"  && <span className="bg-amber-100 text-amber-700 text-xs font-bold px-2.5 py-1 rounded-full">⏳ Pending</span>}
-                          {claim.status === "approved" && <span className="bg-green-100 text-green-700 text-xs font-bold px-2.5 py-1 rounded-full">✓ Aprobat</span>}
-                          {claim.status === "rejected" && <span className="bg-red-100 text-red-600 text-xs font-bold px-2.5 py-1 rounded-full">✗ Respins</span>}
-                        </td>
-                        <td className="px-5 py-3.5 text-right whitespace-nowrap">
-                          {claim.status === "pending" && (
-                            <>
-                              <form action={approveAction} className="inline">
-                                <button className="text-sm font-bold text-green-600 hover:underline mr-3">Aprobă</button>
-                              </form>
-                              <form action={rejectAction} className="inline">
-                                <button className="text-sm font-bold text-red-500 hover:underline">Respinge</button>
-                              </form>
-                            </>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
+                  {rows.map((claim) => (
+                    <tr key={claim.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                      <td className="px-5 py-3.5 font-semibold text-gray-800 max-w-[160px] truncate">
+                        <a href={`/listing/${claim.listing_id}`} target="_blank" className="hover:text-[#ff5a2e] transition-colors">
+                          {claim.listings?.name ?? "—"}
+                        </a>
+                      </td>
+                      <td className="px-4 py-3.5 text-gray-600">{claim.email}</td>
+                      <td className="px-4 py-3.5 text-gray-600">
+                        {claim.phone
+                          ? <a href={`tel:${claim.phone}`} className="hover:text-[#ff5a2e] transition-colors">{claim.phone}</a>
+                          : <span className="text-gray-300">—</span>
+                        }
+                      </td>
+                      <td className="px-4 py-3.5 text-gray-500 max-w-[200px] truncate">
+                        {claim.message ?? <span className="text-gray-300">—</span>}
+                      </td>
+                      <td className="px-4 py-3.5 text-gray-500 whitespace-nowrap">{formatDate(claim.created_at)}</td>
+                      <td className="px-4 py-3.5 text-center">
+                        {claim.status === "pending"  && <span className="bg-amber-100 text-amber-700 text-xs font-bold px-2.5 py-1 rounded-full">⏳ Pending</span>}
+                        {claim.status === "approved" && <span className="bg-green-100 text-green-700 text-xs font-bold px-2.5 py-1 rounded-full">✓ Aprobat</span>}
+                        {claim.status === "rejected" && <span className="bg-red-100 text-red-600 text-xs font-bold px-2.5 py-1 rounded-full">✗ Respins</span>}
+                      </td>
+                      <td className="px-5 py-3.5">
+                        {claim.status === "pending" && (
+                          <ClaimActions
+                            claimId={claim.id}
+                            listingId={claim.listing_id}
+                            userId={claim.user_id}
+                          />
+                        )}
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>

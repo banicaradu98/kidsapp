@@ -109,7 +109,6 @@ export async function approveClaim(claimId: string, listingId: string, userId: s
     .eq("id", listingId);
 
   revalidatePath("/admin/revendicari");
-  redirect("/admin/revendicari");
 }
 
 export async function rejectClaim(claimId: string) {
@@ -118,5 +117,4 @@ export async function rejectClaim(claimId: string) {
     .update({ status: "rejected" })
     .eq("id", claimId);
   revalidatePath("/admin/revendicari");
-  redirect("/admin/revendicari");
 }

@@ -1,20 +1,35 @@
 # KidsApp Sibiu — CLAUDE.md
 
-Platformă de listare a activităților pentru copii din Sibiu. Părinții descoperă locuri de joacă, grădinițe, cursuri, spectacole și evenimente. Conținutul e gestionat de un admin panel simplu protejat cu parolă.
+Platformă de listare a activităților pentru copii din Sibiu. Părinții descoperă locuri de joacă,
+grădinițe, cursuri, spectacole și evenimente. Organizatorii pot revendica și gestiona listingurile
+proprii printr-un dashboard dedicat.
 
 ---
 
-## Status proiect (2 aprilie 2026)
+## Status proiect (3 aprilie 2026)
 
+### Funcționalități live ✅
 - **33 listinguri** importate din Excel în Supabase
 - **Upload poze** funcțional în admin cu drag & drop, reordonare și cover automat (prima poză)
-- **Scraper Teatrul Gong** funcțional — `node scripts/scrape-gong.js` — rulat săptămânal manual; inserează 22 spectacole cu `event_date`, imagine cover și preț
-- **Pagina /spectacole** — calendar interactiv lunar, filtre temporale (săptămâna / luna / urmează / toate), badge locație, carduri cu dată/oră proeminentă
-- **Formular public /adauga-locatia-ta** — organizatorii pot trimite cereri fără cont; upload poze (max 5, în `pending/`); inserare cu `is_verified=false`
-- **Flux aprobare** — cerere publică → `is_verified=false` → admin `/admin/aprobare` → Aprobă (`is_verified=true`) sau Respinge (șterge); banner alert în dashboard când există cereri
-- **Hartă Google Maps embed** pe pagina de detaliu listing (`/listing/[id]`) — iframe fără API key
-- **6 categorii finale** cu filtre subcategorii funcționale (sport, cursuri-ateliere, educație)
-- **RLS Supabase** activ — SELECT deschis pentru anon; INSERT/UPDATE/DELETE folosesc `adminClient` cu `SUPABASE_SERVICE_ROLE_KEY` (bypass RLS)
+- **Scraper Teatrul Gong** — `node scripts/scrape-gong.js` — rulat săptămânal manual
+- **Pagina /spectacole** — calendar interactiv lunar, filtre temporale
+- **Formular public /adauga-locatia-ta** — upload poze (max 5, în `pending/`), inserare cu `is_verified=false`
+- **Flux aprobare admin** — `/admin/aprobare` → Aprobă (`is_verified=true`) sau Respinge (șterge)
+- **Sistem revendicare end-to-end** — ClaimButton → claims DB → admin /admin/revendicari → aprobare → dashboard
+- **Dashboard organizator** (`/dashboard`) — editor locație, evenimente, recenzii cu răspunsuri, statistici vizualizări
+- **Multi-locație în dashboard** — selector pill buttons (`?listing=UUID`), suportă useri cu mai multe claims aprobate
+- **Google OAuth + Email** — ambele văd linkul "Dashboard locație" în navbar după aprobare
+- **Badge "Verificat"** — afișat strict când `is_verified = true`
+- **Avatar utilizator** — poză Google sau inițială coral; upload/ștergere din /contul-meu
+- **Favorite** — grupate pe categorii în /favorite
+- **Vizualizări listing** — tracked în `listing_views`, afișate în StatsPanel
+
+### Backlog — de făcut ⏳
+- [ ] `UPDATE listings SET is_verified = false WHERE claimed_by IS NULL` — toate 33 listingurile importate sunt `is_verified=true`; trebuie resetate cele fără owner
+- [ ] Email automat la aprobare claim
+- [ ] Calendar vizual evenimente în dashboard owner
+- [ ] Buton revendicare vizibil pe mobile
+- [ ] Mutare poze din `pending/` → `{listing-id}/` la aprobare (vezi secțiunea Storage)
 
 ---
 
@@ -26,7 +41,7 @@ Platformă de listare a activităților pentru copii din Sibiu. Părinții desco
 | React | 18 | UI |
 | TypeScript | 5 | Tipuri |
 | Tailwind CSS | 3.4.1 | Stilizare |
-| Supabase | @supabase/ssr 0.10 | Bază de date + auth cookies |
+| Supabase | @supabase/ssr 0.10 | Bază de date + Auth |
 | Font | Nunito (Google Fonts) | Tipografie globală |
 
 ---
@@ -35,12 +50,13 @@ Platformă de listare a activităților pentru copii din Sibiu. Părinții desco
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=...
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY=...
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY=...   # anon key
+SUPABASE_SERVICE_ROLE_KEY=...                       # service role — DOAR server-side
 ADMIN_PASSWORD=...
 ```
 
-- `ADMIN_PASSWORD` — parolă plaintext pentru panoul admin (comparată direct, fără hashing)
-- Supabase folosește cheia publishable (anon key), nu service role
+- `ADMIN_PASSWORD` — parolă plaintext pentru panoul `/admin`
+- `SUPABASE_SERVICE_ROLE_KEY` — folosit DOAR în `utils/supabase/admin.ts` (server-side); nu expune în browser
 
 ---
 
@@ -50,7 +66,72 @@ ADMIN_PASSWORD=...
 npm run dev      # http://localhost:3000
 npm run build
 npm run start
-npm run lint
+```
+
+---
+
+## Arhitectură autentificare — IMPORTANT
+
+### Trei clienți Supabase
+| Fișier | Unde se folosește | Cheie | RLS |
+|--------|------------------|-------|-----|
+| `utils/supabase/client.ts` | Client components (browser) | anon key | Supus RLS |
+| `utils/supabase/server.ts` | Server components + API routes | anon key + JWT din cookies | Supus RLS |
+| `utils/supabase/admin.ts` | Server-only: admin pages, API routes, dashboard | service role key | **Bypass RLS** |
+
+### Regula de aur pentru `claims`
+**Nu face query la tabela `claims` din browser cu clientul anon.** JWT-ul Google OAuth nu e propagat corect în browser la momentul query-ului și poate returna rezultate greșite sau goale chiar dacă RLS e configurat corect.
+
+| Context | Cum verifici claims |
+|---------|-------------------|
+| Navbar (client component) | `fetch('/api/my-claims')` → API route server-side |
+| Dashboard (server component) | `adminClient` direct cu `user.id` din `getUser()` |
+| Admin pages | `adminClient` direct |
+
+### API route `/api/my-claims`
+```
+app/api/my-claims/route.ts
+```
+- GET handler
+- `createClient(await cookies()).auth.getUser()` — identifică userul din sesiune (server-side, corect pentru Google OAuth)
+- `adminClient.from("claims").select(...).eq("user_id", user.id).eq("status", "approved")`
+- Returnează `{ claims: [{id, listing_id}] }`
+
+### NavbarAuth.tsx — pattern corect
+```tsx
+// Initial load
+supabase.auth.getSession().then(async ({ data: { session } }) => {
+  setUser(session?.user ?? null);
+  setReady(true);
+  if (session?.user) {
+    fetch("/api/my-claims")
+      .then(r => r.json())
+      .then(({ claims }) => setHasDashboard(claims.length > 0));
+  }
+});
+
+// SIGNED_IN (OAuth redirect) — delay 500ms pentru propagare cookie
+setTimeout(() => {
+  fetch("/api/my-claims")
+    .then(r => r.json())
+    .then(({ claims }) => setHasDashboard(claims.length > 0));
+}, 500);
+```
+
+### Dashboard `/dashboard/page.tsx` — pattern corect
+```tsx
+export const dynamic = "force-dynamic";
+
+const supabase = createClient(await cookies());
+const { data: { user } } = await supabase.auth.getUser();  // getUser(), NU getSession()
+if (!user) redirect("/?login=1");
+
+// Toate query-urile pe claims și listings folosesc adminClient
+const { data: claims } = await adminClient
+  .from("claims")
+  .select("listing_id, listings(id, name)")
+  .eq("user_id", user.id)
+  .eq("status", "approved");
 ```
 
 ---
@@ -59,202 +140,225 @@ npm run lint
 
 ```
 app/
-├── page.tsx                        # Homepage (SSR, featured listings)
-├── layout.tsx                      # Root layout, font Nunito, metadata globală
+├── page.tsx                        # Homepage (SSR, featured + events săptămâna aceasta)
+├── layout.tsx                      # Root layout, font Nunito
 ├── MobileMenu.tsx                  # Hamburger menu mobil (portal în body)
-├── not-found.tsx                   # Pagina 404
 │
-├── locuri-de-joaca/
-│   ├── page.tsx                    # category = 'loc-de-joaca'
-│   └── FilteredLocuri.tsx          # Filtru: spațiu (indoor/outdoor) + preț
+├── api/
+│   └── my-claims/route.ts          # GET — verifică claims aprobate pt user curent (adminClient)
 │
-├── educatie/
-│   ├── page.tsx                    # category = 'educatie'
-│   └── FilteredEducatie.tsx        # Filtru: subcategory (gradinita/after-school/cresa)
-│
-├── cursuri-ateliere/
-│   ├── page.tsx                    # category = 'curs-atelier'
-│   └── FilteredCursuri.tsx         # Filtru: preț
-│
-├── sport/
-│   └── page.tsx                    # category = 'sport'
-│
-├── spectacole/
-│   └── page.tsx                    # category = 'spectacol'
-│
-├── evenimente/
-│   ├── page.tsx                    # category = 'eveniment', sortat cronologic
-│   └── SectionedEvenimente.tsx     # Secțiuni: Această săptămână / Luna aceasta / Urmează
+├── locuri-de-joaca/page.tsx + FilteredLocuri.tsx
+├── educatie/page.tsx + FilteredEducatie.tsx
+├── cursuri-ateliere/page.tsx + FilteredCursuri.tsx
+├── sport/page.tsx + FilteredSport.tsx
+├── spectacole/page.tsx + SpectacolCard.tsx + FilteredSpectacole.tsx
+├── evenimente/page.tsx + SectionedEvenimente.tsx
+├── calendar/page.tsx               # Calendar evenimente (next 2 months)
+├── gradinite/page.tsx              # Redirect permanent → /educatie
 │
 ├── listing/[id]/
-│   ├── page.tsx                    # Pagina de detaliu listing (select *)
+│   ├── page.tsx                    # Pagina detaliu listing
+│   ├── ClaimButton.tsx             # Buton revendicare (client, verifică status claim)
+│   ├── ViewTracker.tsx             # Tracking vizualizări (client, insert la mount)
+│   ├── ListingGallery.tsx          # Galerie poze
+│   ├── ReviewSection.tsx           # Recenzii publice
 │   └── DescriptionCollapse.tsx     # Descriere expandabilă
 │
-├── gradinite/
-│   └── page.tsx                    # Redirect permanent → /educatie
+├── dashboard/
+│   ├── page.tsx                    # Dashboard organizator (multi-listing, ?listing=UUID)
+│   ├── ListingEditor.tsx           # Editare date locație (client, browser client)
+│   ├── EventsManager.tsx           # CRUD evenimente organizator (client)
+│   ├── ReviewsPanel.tsx            # Recenzii + răspunsuri organizator (client)
+│   └── StatsPanel.tsx              # Statistici vizualizări + rating
+│
+├── contul-meu/
+│   ├── page.tsx                    # Profil utilizator
+│   ├── AvatarUpload.tsx            # Upload/ștergere avatar (Supabase Storage "avatars")
+│   └── SignOutButton.tsx
+│
+├── favorite/page.tsx               # Favorite grupate pe categorii
+│
+├── adauga-locatia-ta/
+│   ├── page.tsx
+│   └── SubmitForm.tsx              # Formular public cerere listing nou
 │
 ├── admin/
-│   ├── page.tsx                    # Dashboard: statistici + tabel toate listingurile
-│   ├── login/page.tsx              # Formular login cu parolă
-│   ├── nou/page.tsx                # Creare listing nou
-│   ├── edit/[id]/page.tsx          # Editare listing existent
-│   ├── layout.tsx                  # Layout admin
-│   ├── actions.ts                  # Server actions: login/logout/create/update/delete
+│   ├── page.tsx                    # Dashboard admin (statistici + tabel listings)
+│   ├── login/page.tsx
+│   ├── nou/page.tsx
+│   ├── edit/[id]/page.tsx
+│   ├── aprobare/page.tsx           # Aprobare cereri publice (is_verified=false)
+│   ├── revendicari/page.tsx        # Aprobare/respingere claims organizatori
+│   ├── layout.tsx
+│   ├── actions.ts                  # Server Actions: CRUD listings + approveClaim/rejectClaim
 │   └── _components/
-│       ├── ListingFormFields.tsx   # Formular reutilizat în nou + edit
-│       ├── AdminNav.tsx            # Sidebar navigare admin
-│       ├── AdminShell.tsx          # Wrapper layout admin
-│       └── DeleteButton.tsx        # Buton ștergere cu confirmare
+│       ├── AdminShell.tsx          # Layout cu sidebar (badge pending claims)
+│       ├── AdminNav.tsx            # Nav sidebar cu badge numeric
+│       ├── ListingFormFields.tsx
+│       ├── ImageUploader.tsx
+│       └── DeleteButton.tsx
 │
 ├── components/
-│   ├── CategoryShell.tsx           # Wrapper standard pentru paginile de categorie
-│   ├── ListingCard.tsx             # Card orizontal listing (export: Listing, CATEGORY_META, formatAge)
-│   └── EmptyState.tsx              # Placeholder când nu există rezultate
+│   ├── Navbar.tsx                  # Navbar shared (toate paginile non-admin)
+│   ├── NavbarAuth.tsx              # Auth state în navbar (client component)
+│   ├── UserAvatar.tsx              # Avatar cu fallback la inițială coral
+│   ├── AuthModal.tsx               # Modal login/register
+│   ├── AutoOpenAuth.tsx            # Deschide AuthModal automat (?login=1)
+│   ├── CategoryShell.tsx           # Wrapper pagini categorie
+│   ├── ListingCard.tsx             # Card listing standard
+│   ├── FavoriteButton.tsx          # Buton favorit (client)
+│   └── EmptyState.tsx
 │
-utils/
-└── supabase/
-    ├── client.ts                   # createBrowserClient (client components)
-    ├── server.ts                   # createServerClient (server components, ia cookieStore)
-    └── middleware.ts               # createServerClient (middleware)
+utils/supabase/
+├── client.ts       # createBrowserClient — browser, anon key
+├── server.ts       # createServerClient — server, anon key + cookies
+├── admin.ts        # createClient service role — BYPASS RLS, doar server
+└── auth.ts         # signOut helper
 
-middleware.ts                       # Protejează /admin/* (verifică cookie admin_session)
+middleware.ts       # Protejează /admin/* cu cookie admin_session
 ```
 
 ---
 
-## Cele 6 categorii finale
+## Tabele Supabase
 
-| Valoare DB | Emoji | Label | URL | Note |
-|------------|-------|-------|-----|------|
-| `loc-de-joaca` | 🛝 | Loc de joacă | `/locuri-de-joaca` | |
-| `educatie` | 🎓 | Educație | `/educatie` | Are coloana `subcategory` (gradinita / after-school / cresa) |
-| `curs-atelier` | 🎨 | Curs & Atelier | `/cursuri-ateliere` | Fostele: curs, atelier, limbi-straine |
-| `sport` | ⚽ | Sport | `/sport` | |
-| `spectacol` | 🎭 | Spectacol | `/spectacole` | |
-| `eveniment` | 🎪 | Eveniment | `/evenimente` | |
-
-Toate metadatele de afișare (emoji, culori Tailwind, gradiente) sunt definite în `CATEGORY_META` din:
-- `app/components/ListingCard.tsx` — sursă primară, exportată
-- `app/page.tsx` — copie locală pentru homepage
-- `app/listing/[id]/page.tsx` — copie locală pentru pagina de detaliu
-
-**Important:** dacă adaugi o categorie nouă, actualizează toate cele 3 locuri.
-
----
-
-## Tabelul `listings` în Supabase
-
+### `listings`
 | Coloană | Tip | Note |
 |---------|-----|------|
-| `id` | uuid | PK, generat automat |
+| `id` | uuid | PK |
 | `name` | text | Obligatoriu |
-| `category` | text | Una din cele 6 valori de mai sus |
-| `subcategory` | text | Nullable; folosit pentru `educatie` (gradinita / after-school / cresa) |
+| `category` | text | Una din cele 6 valori |
+| `subcategory` | text | Nullable; pentru educatie (gradinita/after-school/cresa) |
 | `description` | text | Nullable |
 | `address` | text | Nullable |
 | `city` | text | Default: "Sibiu" |
-| `price` | text | Ex: "25 lei/copil" sau "Gratuit" |
-| `price_details` | text | Nullable; text lung cu pachete/abonamente — afișat în secțiunea "Prețuri" pe pagina de detaliu |
-| `age_min` | integer | Nullable |
-| `age_max` | integer | Nullable |
-| `schedule` | text | Ex: "Luni–Vineri 10:00–20:00" |
+| `price` | text | Ex: "25 lei/copil" / "Gratuit" |
+| `price_details` | text | Nullable; pachete/abonamente detaliate |
+| `age_min` / `age_max` | integer | Nullable |
+| `schedule` | text | Nullable |
 | `phone` | text | Nullable |
 | `website` | text | Nullable, URL |
-| `is_verified` | boolean | Default false; cereri publice intră cu false, admin aprobă |
+| `is_verified` | boolean | Default false; true = aprobat de admin sau claim aprobat |
 | `is_featured` | boolean | Default false; apare pe homepage |
-| `images` | text[] | Array URL-uri Supabase Storage; prima = cover |
-| `event_date` | timestamptz | Nullable; populat de scraper Gong; folosit pe /spectacole |
-| `contact_name` | text | Nullable; privat — persoana de contact din formularul public |
-| `contact_email` | text | Nullable; privat — email contact, nu se afișează public |
-| `created_at` | timestamptz | Generat automat |
+| `images` | text[] | URL-uri Storage; prima = cover |
+| `event_date` | timestamptz | Nullable; scraper Gong; /spectacole |
+| `contact_name` | text | Nullable; privat (din formularul public) |
+| `contact_email` | text | Nullable; privat |
+| `claimed_by` | uuid | Nullable; FK → auth.users.id |
+| `claimed_at` | timestamptz | Nullable |
+| `package` | text | Nullable; "free" la aprobare claim |
+| `created_at` | timestamptz | Auto |
 
-Prețul "gratuit" este detectat prin `price.toLowerCase() === "gratuit"` (afișat verde).
+### `claims`
+| Coloană | Tip | Note |
+|---------|-----|------|
+| `id` | uuid | PK |
+| `listing_id` | uuid | FK → listings.id |
+| `user_id` | uuid | FK → auth.users.id |
+| `email` | text | NOT NULL |
+| `phone` | text | Nullable |
+| `message` | text | Nullable |
+| `status` | text | 'pending' / 'approved' / 'rejected' |
+| `created_at` | timestamptz | Auto |
+
+RLS: SELECT + INSERT pentru `auth.uid() = user_id`  
+**ATENȚIE**: Chiar dacă RLS e corect, NU interoga claims din browser cu clientul anon pentru Google OAuth — folosește `/api/my-claims`.
+
+### `organizer_events`
+| Coloană | Tip | Note |
+|---------|-----|------|
+| `id` | uuid | PK |
+| `listing_id` | uuid | FK → listings.id |
+| `title` | text | |
+| `description` | text | Nullable |
+| `event_date` | timestamptz | |
+| `price` | text | Nullable |
+| `created_at` | timestamptz | Auto |
+
+### `listing_views`
+| Coloană | Tip | Note |
+|---------|-----|------|
+| `id` | uuid | PK |
+| `listing_id` | uuid | FK → listings.id |
+| `user_id` | uuid | Nullable (vizitatori anonimi) |
+| `viewed_at` | timestamptz | Auto |
+
+### `review_replies`
+| Coloană | Tip | Note |
+|---------|-----|------|
+| `id` | uuid | PK |
+| `review_id` | uuid | FK → reviews.id |
+| `text` | text | |
+| `created_at` | timestamptz | Auto |
+
+### `reviews`
+| Coloană | Tip | Note |
+|---------|-----|------|
+| `id` | uuid | PK |
+| `listing_id` | uuid | FK → listings.id |
+| `user_id` | uuid | FK → auth.users.id |
+| `user_name` | text | |
+| `rating` | integer | 1-5 |
+| `text` | text | Nullable |
+| `created_at` | timestamptz | Auto |
 
 ---
 
 ## Admin panel
 
-- **URL:** `/admin` (redirect automat la `/admin/login` dacă nu ești autentificat)
-- **Auth:** parolă simplă din `ADMIN_PASSWORD` env var, stocată în cookie httpOnly `admin_session` (7 zile)
-- **Middleware:** `middleware.ts` protejează toate rutele `/admin/*` exceptând `/admin/login`
-- **Acțiuni:** Server Actions în `app/admin/actions.ts` — `createListing`, `updateListing`, `deleteListing`, `loginAction`, `logoutAction`
-- **Formular:** `ListingFormFields.tsx` este reutilizat atât la creare cât și la editare
+- **URL:** `/admin` → redirect la `/admin/login` dacă nu ești autentificat
+- **Auth:** cookie httpOnly `admin_session` = `ADMIN_PASSWORD` (7 zile)
+- **Middleware:** protejează `/admin/*` exceptând `/admin/login`
+- **Toate query-urile** pe `claims` în admin folosesc `adminClient` — cookie-ul `admin_session` nu e JWT Supabase, deci `auth.uid()` = null și RLS ar bloca totul cu clientul normal
+- **`approveClaim`** în `actions.ts`: setează `status='approved'` pe claim + `claimed_by`, `claimed_at`, `is_verified=true`, `package='free'` pe listing + `revalidatePath` înainte de `redirect`
 
 ---
 
-## Convenții de design
+## Categorii
 
-### Culori
-- **Coral / brand:** `#ff5a2e` (hover: `#f03d12`)
-- **Text dark:** `#1a1a2e`
-- **Fundal:** `bg-white` / `bg-gray-50`
-- **Accent pe categorii:** orange (joacă), green (educație), purple (cursuri), sky (sport), rose (spectacole), pink (evenimente)
+| Valoare DB | Emoji | Label | URL |
+|------------|-------|-------|-----|
+| `loc-de-joaca` | 🛝 | Loc de joacă | `/locuri-de-joaca` |
+| `educatie` | 🎓 | Educație | `/educatie` |
+| `curs-atelier` | 🎨 | Curs & Atelier | `/cursuri-ateliere` |
+| `sport` | ⚽ | Sport | `/sport` |
+| `spectacol` | 🎭 | Spectacol | `/spectacole` |
+| `eveniment` | 🎪 | Eveniment | `/evenimente` |
 
-### Tipografie
-- Font: **Nunito** din Google Fonts (definit în `app/layout.tsx`)
-- Titluri: `font-black`
-- Subtitluri / labels: `font-bold` sau `font-semibold`
+`CATEGORY_META` e definit în `ListingCard.tsx` (sursă primară), copiat în `page.tsx` și `listing/[id]/page.tsx`. Dacă adaugi categorie nouă → actualizează toate 3 + `tailwind.config.ts` safelist.
 
-### Layout
-- **Mobile-first** — breakpoint principal `sm:` și `md:`
-- Max-width conținut: `max-w-6xl` (homepage) / `max-w-4xl` (pagini categorie)
-- Grid categorii homepage: `grid-cols-3 lg:grid-cols-6`
-- Grid listinguri: `flex-col gap-4 sm:grid sm:grid-cols-2`
+---
+
+## Convenții design
+
+- **Brand coral:** `#ff5a2e` (hover `#f03d12`), **text dark:** `#1a1a2e`
+- Font: **Nunito** — titluri `font-black`, subtitluri `font-bold`/`font-semibold`
+- Carduri: `rounded-2xl` / `rounded-3xl`, shadow subtile
 - Header sticky: `sticky top-0 z-50 bg-white/95 backdrop-blur`
-- Carduri: `rounded-2xl` sau `rounded-3xl`, shadow-uri subtile
-
-### Componente recurente
-- `CategoryShell` — wrapper standard pentru orice pagină de categorie (header cu back, titlu, footer)
-- `ListingCard` — card orizontal standard; acceptă `variant="event"` pentru afișare schedule
-- `EmptyState` — placeholder uniform când nu sunt rezultate
-- Filtre: butoane pill cu clasele `ACTIVE` / `INACTIVE` din fiecare FilteredX component
+- Grid listings: `flex-col gap-4 sm:grid sm:grid-cols-2`
 
 ---
 
-## CSS / Tailwind — probleme cunoscute
+## Probleme cunoscute și soluții permanente
 
 ### Admin panel nestyled după restart
-**Cauza:** Tailwind JIT nu detectează clasele din `_components/` la cold start, iar nested layout-ul admin nu prelua fontul/CSS-ul din root layout în mod fiabil.
+- `app/admin/layout.tsx` importă explicit `../globals.css` + font Nunito în `<div>` wrapper (nu are `<html>`/`<body>` propriu — e nested layout)
+- `tailwind.config.ts` are `safelist` cu clasele dinamice din `CATEGORY_META`
+- Fix: `rm -rf .next && npm run dev`
 
-**Soluția aplicată (permanentă):**
-- `app/admin/layout.tsx` importă explicit `../globals.css` și aplică fontul Nunito printr-un `<div>` wrapper — **nu are `<html>`/`<body>` propriu**
-- `tailwind.config.ts` are `safelist` explicit cu toate clasele generate dinamic din `CATEGORY_META` (gradiente + tagColor)
-
-**Dacă problema reapare:**
-1. Verifică că `app/admin/layout.tsx` importă `"../globals.css"` (nu adăuga `<html>`/`<body>` — e nested layout)
-2. Verifică că `tailwind.config.ts` are `safelist` intact
-3. Șterge `.next/` și repornește: `rm -rf .next && npm run dev`
-
-### Clase dinamice (safelist)
-Clasele din `CATEGORY_META` sunt compuse la runtime prin lookup (`meta.gradientFrom`, `meta.tagColor` etc.). Tailwind JIT nu le poate detecta static. Orice clasă nouă adăugată în `CATEGORY_META` din `ListingCard.tsx`, `page.tsx` sau `listing/[id]/page.tsx` trebuie adăugată și în `safelist`-ul din `tailwind.config.ts`.
-
----
-
-## Note tehnice importante
+### Clase Tailwind dinamice
+Clasele din `CATEGORY_META` (gradiente, tagColor) trebuie adăugate manual în `safelist` din `tailwind.config.ts` — JIT nu le detectează static.
 
 ### Storage poze — flux pending → aprobare
-- Pozele din formularul public `/adauga-locatia-ta` se uploadează în `listings-images/pending/{timestamp}-{random}.ext`
-- La aprobarea listingului din admin, pozele trebuie **MUTATE** în `listings-images/{listing-id}/`
-- De implementat când facem dashboardul organizatorului: funcție `moveImages(pendingPaths, listingId)` care mută fișierele și actualizează URL-urile în coloana `images[]`
-- Până atunci pozele rămân în `pending/` și funcționează, dar folderul se va aglomera în timp
+- Poze din `/adauga-locatia-ta` → `listings-images/pending/{timestamp}-{random}.ext`
+- La aprobare ar trebui mutate în `listings-images/{listing-id}/` — **neimplementat**
+- Până atunci rămân în `pending/` și funcționează, dar se acumulează
 
 ---
 
-## Auth utilizatori
+## Auth — note generale
 
-- **Email confirmation dezactivat în development.** Reactivează înainte de lansare în producție din Supabase → Authentication → Settings → "Enable email confirmations"
-- **Google OAuth:** configurat în Supabase → Authentication → Providers → Google; callback URL: `http://localhost:3000/auth/callback` (dev) + domeniu producție
-- **onAuthStateChange** este sursa primară de adevăr pentru starea auth în client components (navbarul ascultă `INITIAL_SESSION`, `SIGNED_IN`, `SIGNED_OUT`)
-- **Tabele necesare:** `user_favorites` și `reviews` cu RLS activ — SQL în istoricul sesiunii
-
----
-
-## Note importante
-
-- **Supabase client server** — `createClient` din `utils/supabase/server.ts` cere `cookieStore` ca parametru: `createClient(await cookies())`
-- **`is_featured`** — listingurile featured apar în secțiunea "Recomandate această săptămână" de pe homepage (max 6)
-- **`subcategory`** — coloana a fost adăugată ulterior; poate fi null pentru listinguri vechi
-- **`SectionedEvenimente`** — împarte evenimentele în 3 secțiuni vizuale pe baza poziției în listă (coloana `event_date` există în DB dar nu e populată pentru evenimente manuale)
-- **Imagini** — upload funcțional în admin și în formularul public; fallback gradient+emoji dacă `images[]` e gol; prima poză = cover pe carduri și hero pe pagina de detaliu
-- **`/gradinite`** — redirect permanent către `/educatie` (după migrarea categoriilor)
-- **`event_date`** — populat de scraper-ul Gong; folosit pe /spectacole pentru calendar și filtre temporale
+- Email confirmation: **dezactivat** în dev — reactivează înainte de producție (Supabase → Auth → Settings)
+- Google OAuth callback URL: `http://localhost:3000/auth/callback` (dev) + domeniu producție
+- `createClient` din `server.ts` necesită `cookieStore`: `createClient(await cookies())`
+- `is_featured` → secțiunea "Recomandate" pe homepage (max 6)
