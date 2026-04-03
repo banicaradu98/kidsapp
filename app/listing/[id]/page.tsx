@@ -68,7 +68,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
   const today = new Date().toISOString().split("T")[0];
   const { data: upcomingEventsRaw } = await supabase
     .from("events")
-    .select("id, title, description, event_date, start_time, end_time, price")
+    .select("id, title, description, event_date, start_time, end_time, price, thumbnail_url")
     .eq("listing_id", params.id)
     .gte("event_date", today)
     .order("event_date", { ascending: true })
@@ -228,12 +228,21 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
 
                     return (
                       <div key={ev.id} className="flex items-start gap-4 bg-orange-50 border border-orange-100 rounded-2xl p-4">
-                        <div className="w-14 h-14 rounded-xl bg-orange-100 flex flex-col items-center justify-center shrink-0">
-                          <span className="text-lg font-black text-[#ff5a2e] leading-none">{dayNum}</span>
-                          <span className="text-[10px] font-bold text-gray-500 uppercase">
-                            {monthStr}
-                          </span>
-                        </div>
+                        {ev.thumbnail_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={ev.thumbnail_url}
+                            alt=""
+                            className="w-14 h-14 rounded-xl object-cover shrink-0"
+                          />
+                        ) : (
+                          <div className="w-14 h-14 rounded-xl bg-orange-100 flex flex-col items-center justify-center shrink-0">
+                            <span className="text-lg font-black text-[#ff5a2e] leading-none">{dayNum}</span>
+                            <span className="text-[10px] font-bold text-gray-500 uppercase">
+                              {monthStr}
+                            </span>
+                          </div>
+                        )}
                         <div className="flex-1 min-w-0">
                           <p className="font-black text-[#1a1a2e] text-base leading-snug">{ev.title}</p>
                           <p className="text-xs font-bold text-[#ff5a2e] mt-0.5">

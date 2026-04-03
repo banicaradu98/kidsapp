@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { addEvent, updateEvent, deleteEvent } from "./eventActions";
+import { useRef, useState } from "react";
+import { addEvent, updateEvent, deleteEvent, updateEventImages } from "./eventActions";
 
 interface Event {
   id: string;
@@ -12,6 +12,8 @@ interface Event {
   start_time: string | null;
   end_time: string | null;
   price: number | null;
+  thumbnail_url: string | null;
+  gallery_urls: string[];
   created_at: string;
 }
 
@@ -22,11 +24,13 @@ interface Props {
 
 const inputCls = "w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700 outline-none focus:border-[#ff5a2e] focus:ring-2 focus:ring-[#ff5a2e]/20 transition-all bg-white";
 
-const emptyForm = { title: "", description: "", event_date: "", start_time: "", end_time: "", price: "" };
+const emptyForm = {
+  title: "", description: "", event_date: "",
+  start_time: "", end_time: "", price: "",
+};
 
 function formatTime(t: string | null) {
-  if (!t) return null;
-  return t.slice(0, 5); // "10:00:00" → "10:00"
+  return t ? t.slice(0, 5) : null;
 }
 
 function parseDate(dateStr: string): Date | null {
@@ -36,13 +40,30 @@ function parseDate(dateStr: string): Date | null {
 }
 
 function toInputDate(dateStr: string): string {
-  // Convert any ISO/timestamptz string to YYYY-MM-DD for <input type="date">
   const d = parseDate(dateStr);
   if (!d) return "";
   const y = d.getUTCFullYear();
   const m = String(d.getUTCMonth() + 1).padStart(2, "0");
   const day = String(d.getUTCDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
+}
+
+async function uploadImage(
+  file: File,
+  eventId: string,
+  type: "thumbnail" | "gallery",
+  galleryIndex?: number
+): Promise<string | null> {
+  const fd = new FormData();
+  fd.append("file", file);
+  fd.append("event_id", eventId);
+  fd.append("type", type);
+  if (type === "gallery" && galleryIndex !== undefined) {
+    fd.append("gallery_index", String(galleryIndex));
+  }
+  const res = await fetch("/api/upload-event", { method: "POST", body: fd });
+  const json = await res.json();
+  return json.url ?? null;
 }
 
 export default function EventsManager({ listingId, initialEvents }: Props) {
@@ -53,13 +74,33 @@ export default function EventsManager({ listingId, initialEvents }: Props) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Image state
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
+  const [existingThumbnail, setExistingThumbnail] = useState<string | null>(null);
+  const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
+  const [galleryPreviews, setGalleryPreviews] = useState<string[]>([]);
+  const [existingGallery, setExistingGallery] = useState<string[]>([]);
+  const thumbInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
+
   function set(k: keyof typeof emptyForm, v: string) {
     setForm((f) => ({ ...f, [k]: v }));
+  }
+
+  function resetImageState() {
+    setThumbnailFile(null);
+    setThumbnailPreview(null);
+    setExistingThumbnail(null);
+    setGalleryFiles([]);
+    setGalleryPreviews([]);
+    setExistingGallery([]);
   }
 
   function openAdd() {
     setEditingId(null);
     setForm(emptyForm);
+    resetImageState();
     setShowForm(true);
     setError(null);
   }
@@ -74,8 +115,36 @@ export default function EventsManager({ listingId, initialEvents }: Props) {
       end_time: formatTime(ev.end_time) ?? "",
       price: ev.price != null ? String(ev.price) : "",
     });
+    resetImageState();
+    setExistingThumbnail(ev.thumbnail_url ?? null);
+    setExistingGallery(ev.gallery_urls ?? []);
     setShowForm(true);
     setError(null);
+  }
+
+  function onThumbnailChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0] ?? null;
+    if (!file) return;
+    setThumbnailFile(file);
+    setThumbnailPreview(URL.createObjectURL(file));
+  }
+
+  function onGalleryChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    const remaining = 3 - existingGallery.length - galleryFiles.length;
+    const toAdd = files.slice(0, remaining);
+    setGalleryFiles((prev) => [...prev, ...toAdd]);
+    setGalleryPreviews((prev) => [...prev, ...toAdd.map((f) => URL.createObjectURL(f))]);
+    e.target.value = "";
+  }
+
+  function removeExistingGallery(idx: number) {
+    setExistingGallery((prev) => prev.filter((_, i) => i !== idx));
+  }
+
+  function removeNewGallery(idx: number) {
+    setGalleryFiles((prev) => prev.filter((_, i) => i !== idx));
+    setGalleryPreviews((prev) => prev.filter((_, i) => i !== idx));
   }
 
   async function handleSave() {
@@ -100,21 +169,45 @@ export default function EventsManager({ listingId, initialEvents }: Props) {
       ? await updateEvent(editingId, payload)
       : await addEvent(payload);
 
-    if (result.error) {
-      setError(result.error);
+    if (result.error || !result.data) {
+      setError(result.error ?? "Eroare la salvare.");
       setSaving(false);
       return;
     }
 
-    if (result.data) {
-      if (editingId) {
-        setEvents((prev) =>
-          prev.map((e) => (e.id === editingId ? result.data! : e))
-              .sort((a, b) => a.event_date.localeCompare(b.event_date))
-        );
-      } else {
-        setEvents((prev) => [...prev, result.data!].sort((a, b) => a.event_date.localeCompare(b.event_date)));
-      }
+    const savedId = result.data.id;
+
+    // Upload images
+    let finalThumbnail: string | null = existingThumbnail;
+    let finalGallery: string[] = [...existingGallery];
+
+    if (thumbnailFile) {
+      const url = await uploadImage(thumbnailFile, savedId, "thumbnail");
+      if (url) finalThumbnail = url;
+    }
+
+    for (let i = 0; i < galleryFiles.length; i++) {
+      const url = await uploadImage(galleryFiles[i], savedId, "gallery", existingGallery.length + i);
+      if (url) finalGallery = [...finalGallery, url];
+    }
+
+    if (thumbnailFile || galleryFiles.length > 0 || existingGallery.length !== (result.data.gallery_urls ?? []).length) {
+      await updateEventImages(savedId, listingId, finalThumbnail, finalGallery);
+    }
+
+    const updatedEvent: Event = {
+      ...result.data,
+      thumbnail_url: finalThumbnail,
+      gallery_urls: finalGallery,
+    };
+
+    if (editingId) {
+      setEvents((prev) =>
+        prev.map((e) => e.id === editingId ? updatedEvent : e)
+            .sort((a, b) => a.event_date.localeCompare(b.event_date))
+      );
+    } else {
+      setEvents((prev) => [...prev, updatedEvent].sort((a, b) => a.event_date.localeCompare(b.event_date)));
     }
 
     setShowForm(false);
@@ -123,9 +216,11 @@ export default function EventsManager({ listingId, initialEvents }: Props) {
 
   async function handleDelete(id: string) {
     if (!confirm("Ștergi evenimentul?")) return;
-    const { error } = await deleteEvent(id, listingId);
-    if (!error) setEvents((prev) => prev.filter((e) => e.id !== id));
+    const { error: err } = await deleteEvent(id, listingId);
+    if (!err) setEvents((prev) => prev.filter((e) => e.id !== id));
   }
+
+  const totalGallery = existingGallery.length + galleryFiles.length;
 
   return (
     <section className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
@@ -145,6 +240,7 @@ export default function EventsManager({ listingId, initialEvents }: Props) {
             {editingId ? "Editează eveniment" : "Eveniment nou"}
           </h3>
 
+          {/* Title */}
           <div>
             <label className="block text-xs font-bold text-gray-500 mb-1.5">Titlu *</label>
             <input
@@ -155,6 +251,7 @@ export default function EventsManager({ listingId, initialEvents }: Props) {
             />
           </div>
 
+          {/* Date + Price */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold text-gray-500 mb-1.5">Data *</label>
@@ -179,6 +276,7 @@ export default function EventsManager({ listingId, initialEvents }: Props) {
             </div>
           </div>
 
+          {/* Times */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold text-gray-500 mb-1.5">Oră start</label>
@@ -200,6 +298,7 @@ export default function EventsManager({ listingId, initialEvents }: Props) {
             </div>
           </div>
 
+          {/* Description */}
           <div>
             <label className="block text-xs font-bold text-gray-500 mb-1.5">Descriere</label>
             <textarea
@@ -211,11 +310,111 @@ export default function EventsManager({ listingId, initialEvents }: Props) {
             />
           </div>
 
+          {/* Thumbnail */}
+          <div>
+            <label className="block text-xs font-bold text-gray-500 mb-1.5">Imagine principală</label>
+            <div className="flex items-center gap-3">
+              {(thumbnailPreview || existingThumbnail) ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={thumbnailPreview ?? existingThumbnail!}
+                  alt=""
+                  className="w-16 h-16 rounded-xl object-cover border border-gray-200"
+                />
+              ) : (
+                <div className="w-16 h-16 rounded-xl bg-gray-100 flex items-center justify-center text-2xl border border-dashed border-gray-300">
+                  📅
+                </div>
+              )}
+              <div className="flex flex-col gap-1">
+                <button
+                  type="button"
+                  onClick={() => thumbInputRef.current?.click()}
+                  className="text-xs font-bold text-[#ff5a2e] hover:underline"
+                >
+                  {thumbnailPreview || existingThumbnail ? "Schimbă imaginea" : "Adaugă imagine"}
+                </button>
+                {(thumbnailPreview || existingThumbnail) && (
+                  <button
+                    type="button"
+                    onClick={() => { setThumbnailFile(null); setThumbnailPreview(null); setExistingThumbnail(null); }}
+                    className="text-xs font-bold text-red-400 hover:underline"
+                  >
+                    Șterge
+                  </button>
+                )}
+                <p className="text-[10px] text-gray-400">JPG, PNG, WebP · max 5MB</p>
+              </div>
+            </div>
+            <input
+              ref={thumbInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={onThumbnailChange}
+            />
+          </div>
+
+          {/* Gallery */}
+          <div>
+            <label className="block text-xs font-bold text-gray-500 mb-1.5">
+              Galerie ({totalGallery}/3 poze extra)
+            </label>
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Existing gallery */}
+              {existingGallery.map((url, i) => (
+                <div key={`eg${i}`} className="relative w-16 h-16">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={url} alt="" className="w-16 h-16 rounded-xl object-cover border border-gray-200" />
+                  <button
+                    type="button"
+                    onClick={() => removeExistingGallery(i)}
+                    className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+              {/* New gallery previews */}
+              {galleryPreviews.map((url, i) => (
+                <div key={`ng${i}`} className="relative w-16 h-16">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={url} alt="" className="w-16 h-16 rounded-xl object-cover border border-orange-200" />
+                  <button
+                    type="button"
+                    onClick={() => removeNewGallery(i)}
+                    className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+              {/* Add button */}
+              {totalGallery < 3 && (
+                <button
+                  type="button"
+                  onClick={() => galleryInputRef.current?.click()}
+                  className="w-16 h-16 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 hover:border-[#ff5a2e] hover:text-[#ff5a2e] transition-colors text-xl"
+                >
+                  +
+                </button>
+              )}
+            </div>
+            <input
+              ref={galleryInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              multiple
+              className="hidden"
+              onChange={onGalleryChange}
+            />
+          </div>
+
           {error && <p className="text-sm font-bold text-red-500">⚠️ {error}</p>}
 
           <div className="flex gap-3 justify-end">
             <button
-              onClick={() => { setShowForm(false); setError(null); }}
+              onClick={() => { setShowForm(false); setError(null); resetImageState(); }}
               className="text-sm font-bold text-gray-400 hover:text-gray-600"
             >
               Anulează
@@ -248,30 +447,36 @@ export default function EventsManager({ listingId, initialEvents }: Props) {
             const end = formatTime(ev.end_time);
             const timeStr = start && end ? `${start}–${end}` : start ? `de la ${start}` : null;
             const dayNum = d ? d.getUTCDate() : "?";
-            const monthStr = d ? d.toLocaleDateString("ro-RO", { month: "short", timeZone: "UTC" }) : "";
-            const dateLabel = d ? d.toLocaleDateString("ro-RO", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }) : "Dată invalidă";
+            const monthStr = d
+              ? d.toLocaleDateString("ro-RO", { month: "short", timeZone: "UTC" })
+              : "";
 
             return (
-              <div key={ev.id} className={`py-3 flex items-start gap-4 ${isPast ? "opacity-40" : ""}`}>
-                <div className="w-12 h-12 rounded-xl bg-orange-50 flex flex-col items-center justify-center shrink-0 text-center">
-                  <span className="text-sm font-black text-[#ff5a2e] leading-none">
-                    {dayNum}
-                  </span>
-                  <span className="text-[9px] font-bold text-gray-400 uppercase">
-                    {monthStr}
-                  </span>
-                </div>
+              <div key={ev.id} className={`py-3 flex items-start gap-3 ${isPast ? "opacity-40" : ""}`}>
+                {/* Thumbnail or date badge */}
+                {ev.thumbnail_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={ev.thumbnail_url}
+                    alt=""
+                    className="w-12 h-12 rounded-xl object-cover shrink-0"
+                  />
+                ) : (
+                  <div className="w-12 h-12 rounded-xl bg-orange-50 flex flex-col items-center justify-center shrink-0 text-center">
+                    <span className="text-sm font-black text-[#ff5a2e] leading-none">{dayNum}</span>
+                    <span className="text-[9px] font-bold text-gray-400 uppercase">{monthStr}</span>
+                  </div>
+                )}
+
                 <div className="flex-1 min-w-0">
                   <p className="font-black text-[#1a1a2e] text-sm">{ev.title}</p>
                   <p className="text-xs text-gray-400 font-medium mt-0.5">
-                    {timeStr}
-                    {timeStr && ev.price != null && " · "}
-                    {ev.price != null ? `${ev.price} lei` : null}
-                    {!timeStr && ev.price == null ? dateLabel : null}
+                    {d
+                      ? d.toLocaleDateString("ro-RO", { day: "numeric", month: "short", timeZone: "UTC" })
+                      : "Dată invalidă"}
+                    {timeStr ? ` · ${timeStr}` : ""}
+                    {ev.price != null ? ` · ${ev.price} lei` : ""}
                   </p>
-                  {ev.description && (
-                    <p className="text-xs text-gray-400 mt-0.5 line-clamp-1">{ev.description}</p>
-                  )}
                 </div>
                 <div className="flex gap-2 shrink-0">
                   <button

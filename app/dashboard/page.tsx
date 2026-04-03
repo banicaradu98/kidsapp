@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import Navbar from "@/app/components/Navbar";
 import ListingEditor from "./ListingEditor";
 import EventsManager from "./EventsManager";
+import EventCalendar from "./EventCalendar";
 import ReviewsPanel from "./ReviewsPanel";
 import StatsPanel from "./StatsPanel";
 import { adminClient } from "@/utils/supabase/admin";
@@ -149,6 +150,8 @@ export default async function DashboardPage({
         <ListingEditor listing={listing} />
 
         <EventsManager listingId={listing.id} initialEvents={events ?? []} />
+
+        <EventCalendar events={events ?? []} />
 
         <ReviewsPanel reviews={reviewList} listingId={listing.id} organizerId={user.id} />
 

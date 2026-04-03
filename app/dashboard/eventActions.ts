@@ -76,6 +76,24 @@ export async function updateEvent(id: string, payload: EventPayload) {
   return { data, error: null };
 }
 
+export async function updateEventImages(
+  eventId: string,
+  listingId: string,
+  thumbnailUrl: string | null,
+  galleryUrls: string[]
+) {
+  const { error: authError } = await getVerifiedUser(listingId);
+  if (authError) return { error: authError };
+
+  const { error } = await adminClient
+    .from("events")
+    .update({ thumbnail_url: thumbnailUrl, gallery_urls: galleryUrls })
+    .eq("id", eventId);
+
+  if (error) return { error: error.message };
+  return { error: null };
+}
+
 export async function deleteEvent(id: string, listingId: string) {
   const { error: authError } = await getVerifiedUser(listingId);
   if (authError) return { error: authError };
