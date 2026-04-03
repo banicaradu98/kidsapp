@@ -215,10 +215,13 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
                 <h3 className="text-lg font-black text-[#1a1a2e] mb-3">📅 Evenimente viitoare</h3>
                 <div className="flex flex-col gap-3">
                   {upcomingEvents.map((ev) => {
-                    const [y, m, d] = ev.event_date.split("-").map(Number);
-                    const dateLabel = new Date(y, m - 1, d).toLocaleDateString("ro-RO", {
-                      weekday: "long", day: "numeric", month: "long",
-                    });
+                    const dateObj = ev.event_date ? new Date(ev.event_date) : null;
+                    const isValid = dateObj && !isNaN(dateObj.getTime());
+                    const dateLabel = isValid
+                      ? dateObj!.toLocaleDateString("ro-RO", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" })
+                      : "Dată nespecificată";
+                    const dayNum   = isValid ? dateObj!.getUTCDate() : "?";
+                    const monthStr = isValid ? dateObj!.toLocaleDateString("ro-RO", { month: "short", timeZone: "UTC" }) : "";
                     const start = ev.start_time?.slice(0, 5) ?? null;
                     const end   = ev.end_time?.slice(0, 5)   ?? null;
                     const timeStr = start && end ? `${start}–${end}` : start ?? null;
@@ -226,9 +229,9 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
                     return (
                       <div key={ev.id} className="flex items-start gap-4 bg-orange-50 border border-orange-100 rounded-2xl p-4">
                         <div className="w-14 h-14 rounded-xl bg-orange-100 flex flex-col items-center justify-center shrink-0">
-                          <span className="text-lg font-black text-[#ff5a2e] leading-none">{d}</span>
+                          <span className="text-lg font-black text-[#ff5a2e] leading-none">{dayNum}</span>
                           <span className="text-[10px] font-bold text-gray-500 uppercase">
-                            {new Date(y, m - 1, d).toLocaleDateString("ro-RO", { month: "short" })}
+                            {monthStr}
                           </span>
                         </div>
                         <div className="flex-1 min-w-0">

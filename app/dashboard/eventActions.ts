@@ -40,11 +40,17 @@ export async function addEvent(payload: EventPayload) {
   const { user, error: authError } = await getVerifiedUser(payload.listing_id);
   if (authError || !user) return { data: null, error: authError ?? "Sesiune expirată." };
 
+  // Validate and convert date from YYYY-MM-DD (form input) to ISO timestamptz
+  const dateObj = new Date(payload.event_date);
+  if (isNaN(dateObj.getTime())) {
+    return { data: null, error: "Data evenimentului nu este validă." };
+  }
+
   console.log("[eventActions] inserting event for listing:", payload.listing_id, "user:", user.id);
 
   const { data, error } = await adminClient
     .from("events")
-    .insert({ ...payload, user_id: user.id })
+    .insert({ ...payload, event_date: dateObj.toISOString(), user_id: user.id })
     .select()
     .single();
 

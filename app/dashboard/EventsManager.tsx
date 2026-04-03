@@ -29,9 +29,20 @@ function formatTime(t: string | null) {
   return t.slice(0, 5); // "10:00:00" → "10:00"
 }
 
-function formatDate(dateStr: string) {
-  const [y, m, d] = dateStr.split("-").map(Number);
-  return new Date(y, m - 1, d).toLocaleDateString("ro-RO", { day: "numeric", month: "short" });
+function parseDate(dateStr: string): Date | null {
+  if (!dateStr) return null;
+  const d = new Date(dateStr);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+function toInputDate(dateStr: string): string {
+  // Convert any ISO/timestamptz string to YYYY-MM-DD for <input type="date">
+  const d = parseDate(dateStr);
+  if (!d) return "";
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
 }
 
 export default function EventsManager({ listingId, initialEvents }: Props) {
@@ -58,7 +69,7 @@ export default function EventsManager({ listingId, initialEvents }: Props) {
     setForm({
       title: ev.title,
       description: ev.description ?? "",
-      event_date: ev.event_date,
+      event_date: toInputDate(ev.event_date),
       start_time: formatTime(ev.start_time) ?? "",
       end_time: formatTime(ev.end_time) ?? "",
       price: ev.price != null ? String(ev.price) : "",
@@ -115,8 +126,6 @@ export default function EventsManager({ listingId, initialEvents }: Props) {
     const { error } = await deleteEvent(id, listingId);
     if (!error) setEvents((prev) => prev.filter((e) => e.id !== id));
   }
-
-  const today = new Date().toISOString().split("T")[0];
 
   return (
     <section className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
@@ -233,19 +242,23 @@ export default function EventsManager({ listingId, initialEvents }: Props) {
       ) : (
         <div className="flex flex-col divide-y divide-gray-50">
           {events.map((ev) => {
-            const isPast = ev.event_date < today;
+            const d = parseDate(ev.event_date);
+            const isPast = d ? d < new Date() : false;
             const start = formatTime(ev.start_time);
             const end = formatTime(ev.end_time);
             const timeStr = start && end ? `${start}–${end}` : start ? `de la ${start}` : null;
+            const dayNum = d ? d.getUTCDate() : "?";
+            const monthStr = d ? d.toLocaleDateString("ro-RO", { month: "short", timeZone: "UTC" }) : "";
+            const dateLabel = d ? d.toLocaleDateString("ro-RO", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }) : "Dată invalidă";
 
             return (
               <div key={ev.id} className={`py-3 flex items-start gap-4 ${isPast ? "opacity-40" : ""}`}>
                 <div className="w-12 h-12 rounded-xl bg-orange-50 flex flex-col items-center justify-center shrink-0 text-center">
                   <span className="text-sm font-black text-[#ff5a2e] leading-none">
-                    {ev.event_date.split("-")[2]}
+                    {dayNum}
                   </span>
                   <span className="text-[9px] font-bold text-gray-400 uppercase">
-                    {formatDate(ev.event_date).split(" ")[1]}
+                    {monthStr}
                   </span>
                 </div>
                 <div className="flex-1 min-w-0">
@@ -254,7 +267,7 @@ export default function EventsManager({ listingId, initialEvents }: Props) {
                     {timeStr}
                     {timeStr && ev.price != null && " · "}
                     {ev.price != null ? `${ev.price} lei` : null}
-                    {!timeStr && ev.price == null ? formatDate(ev.event_date) : null}
+                    {!timeStr && ev.price == null ? dateLabel : null}
                   </p>
                   {ev.description && (
                     <p className="text-xs text-gray-400 mt-0.5 line-clamp-1">{ev.description}</p>
