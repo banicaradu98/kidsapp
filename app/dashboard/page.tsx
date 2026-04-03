@@ -62,12 +62,12 @@ export default async function DashboardPage({
 
   if (!listing) redirect("/");
 
-  // Fetch upcoming events
+  // Fetch events
   const { data: events } = await adminClient
-    .from("organizer_events")
+    .from("events")
     .select("*")
     .eq("listing_id", activeListingId)
-    .order("event_date", { ascending: true });
+    .order("date", { ascending: true });
 
   // Fetch reviews
   const { data: reviews } = await adminClient

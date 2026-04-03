@@ -64,16 +64,17 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
 
   const photos: string[] = listing.images ?? [];
 
-  // Fetch organizer events for this listing
-  const { data: orgEvents } = await supabase
-    .from("organizer_events")
-    .select("id, title, description, event_date, price, image_url")
+  // Fetch upcoming events for this listing
+  const today = new Date().toISOString().split("T")[0];
+  const { data: upcomingEventsRaw } = await supabase
+    .from("events")
+    .select("id, title, description, date, start_time, end_time, price")
     .eq("listing_id", params.id)
-    .gte("event_date", new Date().toISOString())
-    .order("event_date", { ascending: true })
+    .gte("date", today)
+    .order("date", { ascending: true })
     .limit(5);
 
-  const upcomingEvents = orgEvents ?? [];
+  const upcomingEvents = upcomingEventsRaw ?? [];
 
   return (
     <div className="min-h-screen bg-white">
@@ -208,30 +209,39 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
               </section>
             )}
 
-            {/* Upcoming organizer events */}
+            {/* Upcoming events */}
             {upcomingEvents.length > 0 && (
               <section className="mb-6">
                 <h3 className="text-lg font-black text-[#1a1a2e] mb-3">📅 Evenimente viitoare</h3>
                 <div className="flex flex-col gap-3">
                   {upcomingEvents.map((ev) => {
-                    const d = new Date(ev.event_date);
+                    const [y, m, d] = ev.date.split("-").map(Number);
+                    const dateLabel = new Date(y, m - 1, d).toLocaleDateString("ro-RO", {
+                      weekday: "long", day: "numeric", month: "long",
+                    });
+                    const start = ev.start_time?.slice(0, 5) ?? null;
+                    const end   = ev.end_time?.slice(0, 5)   ?? null;
+                    const timeStr = start && end ? `${start}–${end}` : start ?? null;
+
                     return (
                       <div key={ev.id} className="flex items-start gap-4 bg-orange-50 border border-orange-100 rounded-2xl p-4">
-                        {ev.image_url ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={ev.image_url} alt="" className="w-16 h-16 rounded-xl object-cover shrink-0" />
-                        ) : (
-                          <div className="w-16 h-16 rounded-xl bg-orange-100 flex items-center justify-center text-2xl shrink-0">📅</div>
-                        )}
+                        <div className="w-14 h-14 rounded-xl bg-orange-100 flex flex-col items-center justify-center shrink-0">
+                          <span className="text-lg font-black text-[#ff5a2e] leading-none">{d}</span>
+                          <span className="text-[10px] font-bold text-gray-500 uppercase">
+                            {new Date(y, m - 1, d).toLocaleDateString("ro-RO", { month: "short" })}
+                          </span>
+                        </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-black text-[#1a1a2e] text-base leading-snug">{ev.title}</p>
                           <p className="text-xs font-bold text-[#ff5a2e] mt-0.5">
-                            {d.toLocaleDateString("ro-RO", { weekday: "long", day: "numeric", month: "long" })}
-                            {" · "}
-                            {d.toLocaleTimeString("ro-RO", { hour: "2-digit", minute: "2-digit" })}
+                            {dateLabel}{timeStr ? ` · ${timeStr}` : ""}
                           </p>
-                          {ev.description && <p className="text-sm text-gray-500 font-medium mt-1 line-clamp-2">{ev.description}</p>}
-                          {ev.price && <p className="text-sm font-black text-[#ff5a2e] mt-1">{ev.price}</p>}
+                          {ev.description && (
+                            <p className="text-sm text-gray-500 font-medium mt-1 line-clamp-2">{ev.description}</p>
+                          )}
+                          {ev.price != null && (
+                            <p className="text-sm font-black text-[#ff5a2e] mt-1">{ev.price} lei</p>
+                          )}
                         </div>
                       </div>
                     );
