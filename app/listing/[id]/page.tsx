@@ -68,10 +68,10 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
   const today = new Date().toISOString().split("T")[0];
   const { data: upcomingEventsRaw } = await supabase
     .from("events")
-    .select("id, title, description, date, start_time, end_time, price")
+    .select("id, title, description, event_date, start_time, end_time, price")
     .eq("listing_id", params.id)
-    .gte("date", today)
-    .order("date", { ascending: true })
+    .gte("event_date", today)
+    .order("event_date", { ascending: true })
     .limit(5);
 
   const upcomingEvents = upcomingEventsRaw ?? [];
@@ -215,7 +215,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
                 <h3 className="text-lg font-black text-[#1a1a2e] mb-3">📅 Evenimente viitoare</h3>
                 <div className="flex flex-col gap-3">
                   {upcomingEvents.map((ev) => {
-                    const [y, m, d] = ev.date.split("-").map(Number);
+                    const [y, m, d] = ev.event_date.split("-").map(Number);
                     const dateLabel = new Date(y, m - 1, d).toLocaleDateString("ro-RO", {
                       weekday: "long", day: "numeric", month: "long",
                     });

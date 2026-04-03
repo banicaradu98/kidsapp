@@ -8,7 +8,7 @@ interface Event {
   listing_id: string;
   title: string;
   description: string | null;
-  date: string;
+  event_date: string;
   start_time: string | null;
   end_time: string | null;
   price: number | null;
@@ -22,7 +22,7 @@ interface Props {
 
 const inputCls = "w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700 outline-none focus:border-[#ff5a2e] focus:ring-2 focus:ring-[#ff5a2e]/20 transition-all bg-white";
 
-const emptyForm = { title: "", description: "", date: "", start_time: "", end_time: "", price: "" };
+const emptyForm = { title: "", description: "", event_date: "", start_time: "", end_time: "", price: "" };
 
 function formatTime(t: string | null) {
   if (!t) return null;
@@ -58,7 +58,7 @@ export default function EventsManager({ listingId, initialEvents }: Props) {
     setForm({
       title: ev.title,
       description: ev.description ?? "",
-      date: ev.date,
+      event_date: ev.event_date,
       start_time: formatTime(ev.start_time) ?? "",
       end_time: formatTime(ev.end_time) ?? "",
       price: ev.price != null ? String(ev.price) : "",
@@ -68,7 +68,7 @@ export default function EventsManager({ listingId, initialEvents }: Props) {
   }
 
   async function handleSave() {
-    if (!form.title.trim() || !form.date) {
+    if (!form.title.trim() || !form.event_date) {
       setError("Titlu și data sunt obligatorii.");
       return;
     }
@@ -79,7 +79,7 @@ export default function EventsManager({ listingId, initialEvents }: Props) {
       listing_id: listingId,
       title: form.title.trim(),
       description: form.description.trim() || null,
-      date: form.date,
+      event_date: form.event_date,
       start_time: form.start_time || null,
       end_time: form.end_time || null,
       price: form.price !== "" ? Number(form.price) : null,
@@ -99,10 +99,10 @@ export default function EventsManager({ listingId, initialEvents }: Props) {
       if (editingId) {
         setEvents((prev) =>
           prev.map((e) => (e.id === editingId ? result.data! : e))
-              .sort((a, b) => a.date.localeCompare(b.date))
+              .sort((a, b) => a.event_date.localeCompare(b.event_date))
         );
       } else {
-        setEvents((prev) => [...prev, result.data!].sort((a, b) => a.date.localeCompare(b.date)));
+        setEvents((prev) => [...prev, result.data!].sort((a, b) => a.event_date.localeCompare(b.event_date)));
       }
     }
 
@@ -151,8 +151,8 @@ export default function EventsManager({ listingId, initialEvents }: Props) {
               <label className="block text-xs font-bold text-gray-500 mb-1.5">Data *</label>
               <input
                 type="date"
-                value={form.date}
-                onChange={(e) => set("date", e.target.value)}
+                value={form.event_date}
+                onChange={(e) => set("event_date", e.target.value)}
                 className={inputCls}
               />
             </div>
@@ -233,7 +233,7 @@ export default function EventsManager({ listingId, initialEvents }: Props) {
       ) : (
         <div className="flex flex-col divide-y divide-gray-50">
           {events.map((ev) => {
-            const isPast = ev.date < today;
+            const isPast = ev.event_date < today;
             const start = formatTime(ev.start_time);
             const end = formatTime(ev.end_time);
             const timeStr = start && end ? `${start}–${end}` : start ? `de la ${start}` : null;
@@ -242,10 +242,10 @@ export default function EventsManager({ listingId, initialEvents }: Props) {
               <div key={ev.id} className={`py-3 flex items-start gap-4 ${isPast ? "opacity-40" : ""}`}>
                 <div className="w-12 h-12 rounded-xl bg-orange-50 flex flex-col items-center justify-center shrink-0 text-center">
                   <span className="text-sm font-black text-[#ff5a2e] leading-none">
-                    {ev.date.split("-")[2]}
+                    {ev.event_date.split("-")[2]}
                   </span>
                   <span className="text-[9px] font-bold text-gray-400 uppercase">
-                    {formatDate(ev.date).split(" ")[1]}
+                    {formatDate(ev.event_date).split(" ")[1]}
                   </span>
                 </div>
                 <div className="flex-1 min-w-0">
@@ -254,7 +254,7 @@ export default function EventsManager({ listingId, initialEvents }: Props) {
                     {timeStr}
                     {timeStr && ev.price != null && " · "}
                     {ev.price != null ? `${ev.price} lei` : null}
-                    {!timeStr && ev.price == null ? formatDate(ev.date) : null}
+                    {!timeStr && ev.price == null ? formatDate(ev.event_date) : null}
                   </p>
                   {ev.description && (
                     <p className="text-xs text-gray-400 mt-0.5 line-clamp-1">{ev.description}</p>

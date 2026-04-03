@@ -8,7 +8,7 @@ interface EventPayload {
   listing_id: string;
   title: string;
   description: string | null;
-  date: string;
+  event_date: string;
   start_time: string | null;
   end_time: string | null;
   price: number | null;

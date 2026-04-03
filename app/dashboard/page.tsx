@@ -67,7 +67,7 @@ export default async function DashboardPage({
     .from("events")
     .select("*")
     .eq("listing_id", activeListingId)
-    .order("date", { ascending: true });
+    .order("event_date", { ascending: true });
 
   // Fetch reviews
   const { data: reviews } = await adminClient
