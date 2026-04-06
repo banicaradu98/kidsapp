@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import Navbar from "./components/Navbar";
 import AutoOpenAuth from "./components/AutoOpenAuth";
 import ScrollReveal from "./components/ScrollReveal";
+import SearchBar from "./components/SearchBar";
 import { adminClient } from "@/utils/supabase/admin";
 import type { Metadata } from "next";
 
@@ -47,10 +48,12 @@ const CATEGORIES = [
 ];
 
 const POPULAR_TAGS = [
-  { icon: "🛝", label: "Loc de joacă", href: "/locuri-de-joaca" },
-  { icon: "🎨", label: "Atelier weekend", href: "/cursuri-ateliere" },
-  { icon: "🏊", label: "Înot", href: "/sport" },
-  { icon: "🎭", label: "Teatru", href: "/spectacole" },
+  { icon: "🛝", label: "Loc de joacă", href: "/cauta?q=loc+de+joaca" },
+  { icon: "🎨", label: "Atelier",       href: "/cauta?q=atelier" },
+  { icon: "🏊", label: "Înot",          href: "/cauta?q=inot" },
+  { icon: "🎭", label: "Teatru",        href: "/cauta?q=teatru" },
+  { icon: "⚽", label: "Fotbal",        href: "/cauta?q=fotbal" },
+  { icon: "🤖", label: "Robotică",      href: "/cauta?q=robotica" },
 ];
 
 export default async function Home() {
@@ -172,21 +175,7 @@ export default async function Home() {
           </p>
 
           {/* Search bar */}
-          <div className="max-w-xl mx-auto">
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center bg-white rounded-2xl shadow-[0_8px_32px_rgba(255,90,46,0.12)] border-2 border-transparent focus-within:border-[#ff5a2e] overflow-hidden transition-all duration-200">
-              <div className="flex items-center flex-1 px-4 py-1">
-                <span className="text-gray-400 text-xl mr-3 shrink-0">🔍</span>
-                <input
-                  type="text"
-                  placeholder="Caută activități, locuri, cursuri..."
-                  className="flex-1 py-4 text-base font-medium text-gray-700 placeholder-gray-400 outline-none bg-transparent"
-                />
-              </div>
-              <button className="bg-[#ff5a2e] hover:bg-[#f03d12] active:scale-[0.98] text-white font-bold px-6 py-4 text-base transition-all sm:m-2 sm:rounded-xl sm:py-3 whitespace-nowrap">
-                Caută
-              </button>
-            </div>
-          </div>
+          <SearchBar />
 
           {/* Popular tags */}
           <div className="flex flex-wrap justify-center gap-2 mt-5">
