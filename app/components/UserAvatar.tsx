@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 
 interface Props {
   avatarUrl?: string | null;
@@ -13,7 +14,7 @@ export default function UserAvatar({ avatarUrl, initials, size }: Props) {
 
   if (avatarUrl && !imgError) {
     return (
-      <img
+      <Image
         src={avatarUrl}
         alt={initials}
         width={size}

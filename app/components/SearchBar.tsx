@@ -145,7 +145,7 @@ export default function SearchBar({ initialQuery = "" }: { initialQuery?: string
             onClick={() => { setOpen(false); router.push(`/cauta?q=${encodeURIComponent(query.trim())}`); }}
             className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-orange-50 hover:bg-orange-100 text-[#ff5a2e] text-sm font-bold transition-colors border-t border-orange-100"
           >
-            🔍 Vezi toate rezultatele pentru „{query.trim()}"
+            🔍 Vezi toate rezultatele pentru &bdquo;{query.trim()}&rdquo;
           </button>
         </div>
       )}

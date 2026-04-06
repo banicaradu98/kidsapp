@@ -153,7 +153,7 @@ export default async function CautaPage({
           /* No results */
           <div>
             <h1 className="text-xl font-black text-[#1a1a2e] mb-1">
-              Nu am găsit nimic pentru „{q}"
+              Nu am găsit nimic pentru &bdquo;{q}&rdquo;
             </h1>
             <p className="text-gray-400 font-medium mb-8">
               Încearcă: robotică, balet, înot, teatru, fotbal…
@@ -186,7 +186,7 @@ export default async function CautaPage({
             <div className="flex items-center justify-between gap-4 mb-5 flex-wrap">
               <h1 className="text-xl font-black text-[#1a1a2e]">
                 <span className="text-[#ff5a2e]">{totalCount}</span>{" "}
-                {totalCount === 1 ? "rezultat" : "rezultate"} pentru „{q}"
+                {totalCount === 1 ? "rezultat" : "rezultate"} pentru &bdquo;{q}&rdquo;
               </h1>
             </div>
 
