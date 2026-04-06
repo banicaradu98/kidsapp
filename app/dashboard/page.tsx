@@ -5,6 +5,7 @@ import Navbar from "@/app/components/Navbar";
 import ListingEditor from "./ListingEditor";
 import EventsManager from "./EventsManager";
 import EventCalendar from "./EventCalendar";
+import UpdatesManager from "./UpdatesManager";
 import ReviewsPanel from "./ReviewsPanel";
 import StatsPanel from "./StatsPanel";
 import { adminClient } from "@/utils/supabase/admin";
@@ -69,6 +70,13 @@ export default async function DashboardPage({
     .select("*")
     .eq("listing_id", activeListingId)
     .order("event_date", { ascending: true });
+
+  // Fetch updates (all, including expired — dashboard shows full history)
+  const { data: updates } = await adminClient
+    .from("listing_updates")
+    .select("*")
+    .eq("listing_id", activeListingId)
+    .order("created_at", { ascending: false });
 
   // Fetch reviews
   const { data: reviews } = await adminClient
@@ -152,6 +160,8 @@ export default async function DashboardPage({
         <EventsManager listingId={listing.id} initialEvents={events ?? []} />
 
         <EventCalendar events={events ?? []} />
+
+        <UpdatesManager listingId={listing.id} initialUpdates={updates ?? []} />
 
         <ReviewsPanel reviews={reviewList} listingId={listing.id} organizerId={user.id} />
 

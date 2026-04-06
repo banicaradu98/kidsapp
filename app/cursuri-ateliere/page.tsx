@@ -2,8 +2,14 @@ import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
 import CategoryShell from "@/app/components/CategoryShell";
 import FilteredCursuri from "./FilteredCursuri";
+import { getListingBadges } from "@/utils/getListingBadges";
 
-export const metadata = { title: "Cursuri & Ateliere pentru Copii în Sibiu — KidsApp" };
+export const metadata = {
+  title: "Cursuri și Ateliere pentru Copii în Sibiu",
+  description: "Cursuri de desen, muzică, robotică, dans, limbi străine și ateliere creative pentru copii din Sibiu. Descoperă activitățile potrivite pentru copilul tău.",
+  alternates: { canonical: "/cursuri-ateliere" },
+  openGraph: { title: "Cursuri și Ateliere pentru Copii în Sibiu — KidsApp", description: "Desen, muzică, robotică, dans și ateliere creative pentru copii în Sibiu.", url: "/cursuri-ateliere" },
+};
 
 export default async function CursuriAtelierePage() {
   const supabase = createClient(await cookies());
@@ -14,7 +20,9 @@ export default async function CursuriAtelierePage() {
     .order("is_featured", { ascending: false })
     .order("name");
 
-  const items = listings ?? [];
+  const raw = listings ?? [];
+  const badges = await getListingBadges(raw.map((l) => l.id));
+  const items = raw.map((l) => ({ ...l, hot_badge: badges[l.id] ?? null }));
 
   return (
     <CategoryShell

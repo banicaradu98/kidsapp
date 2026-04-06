@@ -2,6 +2,7 @@ import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { adminClient } from "@/utils/supabase/admin";
+import type { Metadata } from "next";
 import DescriptionCollapse from "./DescriptionCollapse";
 import ListingGallery from "./ListingGallery";
 import ReviewSection from "./ReviewSection";
@@ -20,6 +21,32 @@ const CATEGORY_META: Record<string, { emoji: string; label: string; tagColor: st
 };
 const DEFAULT_META = { emoji: "📍", label: "Activitate", tagColor: "bg-gray-100 text-gray-700", gradientFrom: "from-gray-100", gradientTo: "to-gray-200" };
 
+const UPDATE_TYPE_META: Record<string, { emoji: string; bg: string; text: string; border: string }> = {
+  noutate:           { emoji: "ℹ️",  bg: "bg-blue-50",   text: "text-blue-700",   border: "border-blue-100"   },
+  reducere:          { emoji: "🔥", bg: "bg-red-50",    text: "text-red-700",    border: "border-red-100"    },
+  grupa_noua:        { emoji: "👥", bg: "bg-green-50",  text: "text-green-700",  border: "border-green-100"  },
+  schimbare:         { emoji: "📍", bg: "bg-purple-50", text: "text-purple-700", border: "border-purple-100" },
+  eveniment_special: { emoji: "🎉", bg: "bg-yellow-50", text: "text-yellow-700", border: "border-yellow-100" },
+  inchis_temporar:   { emoji: "🔒", bg: "bg-gray-50",   text: "text-gray-600",   border: "border-gray-200"   },
+};
+
+function updateRelativeTime(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `acum ${mins} min`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `acum ${hrs}h`;
+  const days = Math.floor(hrs / 24);
+  if (days === 1) return "ieri";
+  if (days < 30) return `acum ${days} zile`;
+  const months = Math.floor(days / 30);
+  return `acum ${months} ${months === 1 ? "lună" : "luni"}`;
+}
+
+function updateDaysUntil(dateStr: string): number {
+  return Math.ceil((new Date(dateStr).getTime() - Date.now()) / 86400000);
+}
+
 function formatAge(min: number | null, max: number | null) {
   if (min == null && max == null) return null;
   if (min == null) return `până la ${max} ani`;
@@ -32,6 +59,45 @@ function whatsappLink(phone: string | null) {
   const digits = phone.replace(/\D/g, "");
   const intl = digits.startsWith("0") ? "4" + digits : digits;
   return `https://wa.me/${intl}`;
+}
+
+export async function generateMetadata(
+  { params }: { params: { id: string } }
+): Promise<Metadata> {
+  const { data: listing } = await adminClient
+    .from("listings")
+    .select("name, description, images, address, category")
+    .eq("id", params.id)
+    .single();
+
+  if (!listing) return { title: "Locație negăsită" };
+
+  const title = listing.name;
+  const description = listing.description
+    ? listing.description.slice(0, 160)
+    : `${listing.name} — activitate pentru copii în Sibiu.`;
+  const coverImg = listing.images?.[0] ?? null;
+
+  return {
+    title,
+    description,
+    alternates: { canonical: `/listing/${params.id}` },
+    openGraph: {
+      title: `${title} — KidsApp Sibiu`,
+      description,
+      url: `/listing/${params.id}`,
+      type: "website",
+      ...(coverImg
+        ? { images: [{ url: coverImg, width: 1200, height: 630, alt: listing.name }] }
+        : {}),
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${title} — KidsApp Sibiu`,
+      description,
+      ...(coverImg ? { images: [coverImg] } : {}),
+    },
+  };
 }
 
 export default async function ListingDetailPage({ params }: { params: { id: string } }) {
@@ -77,8 +143,49 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
 
   const upcomingEvents = upcomingEventsRaw ?? [];
 
+  // Fetch active listing updates (public RLS allows anon read)
+  const nowIso = new Date().toISOString();
+  const { data: listingUpdatesRaw } = await supabase
+    .from("listing_updates")
+    .select("id, type, title, message, expires_at, created_at")
+    .eq("listing_id", params.id)
+    .or(`expires_at.is.null,expires_at.gt.${nowIso}`)
+    .order("created_at", { ascending: false })
+    .limit(10);
+
+  const listingUpdates = listingUpdatesRaw ?? [];
+
+  // JSON-LD structured data
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://kidsapp.ro";
+  const schemaType =
+    listing.category === "educatie" ? "ChildCare" :
+    listing.category === "spectacol" ? "PerformingArtsTheater" :
+    "LocalBusiness";
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": schemaType,
+    name: listing.name,
+    description: listing.description ?? undefined,
+    url: `${siteUrl}/listing/${listing.id}`,
+    ...(listing.address
+      ? { address: { "@type": "PostalAddress", streetAddress: listing.address, addressLocality: listing.city ?? "Sibiu", addressCountry: "RO" } }
+      : {}),
+    ...(listing.phone ? { telephone: listing.phone } : {}),
+    ...(listing.website ? { sameAs: [listing.website] } : {}),
+    ...(listing.images?.[0] ? { image: listing.images[0] } : {}),
+    ...(listing.price ? { priceRange: listing.price } : {}),
+    ...(avgRating !== null
+      ? { aggregateRating: { "@type": "AggregateRating", ratingValue: avgRating.toFixed(1), reviewCount: reviewList.length, bestRating: 5, worstRating: 1 } }
+      : {}),
+  };
+
   return (
     <div className="min-h-screen bg-white">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <ViewTracker listingId={listing.id} />
       <Navbar />
 
@@ -176,6 +283,46 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
                   <p className="text-sm font-semibold text-gray-700 whitespace-pre-line leading-relaxed">
                     {listing.price_details}
                   </p>
+                </div>
+              </section>
+            )}
+
+            {/* Noutăți & Statusuri */}
+            {listingUpdates.length > 0 && (
+              <section className="mb-6">
+                <h3 className="text-lg font-black text-[#1a1a2e] mb-3">📢 Noutăți & Statusuri</h3>
+                <div className="flex flex-col gap-3">
+                  {listingUpdates.map((upd) => {
+                    const tm = UPDATE_TYPE_META[upd.type] ?? UPDATE_TYPE_META["noutate"];
+                    const daysLeft = upd.expires_at ? updateDaysUntil(upd.expires_at) : null;
+                    return (
+                      <div key={upd.id} className={`${tm.bg} border ${tm.border} rounded-2xl p-4`}>
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-start gap-3 min-w-0">
+                            <span className="text-xl mt-0.5 shrink-0">{tm.emoji}</span>
+                            <div className="min-w-0">
+                              {upd.title && (
+                                <p className={`font-black text-sm leading-snug ${tm.text} mb-1`}>{upd.title}</p>
+                              )}
+                              {upd.message && (
+                                <p className="text-sm font-medium text-gray-600 leading-relaxed">{upd.message}</p>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-end gap-1 shrink-0">
+                            <span className="text-xs font-semibold text-gray-400 whitespace-nowrap">
+                              {updateRelativeTime(upd.created_at)}
+                            </span>
+                            {daysLeft !== null && daysLeft <= 7 && (
+                              <span className="text-xs font-bold bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full whitespace-nowrap">
+                                Expiră în {daysLeft}z
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </section>
             )}

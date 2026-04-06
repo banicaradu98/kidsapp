@@ -5,6 +5,20 @@ import Navbar from "./components/Navbar";
 import AutoOpenAuth from "./components/AutoOpenAuth";
 import ScrollReveal from "./components/ScrollReveal";
 import { adminClient } from "@/utils/supabase/admin";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Ce facem cu copilul în Sibiu? — KidsApp",
+  description:
+    "Sute de activități, locuri de joacă și evenimente pentru copii din Sibiu. Găsește grădinițe, cursuri, ateliere, spectacole și locuri de joacă — gratuit pentru părinți.",
+  alternates: { canonical: "/" },
+  openGraph: {
+    title: "KidsApp Sibiu — Ce facem cu copilul în Sibiu?",
+    description:
+      "Sute de activități, locuri de joacă și evenimente pentru copii din Sibiu. Gratuit pentru părinți.",
+    url: "/",
+  },
+};
 
 const CATEGORY_META: Record<string, { emoji: string; label: string; shortLabel: string; tagColor: string; gradientFrom: string; gradientTo: string; iconBg: string }> = {
   "loc-de-joaca": { emoji: "🛝", label: "Locuri de joacă",   shortLabel: "Loc de joacă",   tagColor: "bg-orange-100 text-orange-700", gradientFrom: "from-orange-50", gradientTo: "to-orange-100", iconBg: "bg-orange-100" },

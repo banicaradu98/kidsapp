@@ -9,7 +9,12 @@ function formatDayHeader(iso: string) {
   });
 }
 
-export const metadata = { title: "Calendar Evenimente — KidsApp Sibiu" };
+export const metadata = {
+  title: "Calendar Evenimente Sibiu",
+  description: "Calendar complet cu spectacole, evenimente și activități pentru copii din Sibiu — următoarele 2 luni. Planifică ieșirile cu familia.",
+  alternates: { canonical: "/calendar" },
+  openGraph: { title: "Calendar Evenimente Copii Sibiu — KidsApp", description: "Spectacole, evenimente și activități pentru copii din Sibiu — calendar complet.", url: "/calendar" },
+};
 
 export default async function CalendarPage() {
   const supabase = createClient(await cookies());

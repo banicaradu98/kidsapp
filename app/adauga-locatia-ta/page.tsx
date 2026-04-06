@@ -1,6 +1,10 @@
 import SubmitForm from "./SubmitForm";
 
-export const metadata = { title: "Adaugă locația ta — KidsApp Sibiu" };
+export const metadata = {
+  title: "Adaugă locația ta",
+  description: "Adaugă grădinița, centrul de activități, locul de joacă sau atelierul tău pe KidsApp Sibiu. Gratuit. Ajungi la mii de părinți din Sibiu.",
+  alternates: { canonical: "/adauga-locatia-ta" },
+};
 
 export default function AdaugaLocatiaPage() {
   return (

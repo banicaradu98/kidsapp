@@ -2,8 +2,14 @@ import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
 import CategoryShell from "@/app/components/CategoryShell";
 import FilteredEducatie from "./FilteredEducatie";
+import { getListingBadges } from "@/utils/getListingBadges";
 
-export const metadata = { title: "Educație pentru Copii în Sibiu — KidsApp" };
+export const metadata = {
+  title: "Grădinițe și Educație în Sibiu",
+  description: "Grădinițe, after-school, creșe și centre educaționale pentru copii din Sibiu. Găsește locul potrivit pentru copilul tău.",
+  alternates: { canonical: "/educatie" },
+  openGraph: { title: "Grădinițe și Educație în Sibiu — KidsApp", description: "Grădinițe, after-school, creșe și centre educaționale în Sibiu.", url: "/educatie" },
+};
 
 export default async function EducatiePage() {
   const supabase = createClient(await cookies());
@@ -14,7 +20,9 @@ export default async function EducatiePage() {
     .order("is_verified", { ascending: false })
     .order("name");
 
-  const items = listings ?? [];
+  const raw = listings ?? [];
+  const badges = await getListingBadges(raw.map((l) => l.id));
+  const items = raw.map((l) => ({ ...l, hot_badge: badges[l.id] ?? null }));
 
   return (
     <CategoryShell

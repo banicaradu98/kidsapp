@@ -15,6 +15,7 @@ export interface Listing {
   is_verified?: boolean;
   images?: string[] | null;
   event_date?: string | null;
+  hot_badge?: { type: string; label: string; emoji: string; bg: string; text: string } | null;
 }
 
 export function formatAge(min: number | null, max: number | null) {
@@ -69,6 +70,11 @@ export default function ListingCard({ listing, variant = "default" }: { listing:
             <span className={`${meta.tagColor} text-xs font-bold px-2.5 py-1 rounded-full`}>{meta.label}</span>
             {listing.is_verified && (
               <span className="bg-green-100 text-green-700 text-xs font-bold px-2.5 py-1 rounded-full">✓ Verificat</span>
+            )}
+            {listing.hot_badge && (
+              <span className={`${listing.hot_badge.bg} ${listing.hot_badge.text} text-xs font-black px-2.5 py-1 rounded-full`}>
+                {listing.hot_badge.emoji} {listing.hot_badge.label}
+              </span>
             )}
             {age && (
               <span className="bg-blue-50 text-blue-600 text-xs font-bold px-2.5 py-1 rounded-full">👶 {age}</span>

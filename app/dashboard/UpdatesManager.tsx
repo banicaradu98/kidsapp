@@ -1,0 +1,256 @@
+"use client";
+
+import { useState } from "react";
+import { addUpdate, deleteUpdate } from "./updateActions";
+
+type UpdateType = "noutate" | "reducere" | "grupa_noua" | "schimbare" | "eveniment_special" | "inchis_temporar";
+
+interface ListingUpdate {
+  id: string;
+  listing_id: string;
+  type: UpdateType;
+  title: string;
+  message: string;
+  expires_at: string | null;
+  created_at: string;
+}
+
+interface Props {
+  listingId: string;
+  initialUpdates: ListingUpdate[];
+}
+
+const TYPE_META: Record<UpdateType, { emoji: string; label: string; bg: string; text: string }> = {
+  noutate:          { emoji: "ℹ️",  label: "Noutate generală",    bg: "bg-blue-50",   text: "text-blue-700"   },
+  reducere:         { emoji: "🔥", label: "Reducere flash",       bg: "bg-red-50",    text: "text-red-700"    },
+  grupa_noua:       { emoji: "👥", label: "Formăm grupă nouă",    bg: "bg-green-50",  text: "text-green-700"  },
+  schimbare:        { emoji: "📍", label: "Schimbare sediu",      bg: "bg-purple-50", text: "text-purple-700" },
+  eveniment_special:{ emoji: "🎉", label: "Eveniment special",    bg: "bg-yellow-50", text: "text-yellow-700" },
+  inchis_temporar:  { emoji: "🔒", label: "Închis temporar",      bg: "bg-gray-50",   text: "text-gray-600"   },
+};
+
+const TYPE_OPTIONS = Object.entries(TYPE_META) as [UpdateType, (typeof TYPE_META)[UpdateType]][];
+
+const inputCls = "w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700 outline-none focus:border-[#ff5a2e] focus:ring-2 focus:ring-[#ff5a2e]/20 transition-all bg-white";
+
+function relativeTime(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  const hours = Math.floor(mins / 60);
+  const days = Math.floor(hours / 24);
+  if (days >= 1) return `acum ${days} ${days === 1 ? "zi" : "zile"}`;
+  if (hours >= 1) return `acum ${hours} ${hours === 1 ? "oră" : "ore"}`;
+  if (mins >= 1) return `acum ${mins} min`;
+  return "chiar acum";
+}
+
+function daysUntil(dateStr: string): number {
+  return Math.ceil((new Date(dateStr).getTime() - Date.now()) / 86400000);
+}
+
+const emptyForm = { type: "noutate" as UpdateType, title: "", message: "", expires_at: "" };
+
+export default function UpdatesManager({ listingId, initialUpdates }: Props) {
+  const [updates, setUpdates] = useState<ListingUpdate[]>(initialUpdates);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState(emptyForm);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
+
+  function set<K extends keyof typeof emptyForm>(k: K, v: (typeof emptyForm)[K]) {
+    setForm((f) => ({ ...f, [k]: v }));
+  }
+
+  async function handleSave() {
+    if (!form.title.trim() || !form.message.trim()) {
+      setError("Titlul și mesajul sunt obligatorii.");
+      return;
+    }
+    setSaving(true);
+    setError(null);
+
+    const result = await addUpdate({
+      listing_id: listingId,
+      type: form.type,
+      title: form.title,
+      message: form.message,
+      expires_at: form.expires_at || null,
+    });
+
+    if (result.error || !result.data) {
+      setError(result.error ?? "Eroare la salvare.");
+      setSaving(false);
+      return;
+    }
+
+    setUpdates((prev) => [result.data as ListingUpdate, ...prev]);
+    setForm(emptyForm);
+    setShowForm(false);
+    setSaving(false);
+  }
+
+  async function handleDelete(id: string) {
+    if (!confirm("Ștergi această noutate?")) return;
+    setDeleting(id);
+    const { error: err } = await deleteUpdate(id, listingId);
+    if (!err) setUpdates((prev) => prev.filter((u) => u.id !== id));
+    setDeleting(null);
+  }
+
+  return (
+    <section className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h2 className="text-base font-black text-[#1a1a2e]">📣 Noutăți & Statusuri</h2>
+          <p className="text-xs font-medium text-gray-400 mt-0.5">Informații afișate pe pagina ta publică</p>
+        </div>
+        <button
+          onClick={() => { setShowForm(true); setError(null); }}
+          className="text-sm font-black text-[#ff5a2e] border border-[#ff5a2e] px-3 py-1.5 rounded-lg hover:bg-orange-50 transition-colors"
+        >
+          + Adaugă noutate
+        </button>
+      </div>
+
+      {showForm && (
+        <div className="bg-gray-50 rounded-2xl p-4 mb-4 flex flex-col gap-3">
+          <h3 className="text-sm font-black text-[#1a1a2e]">Noutate nouă</h3>
+
+          {/* Type select */}
+          <div>
+            <label className="block text-xs font-bold text-gray-500 mb-1.5">Tip *</label>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {TYPE_OPTIONS.map(([key, meta]) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => set("type", key)}
+                  className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 text-sm font-bold transition-all ${
+                    form.type === key
+                      ? "border-[#ff5a2e] bg-orange-50 text-[#ff5a2e]"
+                      : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
+                  }`}
+                >
+                  <span>{meta.emoji}</span>
+                  <span className="leading-tight text-xs">{meta.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Title */}
+          <div>
+            <label className="block text-xs font-bold text-gray-500 mb-1.5">
+              Titlu scurt * <span className="text-gray-400 font-medium">({form.title.length}/60)</span>
+            </label>
+            <input
+              value={form.title}
+              onChange={(e) => set("title", e.target.value.slice(0, 60))}
+              className={inputCls}
+              placeholder={`ex: ${TYPE_META[form.type].emoji} ${TYPE_META[form.type].label}`}
+            />
+          </div>
+
+          {/* Message */}
+          <div>
+            <label className="block text-xs font-bold text-gray-500 mb-1.5">
+              Mesaj * <span className="text-gray-400 font-medium">({form.message.length}/280)</span>
+            </label>
+            <textarea
+              value={form.message}
+              onChange={(e) => set("message", e.target.value.slice(0, 280))}
+              rows={3}
+              className={inputCls + " resize-none"}
+              placeholder="Detalii pentru părinți..."
+            />
+          </div>
+
+          {/* Expires at */}
+          <div>
+            <label className="block text-xs font-bold text-gray-500 mb-1.5">
+              Expiră la <span className="text-gray-400 font-medium">(opțional — lasă gol pentru permanent)</span>
+            </label>
+            <input
+              type="date"
+              value={form.expires_at}
+              onChange={(e) => set("expires_at", e.target.value)}
+              min={new Date().toISOString().split("T")[0]}
+              className={inputCls}
+            />
+          </div>
+
+          {error && <p className="text-sm font-bold text-red-500">⚠️ {error}</p>}
+
+          <div className="flex gap-3 justify-end">
+            <button
+              onClick={() => { setShowForm(false); setError(null); setForm(emptyForm); }}
+              className="text-sm font-bold text-gray-400 hover:text-gray-600"
+            >
+              Anulează
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="bg-[#ff5a2e] hover:bg-[#f03d12] disabled:opacity-60 text-white font-black text-sm px-4 py-2 rounded-xl transition-colors"
+            >
+              {saving ? "Salvare..." : "Publică noutatea"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {updates.length === 0 ? (
+        <div className="text-center py-8 text-gray-400">
+          <p className="text-3xl mb-2">📭</p>
+          <p className="font-bold">Nicio noutate publicată</p>
+          <p className="text-sm font-medium mt-1">
+            Anunță reduceri, grupe noi sau schimbări — părinții le văd instant pe pagina ta.
+          </p>
+        </div>
+      ) : (
+        <div className="flex flex-col divide-y divide-gray-50">
+          {updates.map((u) => {
+            const meta = TYPE_META[u.type];
+            const expiryDays = u.expires_at ? daysUntil(u.expires_at) : null;
+            const isExpired = expiryDays !== null && expiryDays <= 0;
+            return (
+              <div key={u.id} className={`py-3 flex items-start gap-3 ${isExpired ? "opacity-40" : ""}`}>
+                <div className={`w-9 h-9 rounded-xl ${meta.bg} flex items-center justify-center text-lg shrink-0`}>
+                  {meta.emoji}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-sm font-black text-[#1a1a2e]">{u.title}</p>
+                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${meta.bg} ${meta.text}`}>
+                      {meta.label}
+                    </span>
+                    {isExpired && (
+                      <span className="text-[10px] font-bold bg-gray-100 text-gray-400 px-2 py-0.5 rounded-full">
+                        Expirat
+                      </span>
+                    )}
+                    {!isExpired && expiryDays !== null && expiryDays <= 7 && (
+                      <span className="text-[10px] font-bold bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full">
+                        Expiră în {expiryDays}z
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500 font-medium mt-0.5 line-clamp-2">{u.message}</p>
+                  <p className="text-[10px] text-gray-400 font-medium mt-1">{relativeTime(u.created_at)}</p>
+                </div>
+                <button
+                  onClick={() => handleDelete(u.id)}
+                  disabled={deleting === u.id}
+                  className="text-xs font-bold text-gray-400 hover:text-red-500 transition-colors shrink-0 disabled:opacity-50"
+                >
+                  {deleting === u.id ? "..." : "Șterge"}
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
