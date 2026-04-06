@@ -548,7 +548,7 @@ export default async function Home() {
                       + Adaugă locația ta gratuit
                     </a>
                     <a
-                      href="#"
+                      href="/cum-functioneaza"
                       className="inline-block bg-orange-50 hover:bg-orange-100 text-[#ff5a2e] font-black px-6 py-4 rounded-2xl text-base transition-colors"
                     >
                       Cum funcționează?
