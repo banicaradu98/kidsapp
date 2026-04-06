@@ -48,21 +48,26 @@ function toInputDate(dateStr: string): string {
   return `${y}-${m}-${day}`;
 }
 
+// Upload a single image; supports both new events (listing_id only) and existing events (event_id)
 async function uploadImage(
   file: File,
-  eventId: string,
-  type: "thumbnail" | "gallery",
-  galleryIndex?: number
+  opts: { eventId: string; type: "thumbnail" | "gallery"; galleryIndex?: number } |
+        { listingId: string; type: "thumbnail" | "gallery"; galleryIndex?: number }
 ): Promise<string | null> {
   const fd = new FormData();
   fd.append("file", file);
-  fd.append("event_id", eventId);
-  fd.append("type", type);
-  if (type === "gallery" && galleryIndex !== undefined) {
-    fd.append("gallery_index", String(galleryIndex));
+  if ("eventId" in opts) {
+    fd.append("event_id", opts.eventId);
+  } else {
+    fd.append("listing_id", opts.listingId);
+  }
+  fd.append("type", opts.type);
+  if (opts.type === "gallery" && opts.galleryIndex !== undefined) {
+    fd.append("gallery_index", String(opts.galleryIndex));
   }
   const res = await fetch("/api/upload-event", { method: "POST", body: fd });
   const json = await res.json();
+  if (json.error) console.error("[upload-event]", json.error);
   return json.url ?? null;
 }
 
@@ -127,6 +132,7 @@ export default function EventsManager({ listingId, initialEvents }: Props) {
     if (!file) return;
     setThumbnailFile(file);
     setThumbnailPreview(URL.createObjectURL(file));
+    e.target.value = "";
   }
 
   function onGalleryChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -155,7 +161,7 @@ export default function EventsManager({ listingId, initialEvents }: Props) {
     setSaving(true);
     setError(null);
 
-    const payload = {
+    const basePayload = {
       listing_id: listingId,
       title: form.title.trim(),
       description: form.description.trim() || null,
@@ -165,53 +171,78 @@ export default function EventsManager({ listingId, initialEvents }: Props) {
       price: form.price !== "" ? Number(form.price) : null,
     };
 
-    const result = editingId
-      ? await updateEvent(editingId, payload)
-      : await addEvent(payload);
+    if (!editingId) {
+      // ── NEW EVENT: upload photos first, then insert with URLs ──
+      let thumbUrl: string | null = null;
+      const newGalleryUrls: string[] = [];
 
-    if (result.error || !result.data) {
-      setError(result.error ?? "Eroare la salvare.");
-      setSaving(false);
-      return;
-    }
+      if (thumbnailFile) {
+        thumbUrl = await uploadImage(thumbnailFile, { listingId, type: "thumbnail" });
+      }
+      for (let i = 0; i < galleryFiles.length; i++) {
+        const url = await uploadImage(galleryFiles[i], { listingId, type: "gallery", galleryIndex: i });
+        if (url) newGalleryUrls.push(url);
+      }
 
-    const savedId = result.data.id;
+      const result = await addEvent({
+        ...basePayload,
+        thumbnail_url: thumbUrl,
+        gallery_urls: newGalleryUrls,
+      });
 
-    // Upload images
-    let finalThumbnail: string | null = existingThumbnail;
-    let finalGallery: string[] = [...existingGallery];
+      if (result.error || !result.data) {
+        setError(result.error ?? "Eroare la salvare.");
+        setSaving(false);
+        return;
+      }
 
-    if (thumbnailFile) {
-      const url = await uploadImage(thumbnailFile, savedId, "thumbnail");
-      if (url) finalThumbnail = url;
-    }
+      const newEvent: Event = {
+        ...result.data,
+        thumbnail_url: thumbUrl,
+        gallery_urls: newGalleryUrls,
+      };
+      setEvents((prev) => [...prev, newEvent].sort((a, b) => a.event_date.localeCompare(b.event_date)));
 
-    for (let i = 0; i < galleryFiles.length; i++) {
-      const url = await uploadImage(galleryFiles[i], savedId, "gallery", existingGallery.length + i);
-      if (url) finalGallery = [...finalGallery, url];
-    }
+    } else {
+      // ── EDIT: update event, then upload new images with event_id ──
+      const result = await updateEvent(editingId, basePayload);
 
-    if (thumbnailFile || galleryFiles.length > 0 || existingGallery.length !== (result.data.gallery_urls ?? []).length) {
+      if (result.error || !result.data) {
+        setError(result.error ?? "Eroare la salvare.");
+        setSaving(false);
+        return;
+      }
+
+      const savedId = result.data.id;
+      let finalThumbnail: string | null = existingThumbnail;
+      let finalGallery: string[] = [...existingGallery];
+
+      if (thumbnailFile) {
+        const url = await uploadImage(thumbnailFile, { eventId: savedId, type: "thumbnail" });
+        if (url) finalThumbnail = url;
+      }
+      for (let i = 0; i < galleryFiles.length; i++) {
+        const url = await uploadImage(galleryFiles[i], { eventId: savedId, type: "gallery", galleryIndex: existingGallery.length + i });
+        if (url) finalGallery = [...finalGallery, url];
+      }
+
+      // Always sync images when editing (covers removal of existing images too)
       await updateEventImages(savedId, listingId, finalThumbnail, finalGallery);
-    }
 
-    const updatedEvent: Event = {
-      ...result.data,
-      thumbnail_url: finalThumbnail,
-      gallery_urls: finalGallery,
-    };
-
-    if (editingId) {
+      const updatedEvent: Event = {
+        ...result.data,
+        thumbnail_url: finalThumbnail,
+        gallery_urls: finalGallery,
+      };
       setEvents((prev) =>
         prev.map((e) => e.id === editingId ? updatedEvent : e)
             .sort((a, b) => a.event_date.localeCompare(b.event_date))
       );
-    } else {
-      setEvents((prev) => [...prev, updatedEvent].sort((a, b) => a.event_date.localeCompare(b.event_date)));
     }
 
     setShowForm(false);
     setSaving(false);
+    resetImageState();
   }
 
   async function handleDelete(id: string) {
@@ -310,109 +341,111 @@ export default function EventsManager({ listingId, initialEvents }: Props) {
             />
           </div>
 
-          {/* Thumbnail */}
-          <div>
-            <label className="block text-xs font-bold text-gray-500 mb-1.5">Imagine principală</label>
-            <div className="flex items-center gap-3">
-              {(thumbnailPreview || existingThumbnail) ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={thumbnailPreview ?? existingThumbnail!}
-                  alt=""
-                  className="w-16 h-16 rounded-xl object-cover border border-gray-200"
-                />
-              ) : (
-                <div className="w-16 h-16 rounded-xl bg-gray-100 flex items-center justify-center text-2xl border border-dashed border-gray-300">
-                  📅
-                </div>
-              )}
-              <div className="flex flex-col gap-1">
-                <button
-                  type="button"
-                  onClick={() => thumbInputRef.current?.click()}
-                  className="text-xs font-bold text-[#ff5a2e] hover:underline"
-                >
-                  {thumbnailPreview || existingThumbnail ? "Schimbă imaginea" : "Adaugă imagine"}
-                </button>
-                {(thumbnailPreview || existingThumbnail) && (
+          {/* ── FOTOGRAFII ── */}
+          <div className="border-t border-gray-200 pt-3">
+            <p className="text-xs font-black text-gray-500 mb-3">Fotografii eveniment</p>
+
+            {/* Thumbnail */}
+            <div className="mb-3">
+              <label className="block text-xs font-bold text-gray-400 mb-1.5">Imagine principală</label>
+              <div className="flex items-center gap-3">
+                {(thumbnailPreview || existingThumbnail) ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={thumbnailPreview ?? existingThumbnail!}
+                    alt=""
+                    className="w-16 h-16 rounded-xl object-cover border border-gray-200 shrink-0"
+                  />
+                ) : (
+                  <div className="w-16 h-16 rounded-xl bg-gray-100 flex items-center justify-center text-2xl border border-dashed border-gray-300 shrink-0">
+                    📅
+                  </div>
+                )}
+                <div className="flex flex-col gap-1">
                   <button
                     type="button"
-                    onClick={() => { setThumbnailFile(null); setThumbnailPreview(null); setExistingThumbnail(null); }}
-                    className="text-xs font-bold text-red-400 hover:underline"
+                    onClick={() => thumbInputRef.current?.click()}
+                    className="text-xs font-bold text-[#ff5a2e] hover:underline text-left"
                   >
-                    Șterge
+                    {thumbnailPreview || existingThumbnail ? "Schimbă imaginea" : "Adaugă imagine"}
+                  </button>
+                  {(thumbnailPreview || existingThumbnail) && (
+                    <button
+                      type="button"
+                      onClick={() => { setThumbnailFile(null); setThumbnailPreview(null); setExistingThumbnail(null); }}
+                      className="text-xs font-bold text-red-400 hover:underline text-left"
+                    >
+                      Șterge
+                    </button>
+                  )}
+                  <p className="text-[10px] text-gray-400">JPG, PNG, WebP · max 5MB</p>
+                </div>
+              </div>
+              <input
+                ref={thumbInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                onChange={onThumbnailChange}
+              />
+            </div>
+
+            {/* Gallery */}
+            <div>
+              <label className="block text-xs font-bold text-gray-400 mb-1.5">
+                Galerie ({totalGallery}/3 poze)
+              </label>
+              <div className="flex items-center gap-2 flex-wrap">
+                {existingGallery.map((url, i) => (
+                  <div key={`eg${i}`} className="relative w-16 h-16">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={url} alt="" className="w-16 h-16 rounded-xl object-cover border border-gray-200" />
+                    <button
+                      type="button"
+                      onClick={() => removeExistingGallery(i)}
+                      className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center leading-none"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+                {galleryPreviews.map((url, i) => (
+                  <div key={`ng${i}`} className="relative w-16 h-16">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={url} alt="" className="w-16 h-16 rounded-xl object-cover border border-orange-200" />
+                    <button
+                      type="button"
+                      onClick={() => removeNewGallery(i)}
+                      className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center leading-none"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+                {totalGallery < 3 && (
+                  <button
+                    type="button"
+                    onClick={() => galleryInputRef.current?.click()}
+                    className="w-16 h-16 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 hover:border-[#ff5a2e] hover:text-[#ff5a2e] transition-colors text-xl"
+                  >
+                    +
                   </button>
                 )}
-                <p className="text-[10px] text-gray-400">JPG, PNG, WebP · max 5MB</p>
               </div>
+              <input
+                ref={galleryInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                multiple
+                className="hidden"
+                onChange={onGalleryChange}
+              />
             </div>
-            <input
-              ref={thumbInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              className="hidden"
-              onChange={onThumbnailChange}
-            />
-          </div>
-
-          {/* Gallery */}
-          <div>
-            <label className="block text-xs font-bold text-gray-500 mb-1.5">
-              Galerie ({totalGallery}/3 poze extra)
-            </label>
-            <div className="flex items-center gap-2 flex-wrap">
-              {/* Existing gallery */}
-              {existingGallery.map((url, i) => (
-                <div key={`eg${i}`} className="relative w-16 h-16">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={url} alt="" className="w-16 h-16 rounded-xl object-cover border border-gray-200" />
-                  <button
-                    type="button"
-                    onClick={() => removeExistingGallery(i)}
-                    className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center"
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-              {/* New gallery previews */}
-              {galleryPreviews.map((url, i) => (
-                <div key={`ng${i}`} className="relative w-16 h-16">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={url} alt="" className="w-16 h-16 rounded-xl object-cover border border-orange-200" />
-                  <button
-                    type="button"
-                    onClick={() => removeNewGallery(i)}
-                    className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center"
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-              {/* Add button */}
-              {totalGallery < 3 && (
-                <button
-                  type="button"
-                  onClick={() => galleryInputRef.current?.click()}
-                  className="w-16 h-16 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 hover:border-[#ff5a2e] hover:text-[#ff5a2e] transition-colors text-xl"
-                >
-                  +
-                </button>
-              )}
-            </div>
-            <input
-              ref={galleryInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              multiple
-              className="hidden"
-              onChange={onGalleryChange}
-            />
           </div>
 
           {error && <p className="text-sm font-bold text-red-500">⚠️ {error}</p>}
 
-          <div className="flex gap-3 justify-end">
+          <div className="flex gap-3 justify-end pt-1">
             <button
               onClick={() => { setShowForm(false); setError(null); resetImageState(); }}
               className="text-sm font-bold text-gray-400 hover:text-gray-600"
@@ -453,7 +486,6 @@ export default function EventsManager({ listingId, initialEvents }: Props) {
 
             return (
               <div key={ev.id} className={`py-3 flex items-start gap-3 ${isPast ? "opacity-40" : ""}`}>
-                {/* Thumbnail or date badge */}
                 {ev.thumbnail_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img

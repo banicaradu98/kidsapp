@@ -12,17 +12,16 @@ interface EventPayload {
   start_time: string | null;
   end_time: string | null;
   price: number | null;
+  thumbnail_url?: string | null;
+  gallery_urls?: string[];
 }
 
 async function getVerifiedUser(listingId: string) {
   const supabase = createClient(await cookies());
   const { data: { user } } = await supabase.auth.getUser();
 
-  console.log("[eventActions] user.id:", user?.id ?? "null");
-
   if (!user) return { user: null, error: "Sesiune expirată. Reautentifică-te." };
 
-  // Verify ownership via adminClient (bypasses RLS — same pattern as dashboard/page.tsx)
   const { data: claim } = await adminClient
     .from("claims")
     .select("id")
@@ -40,17 +39,25 @@ export async function addEvent(payload: EventPayload) {
   const { user, error: authError } = await getVerifiedUser(payload.listing_id);
   if (authError || !user) return { data: null, error: authError ?? "Sesiune expirată." };
 
-  // Validate and convert date from YYYY-MM-DD (form input) to ISO timestamptz
   const dateObj = new Date(payload.event_date);
   if (isNaN(dateObj.getTime())) {
     return { data: null, error: "Data evenimentului nu este validă." };
   }
 
-  console.log("[eventActions] inserting event for listing:", payload.listing_id, "user:", user.id);
-
   const { data, error } = await adminClient
     .from("events")
-    .insert({ ...payload, event_date: dateObj.toISOString(), user_id: user.id })
+    .insert({
+      listing_id: payload.listing_id,
+      title: payload.title,
+      description: payload.description,
+      event_date: dateObj.toISOString(),
+      start_time: payload.start_time,
+      end_time: payload.end_time,
+      price: payload.price,
+      user_id: user.id,
+      thumbnail_url: payload.thumbnail_url ?? null,
+      gallery_urls: payload.gallery_urls ?? [],
+    })
     .select()
     .single();
 
@@ -67,7 +74,15 @@ export async function updateEvent(id: string, payload: EventPayload) {
 
   const { data, error } = await adminClient
     .from("events")
-    .update(payload)
+    .update({
+      listing_id: payload.listing_id,
+      title: payload.title,
+      description: payload.description,
+      event_date: payload.event_date,
+      start_time: payload.start_time,
+      end_time: payload.end_time,
+      price: payload.price,
+    })
     .eq("id", id)
     .select()
     .single();
