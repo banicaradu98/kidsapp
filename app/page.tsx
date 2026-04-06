@@ -3,16 +3,18 @@ import { cookies } from "next/headers";
 import { Suspense } from "react";
 import Navbar from "./components/Navbar";
 import AutoOpenAuth from "./components/AutoOpenAuth";
+import ScrollReveal from "./components/ScrollReveal";
+import { adminClient } from "@/utils/supabase/admin";
 
-const CATEGORY_META: Record<string, { emoji: string; label: string; tagColor: string; gradientFrom: string; gradientTo: string }> = {
-  "loc-de-joaca": { emoji: "🛝", label: "Loc de joacă",   tagColor: "bg-orange-100 text-orange-700", gradientFrom: "from-orange-50", gradientTo: "to-orange-100" },
-  "educatie":     { emoji: "🎓", label: "Educație",        tagColor: "bg-green-100 text-green-700",   gradientFrom: "from-green-50",  gradientTo: "to-green-100"  },
-  "curs-atelier": { emoji: "🎨", label: "Curs & Atelier", tagColor: "bg-purple-100 text-purple-700", gradientFrom: "from-purple-50", gradientTo: "to-purple-100" },
-  "sport":        { emoji: "⚽", label: "Sport",          tagColor: "bg-sky-100 text-sky-700",       gradientFrom: "from-sky-50",    gradientTo: "to-sky-100"    },
-  "spectacol":    { emoji: "🎭", label: "Spectacol",       tagColor: "bg-rose-100 text-rose-700",     gradientFrom: "from-rose-50",   gradientTo: "to-rose-100"   },
-  "eveniment":    { emoji: "🎪", label: "Eveniment",       tagColor: "bg-pink-100 text-pink-700",     gradientFrom: "from-pink-50",   gradientTo: "to-pink-100"   },
+const CATEGORY_META: Record<string, { emoji: string; label: string; shortLabel: string; tagColor: string; gradientFrom: string; gradientTo: string; iconBg: string }> = {
+  "loc-de-joaca": { emoji: "🛝", label: "Locuri de joacă",   shortLabel: "Loc de joacă",   tagColor: "bg-orange-100 text-orange-700", gradientFrom: "from-orange-50", gradientTo: "to-orange-100", iconBg: "bg-orange-100" },
+  "educatie":     { emoji: "🎓", label: "Educație",           shortLabel: "Educație",         tagColor: "bg-green-100 text-green-700",   gradientFrom: "from-green-50",  gradientTo: "to-green-100",  iconBg: "bg-green-100"  },
+  "curs-atelier": { emoji: "🎨", label: "Cursuri & Ateliere", shortLabel: "Cursuri",          tagColor: "bg-purple-100 text-purple-700", gradientFrom: "from-purple-50", gradientTo: "to-purple-100", iconBg: "bg-purple-100" },
+  "sport":        { emoji: "⚽", label: "Sport",             shortLabel: "Sport",            tagColor: "bg-sky-100 text-sky-700",       gradientFrom: "from-sky-50",    gradientTo: "to-sky-100",    iconBg: "bg-sky-100"    },
+  "spectacol":    { emoji: "🎭", label: "Spectacole",         shortLabel: "Spectacole",       tagColor: "bg-rose-100 text-rose-700",     gradientFrom: "from-rose-50",   gradientTo: "to-rose-100",   iconBg: "bg-rose-100"   },
+  "eveniment":    { emoji: "🎪", label: "Evenimente",         shortLabel: "Evenimente",       tagColor: "bg-pink-100 text-pink-700",     gradientFrom: "from-pink-50",   gradientTo: "to-pink-100",   iconBg: "bg-pink-100"   },
 };
-const DEFAULT_META = { emoji: "📍", label: "Activitate", tagColor: "bg-gray-100 text-gray-700", gradientFrom: "from-gray-50", gradientTo: "to-gray-100" };
+const DEFAULT_META = { emoji: "📍", label: "Activitate", shortLabel: "Activitate", tagColor: "bg-gray-100 text-gray-700", gradientFrom: "from-gray-50", gradientTo: "to-gray-100", iconBg: "bg-gray-100" };
 
 function formatAge(min: number | null, max: number | null) {
   if (min == null && max == null) return null;
@@ -21,25 +23,55 @@ function formatAge(min: number | null, max: number | null) {
   return `${min}–${max} ani`;
 }
 
-const categories = [
-  { icon: "🛝", label: "Locuri de joacă",   href: "/locuri-de-joaca",  bg: "bg-orange-50", border: "border-orange-200" },
-  { icon: "🎓", label: "Educație",           href: "/educatie",         bg: "bg-green-50",  border: "border-green-200"  },
-  { icon: "🎨", label: "Cursuri & Ateliere", href: "/cursuri-ateliere", bg: "bg-purple-50", border: "border-purple-200" },
-  { icon: "⚽", label: "Sport",             href: "/sport",            bg: "bg-sky-50",    border: "border-sky-200"    },
-  { icon: "🎭", label: "Spectacole",         href: "/spectacole",       bg: "bg-rose-50",   border: "border-rose-200"   },
-  { icon: "🎪", label: "Evenimente",         href: "/evenimente",       bg: "bg-pink-50",   border: "border-pink-200"   },
+const CATEGORIES = [
+  { key: "loc-de-joaca", href: "/locuri-de-joaca" },
+  { key: "educatie",     href: "/educatie" },
+  { key: "curs-atelier", href: "/cursuri-ateliere" },
+  { key: "sport",        href: "/sport" },
+  { key: "spectacol",    href: "/spectacole" },
+  { key: "eveniment",    href: "/evenimente" },
+];
+
+const POPULAR_TAGS = [
+  { icon: "🛝", label: "Loc de joacă", href: "/locuri-de-joaca" },
+  { icon: "🎨", label: "Atelier weekend", href: "/cursuri-ateliere" },
+  { icon: "🏊", label: "Înot", href: "/sport" },
+  { icon: "🎭", label: "Teatru", href: "/spectacole" },
 ];
 
 export default async function Home() {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
 
-  const { data: featured } = await supabase
+  // Category counts
+  const { data: allListingsForCount } = await supabase
     .from("listings")
-    .select("id, name, category, description, address, price, age_min, age_max")
+    .select("category")
+    .eq("is_verified", true);
+
+  const catCounts: Record<string, number> = {};
+  for (const l of allListingsForCount ?? []) {
+    if (l.category) catCounts[l.category] = (catCounts[l.category] ?? 0) + 1;
+  }
+
+  // Featured listings with images + reviews for rating
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: featuredRaw } = await supabase
+    .from("listings")
+    .select("id, name, category, description, address, price, age_min, age_max, images, reviews(rating)")
     .eq("is_featured", true)
     .order("created_at", { ascending: false })
     .limit(6);
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const featured = (featuredRaw ?? []).map((l: any) => {
+    const reviews = (l.reviews as { rating: number }[]) ?? [];
+    return {
+      ...l,
+      avgRating: reviews.length > 0 ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : null,
+      reviewCount: reviews.length,
+    };
+  });
 
   // Events this week
   const weekStart = new Date();
@@ -56,326 +88,511 @@ export default async function Home() {
     .order("event_date", { ascending: true })
     .limit(8);
 
-  const { data: weekOrgEvents } = await supabase
-    .from("organizer_events")
-    .select("id, title, event_date, price, image_url, listing_id, listings(id, name, address)")
+  const { data: weekOrgEvents } = await adminClient
+    .from("events")
+    .select("id, title, event_date, start_time, price, thumbnail_url, listing_id, listings(id, name, address)")
     .gte("event_date", weekStart.toISOString())
     .lte("event_date", weekEnd.toISOString())
     .order("event_date", { ascending: true })
     .limit(8);
 
   type WeekEvent = {
-    id: string; title: string; event_date: string; price: string | null;
-    image_url: string | null; href: string; address: string | null;
+    id: string; title: string; event_date: string; start_time: string | null;
+    price: string | null; image_url: string | null;
+    href: string; address: string | null;
+    listing_name: string | null; type: "listing" | "org";
   };
 
   const allWeekEvents: WeekEvent[] = [
     ...(weekListings ?? []).map((l) => ({
       id: `l-${l.id}`, title: l.name, event_date: l.event_date!,
+      start_time: null,
       price: l.price, image_url: l.images?.[0] ?? null,
       href: `/listing/${l.id}`, address: l.address,
+      listing_name: null, type: "listing" as const,
     })),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ...(weekOrgEvents ?? []).map((e: any) => ({
       id: `o-${e.id}`, title: e.title, event_date: e.event_date,
-      price: e.price, image_url: e.image_url,
-      href: `/listing/${e.listing_id}`, address: e.listings?.address ?? null,
+      start_time: e.start_time ?? null,
+      price: e.price != null ? `${e.price} lei` : null,
+      image_url: e.thumbnail_url ?? null,
+      href: `/listing/${e.listing_id}`,
+      address: e.listings?.address ?? null,
+      listing_name: e.listings?.name ?? null,
+      type: "org" as const,
     })),
   ].sort((a, b) => a.event_date.localeCompare(b.event_date)).slice(0, 8);
 
   return (
     <div className="min-h-screen bg-white">
       <Suspense><AutoOpenAuth /></Suspense>
-
       <Navbar />
 
       {/* ── HERO ── */}
-      <section className="bg-gradient-to-br from-[#fff4f0] via-[#fff8f5] to-white pt-10 pb-12 px-4 sm:pt-14 sm:pb-16">
-        <div className="max-w-3xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 bg-orange-100 text-orange-700 text-sm font-bold px-4 py-2 rounded-full mb-6">
+      <section className="relative bg-gradient-to-br from-[#fff4f0] via-[#fff8f5] to-white pt-12 pb-14 px-4 sm:pt-20 sm:pb-20 overflow-hidden">
+        {/* Dot pattern background */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundImage: "radial-gradient(circle, #ff5a2e 1.5px, transparent 1.5px)",
+            backgroundSize: "28px 28px",
+            opacity: 0.07,
+          }}
+        />
+        {/* Decorative blobs */}
+        <div className="absolute -top-16 -right-16 w-64 h-64 bg-[#ff5a2e] rounded-full opacity-[0.06] pointer-events-none" />
+        <div className="absolute bottom-0 -left-20 w-80 h-80 bg-[#ff5a2e] rounded-full opacity-[0.04] pointer-events-none" />
+
+        <div className="relative max-w-3xl mx-auto text-center">
+          <div className="inline-flex items-center gap-2 bg-orange-100 text-orange-700 text-sm font-bold px-4 py-2 rounded-full mb-6 shadow-sm">
             <span>📍</span> Sibiu, România
           </div>
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-[#1a1a2e] leading-tight mb-4 text-balance">
+
+          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-[#1a1a2e] leading-[1.08] mb-5 text-balance">
             Ce facem cu copilul<br />
             <span className="text-[#ff5a2e]">în Sibiu?</span>
           </h1>
-          <p className="text-gray-500 text-lg font-medium mb-8 max-w-xl mx-auto leading-relaxed">
+          <p className="text-gray-500 text-lg sm:text-xl font-medium mb-8 max-w-xl mx-auto leading-relaxed">
             Descoperă sute de activități, locuri de joacă și evenimente pentru copii de toate vârstele.
           </p>
 
-          {/* Search bar — stacked on mobile, inline on sm+ */}
+          {/* Search bar */}
           <div className="max-w-xl mx-auto">
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center bg-white rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.10)] border border-gray-100 overflow-hidden">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center bg-white rounded-2xl shadow-[0_8px_32px_rgba(255,90,46,0.12)] border-2 border-transparent focus-within:border-[#ff5a2e] overflow-hidden transition-all duration-200">
               <div className="flex items-center flex-1 px-4 py-1">
-                <span className="text-gray-400 text-xl mr-3">🔍</span>
+                <span className="text-gray-400 text-xl mr-3 shrink-0">🔍</span>
                 <input
                   type="text"
                   placeholder="Caută activități, locuri, cursuri..."
                   className="flex-1 py-4 text-base font-medium text-gray-700 placeholder-gray-400 outline-none bg-transparent"
                 />
               </div>
-              <button className="bg-[#ff5a2e] hover:bg-[#f03d12] text-white font-bold px-6 py-4 text-base transition-colors sm:m-2 sm:rounded-xl sm:py-3 whitespace-nowrap">
+              <button className="bg-[#ff5a2e] hover:bg-[#f03d12] active:scale-[0.98] text-white font-bold px-6 py-4 text-base transition-all sm:m-2 sm:rounded-xl sm:py-3 whitespace-nowrap">
                 Caută
               </button>
             </div>
           </div>
 
-          <p className="mt-5 text-base text-gray-400 font-medium">
-            Popular:{" "}
-            <span className="text-gray-600 cursor-pointer hover:text-[#ff5a2e] transition-colors">Loc de joacă</span>
-            {" · "}
-            <span className="text-gray-600 cursor-pointer hover:text-[#ff5a2e] transition-colors">Piscină</span>
-            {" · "}
-            <span className="text-gray-600 cursor-pointer hover:text-[#ff5a2e] transition-colors">Ateliere weekend</span>
-          </p>
+          {/* Popular tags */}
+          <div className="flex flex-wrap justify-center gap-2 mt-5">
+            <span className="text-sm text-gray-400 font-semibold self-center mr-1">Popular:</span>
+            {POPULAR_TAGS.map((tag) => (
+              <a
+                key={tag.label}
+                href={tag.href}
+                className="inline-flex items-center gap-1.5 bg-white hover:bg-orange-50 border border-gray-200 hover:border-[#ff5a2e] text-gray-600 hover:text-[#ff5a2e] text-sm font-bold px-3 py-1.5 rounded-full transition-all duration-150 shadow-sm active:scale-95"
+              >
+                <span>{tag.icon}</span> {tag.label}
+              </a>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* ── CATEGORIES ── */}
-      <section className="py-10 sm:py-12">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-2xl font-black text-[#1a1a2e] mb-5 px-4 sm:px-6">Explorează după categorie</h2>
-
-          {/* Mobile: horizontal scroll */}
-          <div className="flex gap-3 overflow-x-auto scrollbar-hide px-4 sm:px-6 pb-2 md:hidden">
-            {categories.map((cat) => (
-              <a
-                key={cat.label}
-                href={cat.href}
-                className={`flex-none ${cat.bg} border ${cat.border} rounded-2xl px-5 py-4 flex flex-col items-center gap-2 min-w-[100px] active:scale-95 transition-transform`}
-              >
-                <span className="text-3xl">{cat.icon}</span>
-                <span className="text-sm font-bold text-gray-700 text-center leading-tight whitespace-nowrap">{cat.label}</span>
-              </a>
-            ))}
-          </div>
-
-          {/* Desktop: grid */}
-          <div className="hidden md:grid grid-cols-3 lg:grid-cols-6 gap-3 px-6">
-            {categories.map((cat) => (
-              <a
-                key={cat.label}
-                href={cat.href}
-                className={`${cat.bg} border ${cat.border} rounded-2xl p-4 flex flex-col items-center gap-2 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group`}
-              >
-                <span className="text-3xl group-hover:scale-110 transition-transform duration-200">{cat.icon}</span>
-                <span className="text-sm font-bold text-gray-700 text-center leading-tight">{cat.label}</span>
-              </a>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── RECOMMENDED ── */}
-      <section className="pb-14 sm:pb-16">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex items-center justify-between mb-5 px-4 sm:px-6">
-            <h2 className="text-2xl font-black text-[#1a1a2e]">Recomandate această săptămână</h2>
-            <a href="#" className="text-base font-bold text-[#ff5a2e] hover:underline hidden sm:block shrink-0 ml-4">
-              Vezi toate →
-            </a>
-          </div>
-
-          {!featured || featured.length === 0 ? (
-            <p className="text-gray-400 font-medium text-center py-12 text-lg px-4">
-              Nicio activitate recomandată momentan. Revino curând!
-            </p>
-          ) : (
-            <>
-              {/* Mobile: horizontal scroll */}
-              <div className="flex gap-4 overflow-x-auto scrollbar-hide px-4 pb-3 md:hidden snap-x snap-mandatory">
-                {featured.map((listing) => {
-                  const meta = CATEGORY_META[listing.category ?? ""] ?? DEFAULT_META;
-                  const age = formatAge(listing.age_min, listing.age_max);
-                  const isFree = listing.price?.toLowerCase() === "gratuit";
-                  return (
-                    <a
-                      key={listing.id}
-                      href={`/listing/${listing.id}`}
-                      className="flex-none w-72 snap-start bg-white rounded-3xl shadow-[0_2px_16px_rgba(0,0,0,0.08)] border border-gray-100 overflow-hidden block active:scale-[.98] transition-transform"
-                    >
-                      <div className={`h-40 bg-gradient-to-br ${meta.gradientFrom} ${meta.gradientTo} flex items-center justify-center relative`}>
-                        <span className="text-6xl">{meta.emoji}</span>
-                        <span className={`absolute top-3 left-3 ${meta.tagColor} text-xs font-bold px-3 py-1 rounded-full`}>
-                          {meta.label}
-                        </span>
-                      </div>
-                      <div className="p-4">
-                        <h3 className="font-black text-[#1a1a2e] text-lg leading-snug mb-2">{listing.name}</h3>
-                        {listing.description && (
-                          <p className="text-gray-500 text-base font-medium leading-relaxed mb-3 line-clamp-2">
-                            {listing.description}
-                          </p>
-                        )}
-                        <div className="flex items-center justify-between">
-                          <div className="flex flex-col gap-1">
-                            {listing.address && <span className="text-sm text-gray-400 font-semibold">📍 {listing.address}</span>}
-                            {age && <span className="text-sm text-gray-400 font-semibold">👶 {age}</span>}
-                          </div>
-                          {listing.price && (
-                            <span className={`text-lg font-black ${isFree ? "text-green-600" : "text-[#ff5a2e]"}`}>
-                              {listing.price}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </a>
-                  );
-                })}
-              </div>
-
-              {/* Desktop: grid */}
-              <div className="hidden md:grid grid-cols-2 lg:grid-cols-3 gap-5 px-6">
-                {featured.map((listing) => {
-                  const meta = CATEGORY_META[listing.category ?? ""] ?? DEFAULT_META;
-                  const age = formatAge(listing.age_min, listing.age_max);
-                  const isFree = listing.price?.toLowerCase() === "gratuit";
-                  return (
-                    <a
-                      key={listing.id}
-                      href={`/listing/${listing.id}`}
-                      className="bg-white rounded-3xl shadow-[0_2px_16px_rgba(0,0,0,0.07)] hover:shadow-[0_8px_32px_rgba(0,0,0,0.13)] border border-gray-100 overflow-hidden transition-all duration-300 hover:-translate-y-1 group block"
-                    >
-                      <div className={`h-44 bg-gradient-to-br ${meta.gradientFrom} ${meta.gradientTo} flex items-center justify-center relative`}>
-                        <span className="text-6xl group-hover:scale-110 transition-transform duration-300">{meta.emoji}</span>
-                        <span className={`absolute top-3 left-3 ${meta.tagColor} text-xs font-bold px-3 py-1 rounded-full`}>
-                          {meta.label}
-                        </span>
-                      </div>
-                      <div className="p-5">
-                        <h3 className="font-black text-[#1a1a2e] text-lg leading-snug mb-3">{listing.name}</h3>
-                        {listing.description && (
-                          <p className="text-gray-500 text-base font-medium leading-relaxed mb-4 line-clamp-2">
-                            {listing.description}
-                          </p>
-                        )}
-                        <div className="flex items-center justify-between">
-                          <div className="flex flex-col gap-1">
-                            {listing.address && <span className="text-sm text-gray-400 font-semibold">📍 {listing.address}</span>}
-                            {age && <span className="text-sm text-gray-400 font-semibold">👶 {age}</span>}
-                          </div>
-                          {listing.price && (
-                            <span className={`text-lg font-black ${isFree ? "text-green-600" : "text-[#ff5a2e]"}`}>
-                              {listing.price}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </a>
-                  );
-                })}
-              </div>
-            </>
-          )}
-
-          <div className="mt-6 text-center md:hidden px-4">
-            <a href="#" className="inline-block w-full bg-orange-50 text-[#ff5a2e] font-black text-base py-4 rounded-2xl">
-              Vezi toate activitățile →
-            </a>
-          </div>
-        </div>
-      </section>
-
-      {/* ── EVENTS THIS WEEK ── */}
-      {allWeekEvents.length > 0 && (
-        <section className="pb-14 sm:pb-16">
+      <ScrollReveal>
+        <section className="py-12 sm:py-16">
           <div className="max-w-6xl mx-auto">
-            <div className="flex items-center justify-between mb-5 px-4 sm:px-6">
-              <h2 className="text-2xl font-black text-[#1a1a2e]">Ce se întâmplă săptămâna aceasta 📅</h2>
-              <a href="/calendar" className="text-base font-bold text-[#ff5a2e] hover:underline hidden sm:block shrink-0 ml-4">
-                Vezi tot calendarul →
+            <div className="flex items-center justify-between mb-6 px-4 sm:px-6">
+              <h2 className="text-2xl sm:text-3xl font-black text-[#1a1a2e]">Explorează după categorie</h2>
+            </div>
+
+            {/* Mobile tiny: horizontal scroll */}
+            <div className="flex gap-3 overflow-x-auto scrollbar-hide px-4 sm:px-6 pb-2 sm:hidden snap-x snap-mandatory">
+              {CATEGORIES.map((cat) => {
+                const meta = CATEGORY_META[cat.key];
+                const count = catCounts[cat.key] ?? 0;
+                return (
+                  <a
+                    key={cat.key}
+                    href={cat.href}
+                    className={`flex-none snap-start ${meta.iconBg} rounded-2xl p-4 flex flex-col items-center gap-2 min-w-[110px] active:scale-95 transition-transform border border-white hover:shadow-md`}
+                  >
+                    <span className="text-4xl">{meta.emoji}</span>
+                    <span className="text-sm font-black text-gray-700 text-center leading-tight">{meta.shortLabel}</span>
+                    {count > 0 && <span className="text-xs font-bold text-gray-400">{count} locuri</span>}
+                  </a>
+                );
+              })}
+            </div>
+
+            {/* sm+: 2-col grid → lg: 3-col grid */}
+            <div className="hidden sm:grid grid-cols-2 lg:grid-cols-3 gap-4 px-4 sm:px-6">
+              {CATEGORIES.map((cat, i) => {
+                const meta = CATEGORY_META[cat.key];
+                const count = catCounts[cat.key] ?? 0;
+                return (
+                  <a
+                    key={cat.key}
+                    href={cat.href}
+                    style={{ animationDelay: `${i * 60}ms` }}
+                    className={`group bg-gradient-to-br ${meta.gradientFrom} ${meta.gradientTo} rounded-3xl p-6 flex flex-col items-center gap-3 hover:shadow-[0_8px_32px_rgba(0,0,0,0.10)] hover:-translate-y-1.5 transition-all duration-250 border border-white`}
+                  >
+                    <div className={`w-16 h-16 ${meta.iconBg} rounded-2xl flex items-center justify-center text-4xl group-hover:scale-110 transition-transform duration-200 shadow-sm`}>
+                      {meta.emoji}
+                    </div>
+                    <div className="text-center">
+                      <p className="font-black text-[#1a1a2e] text-base leading-snug">{meta.label}</p>
+                      {count > 0 && (
+                        <p className="text-xs font-bold text-gray-400 mt-0.5">{count} {count === 1 ? "loc" : "locuri"}</p>
+                      )}
+                    </div>
+                    <span className={`text-xs font-bold px-3 py-1 rounded-full ${meta.tagColor} group-hover:opacity-100 opacity-0 transition-opacity duration-200`}>
+                      Explorează →
+                    </span>
+                  </a>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      </ScrollReveal>
+
+      {/* ── FEATURED ── */}
+      <ScrollReveal>
+        <section className="pb-14 sm:pb-16 bg-gray-50/60">
+          <div className="max-w-6xl mx-auto pt-12 sm:pt-16">
+            <div className="flex items-center justify-between mb-6 px-4 sm:px-6">
+              <div>
+                <h2 className="text-2xl sm:text-3xl font-black text-[#1a1a2e]">❤️ Recomandate de părinți</h2>
+                <p className="text-sm font-semibold text-gray-400 mt-0.5">Locuri iubite de familiile din Sibiu</p>
+              </div>
+              <a href="#" className="text-base font-bold text-[#ff5a2e] hover:underline hidden sm:block shrink-0 ml-4">
+                Vezi toate →
               </a>
             </div>
 
-            {/* Mobile: horizontal scroll */}
-            <div className="flex gap-4 overflow-x-auto scrollbar-hide px-4 pb-3 md:hidden snap-x snap-mandatory">
-              {allWeekEvents.map((ev) => {
-                const d = new Date(ev.event_date);
-                return (
-                  <a key={ev.id} href={ev.href}
-                    className="flex-none w-56 snap-start bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.08)] border border-gray-100 overflow-hidden block active:scale-[.98] transition-transform"
-                  >
-                    <div className="h-28 bg-rose-50 overflow-hidden relative">
-                      {ev.image_url
-                        ? <img src={ev.image_url} alt="" className="w-full h-full object-cover" />
-                        : <div className="w-full h-full flex items-center justify-center text-4xl">🎭</div>
-                      }
-                      <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm rounded-lg px-2 py-1 text-center">
-                        <p className="text-xs font-black text-[#ff5a2e] leading-none">{d.getDate()}</p>
-                        <p className="text-[9px] font-bold text-gray-400 uppercase">{d.toLocaleDateString("ro-RO",{month:"short"})}</p>
-                      </div>
-                    </div>
-                    <div className="p-3">
-                      <p className="font-black text-[#1a1a2e] text-sm leading-snug line-clamp-2">{ev.title}</p>
-                      <p className="text-xs text-gray-400 font-semibold mt-1">{d.toLocaleTimeString("ro-RO",{hour:"2-digit",minute:"2-digit"})}</p>
-                      {ev.price && <p className="text-sm font-black text-[#ff5a2e] mt-1">{ev.price}</p>}
-                    </div>
-                  </a>
-                );
-              })}
-            </div>
+            {!featured || featured.length === 0 ? (
+              <p className="text-gray-400 font-medium text-center py-12 text-lg px-4">
+                Nicio activitate recomandată momentan. Revino curând!
+              </p>
+            ) : (
+              <>
+                {/* Mobile: horizontal scroll */}
+                <div className="flex gap-4 overflow-x-auto scrollbar-hide px-4 pb-3 md:hidden snap-x snap-mandatory">
+                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                  {featured.map((listing: any) => {
+                    const meta = CATEGORY_META[listing.category ?? ""] ?? DEFAULT_META;
+                    const age = formatAge(listing.age_min, listing.age_max);
+                    const isFree = listing.price?.toLowerCase() === "gratuit";
+                    const coverImg = listing.images?.[0] ?? null;
+                    return (
+                      <a
+                        key={listing.id}
+                        href={`/listing/${listing.id}`}
+                        className="flex-none w-72 snap-start bg-white rounded-3xl shadow-[0_2px_16px_rgba(0,0,0,0.08)] border border-gray-100 overflow-hidden block active:scale-[.98] transition-transform"
+                      >
+                        <div className={`h-44 bg-gradient-to-br ${meta.gradientFrom} ${meta.gradientTo} overflow-hidden relative`}>
+                          {coverImg ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={coverImg} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <span className="text-6xl">{meta.emoji}</span>
+                            </div>
+                          )}
+                          <span className={`absolute top-3 left-3 ${meta.tagColor} text-xs font-bold px-3 py-1 rounded-full backdrop-blur-sm`}>
+                            {meta.emoji} {meta.shortLabel}
+                          </span>
+                          <span className="absolute top-3 right-3 bg-[#ff5a2e] text-white text-xs font-black px-2.5 py-1 rounded-full">
+                            ❤️ Top
+                          </span>
+                        </div>
+                        <div className="p-4">
+                          <h3 className="font-black text-[#1a1a2e] text-lg leading-snug mb-1">{listing.name}</h3>
+                          {listing.avgRating !== null && (
+                            <div className="flex items-center gap-1 mb-2">
+                              <span className="text-yellow-400 text-sm">{"★".repeat(Math.round(listing.avgRating))}</span>
+                              <span className="text-xs font-bold text-gray-600">{listing.avgRating.toFixed(1)}</span>
+                              <span className="text-xs text-gray-400">({listing.reviewCount})</span>
+                            </div>
+                          )}
+                          {listing.description && (
+                            <p className="text-gray-500 text-sm font-medium leading-relaxed mb-3 line-clamp-2">
+                              {listing.description}
+                            </p>
+                          )}
+                          <div className="flex items-center justify-between">
+                            <div className="flex flex-col gap-1">
+                              {listing.address && <span className="text-xs text-gray-400 font-semibold">📍 {listing.address}</span>}
+                              {age && <span className="text-xs text-gray-400 font-semibold">👶 {age}</span>}
+                            </div>
+                            {listing.price && (
+                              <span className={`text-base font-black ${isFree ? "text-green-600" : "text-[#ff5a2e]"}`}>
+                                {listing.price}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </a>
+                    );
+                  })}
+                </div>
 
-            {/* Desktop: grid */}
-            <div className="hidden md:grid grid-cols-2 lg:grid-cols-4 gap-4 px-6">
-              {allWeekEvents.map((ev) => {
-                const d = new Date(ev.event_date);
-                return (
-                  <a key={ev.id} href={ev.href}
-                    className="bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.07)] hover:shadow-[0_6px_24px_rgba(0,0,0,0.12)] border border-gray-100 overflow-hidden transition-all hover:-translate-y-0.5 group block"
-                  >
-                    <div className="h-32 bg-rose-50 overflow-hidden relative">
-                      {ev.image_url
-                        ? <img src={ev.image_url} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                        : <div className="w-full h-full flex items-center justify-center text-5xl">🎭</div>
-                      }
-                      <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm rounded-lg px-2.5 py-1.5 text-center">
-                        <p className="text-sm font-black text-[#ff5a2e] leading-none">{d.getDate()}</p>
-                        <p className="text-[10px] font-bold text-gray-400 uppercase">{d.toLocaleDateString("ro-RO",{month:"short"})}</p>
-                      </div>
-                    </div>
-                    <div className="p-4">
-                      <p className="font-black text-[#1a1a2e] text-sm leading-snug line-clamp-2 mb-1">{ev.title}</p>
-                      <p className="text-xs text-gray-400 font-semibold">{d.toLocaleTimeString("ro-RO",{hour:"2-digit",minute:"2-digit"})}</p>
-                      {ev.price && <p className="text-sm font-black text-[#ff5a2e] mt-1">{ev.price}</p>}
-                    </div>
-                  </a>
-                );
-              })}
-            </div>
+                {/* Desktop: grid */}
+                <div className="hidden md:grid grid-cols-2 lg:grid-cols-3 gap-5 px-6">
+                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                  {featured.map((listing: any) => {
+                    const meta = CATEGORY_META[listing.category ?? ""] ?? DEFAULT_META;
+                    const age = formatAge(listing.age_min, listing.age_max);
+                    const isFree = listing.price?.toLowerCase() === "gratuit";
+                    const coverImg = listing.images?.[0] ?? null;
+                    return (
+                      <a
+                        key={listing.id}
+                        href={`/listing/${listing.id}`}
+                        className="bg-white rounded-3xl shadow-[0_2px_16px_rgba(0,0,0,0.07)] hover:shadow-[0_12px_40px_rgba(0,0,0,0.12)] border border-gray-100 overflow-hidden transition-all duration-300 hover:-translate-y-1.5 group block"
+                      >
+                        <div className={`h-48 bg-gradient-to-br ${meta.gradientFrom} ${meta.gradientTo} overflow-hidden relative`}>
+                          {coverImg ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={coverImg} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-400" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <span className="text-7xl group-hover:scale-110 transition-transform duration-300">{meta.emoji}</span>
+                            </div>
+                          )}
+                          <span className={`absolute top-3 left-3 ${meta.tagColor} text-xs font-bold px-3 py-1 rounded-full backdrop-blur-sm`}>
+                            {meta.emoji} {meta.shortLabel}
+                          </span>
+                          <span className="absolute top-3 right-3 bg-[#ff5a2e] text-white text-xs font-black px-2.5 py-1 rounded-full shadow-sm">
+                            ❤️ Recomandat
+                          </span>
+                        </div>
+                        <div className="p-5">
+                          <h3 className="font-black text-[#1a1a2e] text-lg leading-snug mb-1">{listing.name}</h3>
+                          {listing.avgRating !== null && (
+                            <div className="flex items-center gap-1.5 mb-2">
+                              <span className="text-yellow-400">{"★".repeat(Math.round(listing.avgRating))}</span>
+                              <span className="text-sm font-bold text-gray-700">{listing.avgRating.toFixed(1)}</span>
+                              <span className="text-xs text-gray-400">({listing.reviewCount} recenzii)</span>
+                            </div>
+                          )}
+                          {listing.description && (
+                            <p className="text-gray-500 text-sm font-medium leading-relaxed mb-4 line-clamp-2">
+                              {listing.description}
+                            </p>
+                          )}
+                          <div className="flex items-center justify-between">
+                            <div className="flex flex-col gap-1">
+                              {listing.address && <span className="text-xs text-gray-400 font-semibold">📍 {listing.address}</span>}
+                              {age && <span className="text-xs text-gray-400 font-semibold">👶 {age}</span>}
+                            </div>
+                            {listing.price && (
+                              <span className={`text-lg font-black ${isFree ? "text-green-600" : "text-[#ff5a2e]"}`}>
+                                {listing.price}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </a>
+                    );
+                  })}
+                </div>
+              </>
+            )}
 
-            <div className="mt-4 text-center md:hidden px-4">
-              <a href="/calendar" className="inline-block w-full bg-rose-50 text-rose-600 font-black text-base py-4 rounded-2xl">
-                Vezi tot calendarul →
+            <div className="mt-6 text-center md:hidden px-4">
+              <a href="#" className="inline-block w-full bg-orange-50 text-[#ff5a2e] font-black text-base py-4 rounded-2xl">
+                Vezi toate activitățile →
               </a>
             </div>
           </div>
         </section>
-      )}
+      </ScrollReveal>
 
-      {/* ── CTA ADAUGĂ LOCAȚIA ── */}
-      <section className="py-12 px-4 bg-gradient-to-br from-[#fff4f0] to-white">
-        <div className="max-w-3xl mx-auto text-center">
-          <p className="text-4xl mb-4">🏠</p>
-          <h2 className="text-2xl sm:text-3xl font-black text-[#1a1a2e] mb-3">
-            Ai o locație pentru copii în Sibiu?
-          </h2>
-          <p className="text-gray-500 font-medium text-lg mb-6 max-w-lg mx-auto leading-relaxed">
-            Adaugă grădinița, centrul de activități, locul de joacă, atelierul tău și nu numai și acesta ajunge la mii de părinți din Sibiu.
-          </p>
-          <a
-            href="/adauga-locatia-ta"
-            className="inline-block bg-[#ff5a2e] hover:bg-[#f03d12] text-white font-black px-8 py-4 rounded-2xl text-base transition-colors shadow-[0_4px_16px_rgba(255,90,46,0.3)]"
-          >
-            + Adaugă locația ta gratuit
-          </a>
-          <p className="mt-4 text-sm text-gray-400 font-medium">
-            Fără cont. Publicare în maxim 48 ore.
-          </p>
-        </div>
-      </section>
+      {/* ── EVENTS THIS WEEK ── */}
+      <ScrollReveal>
+        <section className="py-12 sm:py-16">
+          <div className="max-w-6xl mx-auto">
+            <div className="flex items-center justify-between mb-6 px-4 sm:px-6">
+              <div>
+                <h2 className="text-2xl sm:text-3xl font-black text-[#1a1a2e]">📅 Ce se întâmplă în Sibiu</h2>
+                <p className="text-sm font-semibold text-gray-400 mt-0.5">Săptămâna aceasta</p>
+              </div>
+              <a href="/calendar" className="text-base font-bold text-[#ff5a2e] hover:underline hidden sm:block shrink-0 ml-4">
+                Tot calendarul →
+              </a>
+            </div>
+
+            {allWeekEvents.length === 0 ? (
+              <div className="mx-4 sm:mx-6 bg-orange-50 rounded-2xl p-8 text-center">
+                <p className="text-3xl mb-3">🌙</p>
+                <p className="font-bold text-gray-600">Nu sunt evenimente programate săptămâna aceasta.</p>
+                <a href="/spectacole" className="inline-block mt-3 text-sm font-black text-[#ff5a2e] hover:underline">
+                  Verifică spectacolele →
+                </a>
+              </div>
+            ) : (
+              <>
+                {/* Mobile: vertical stack */}
+                <div className="flex flex-col gap-3 px-4 md:hidden">
+                  {allWeekEvents.slice(0, 5).map((ev) => {
+                    const d = new Date(ev.event_date);
+                    const dayNum = d.getUTCDate();
+                    const monthStr = d.toLocaleDateString("ro-RO", { month: "short", timeZone: "UTC" });
+                    const timeLabel = ev.start_time ? ev.start_time.slice(0, 5) : null;
+                    return (
+                      <a
+                        key={ev.id}
+                        href={ev.href}
+                        className="flex items-center gap-3 bg-white rounded-2xl shadow-sm hover:shadow-md transition-all active:scale-[.99]"
+                        style={{ borderLeft: "4px solid #ff5a2e" }}
+                      >
+                        <div className="flex flex-col items-center justify-center min-w-[56px] py-4 pl-3">
+                          <span className="text-xl font-black text-[#ff5a2e] leading-none">{dayNum}</span>
+                          <span className="text-[10px] font-bold text-gray-400 uppercase">{monthStr}</span>
+                        </div>
+                        <div className="flex-1 min-w-0 py-3 pr-3">
+                          <p className="font-black text-[#1a1a2e] text-sm leading-snug line-clamp-1">{ev.title}</p>
+                          <p className="text-xs text-gray-400 font-semibold mt-0.5 truncate">
+                            {ev.listing_name ? `📍 ${ev.listing_name}` : ev.address ? `📍 ${ev.address}` : ""}
+                            {timeLabel ? (ev.listing_name || ev.address ? ` · ${timeLabel}` : timeLabel) : ""}
+                          </p>
+                          {ev.price && <p className="text-xs font-black text-[#ff5a2e] mt-0.5">{ev.price}</p>}
+                        </div>
+                        {ev.image_url && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={ev.image_url} alt="" className="w-14 h-14 object-cover rounded-xl shrink-0 mr-3" />
+                        )}
+                      </a>
+                    );
+                  })}
+                </div>
+
+                {/* Desktop: 2-column grid */}
+                <div className="hidden md:grid grid-cols-2 gap-3 px-6">
+                  {allWeekEvents.map((ev) => {
+                    const d = new Date(ev.event_date);
+                    const dayNum = d.getUTCDate();
+                    const monthStr = d.toLocaleDateString("ro-RO", { month: "short", timeZone: "UTC" });
+                    const timeLabel = ev.start_time ? ev.start_time.slice(0, 5) : null;
+                    return (
+                      <a
+                        key={ev.id}
+                        href={ev.href}
+                        className="flex items-center gap-4 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-[0_6px_20px_rgba(0,0,0,0.1)] hover:-translate-y-0.5 transition-all duration-200 group overflow-hidden"
+                        style={{ borderLeft: "4px solid #ff5a2e" }}
+                      >
+                        <div className="flex flex-col items-center justify-center min-w-[64px] py-5 pl-4 shrink-0">
+                          <span className="text-2xl font-black text-[#ff5a2e] leading-none">{dayNum}</span>
+                          <span className="text-[11px] font-bold text-gray-400 uppercase">{monthStr}</span>
+                        </div>
+                        <div className="flex-1 min-w-0 py-4">
+                          <p className="font-black text-[#1a1a2e] text-sm leading-snug line-clamp-2">{ev.title}</p>
+                          {(ev.listing_name || ev.address) && (
+                            <p className="text-xs text-gray-400 font-semibold mt-0.5 truncate">
+                              📍 {ev.listing_name ?? ev.address}
+                            </p>
+                          )}
+                          <div className="flex items-center gap-2 mt-1">
+                            {timeLabel && <span className="text-xs font-bold text-[#ff5a2e]">{timeLabel}</span>}
+                            {ev.price && <span className="text-xs font-black text-[#ff5a2e]">{timeLabel ? `· ${ev.price}` : ev.price}</span>}
+                          </div>
+                        </div>
+                        {ev.image_url && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={ev.image_url} alt="" className="w-20 h-full min-h-[80px] object-cover shrink-0 group-hover:scale-105 transition-transform duration-300" />
+                        )}
+                      </a>
+                    );
+                  })}
+                </div>
+
+                <div className="mt-5 text-center md:hidden px-4">
+                  <a href="/calendar" className="inline-block w-full bg-rose-50 text-rose-600 font-black text-base py-4 rounded-2xl">
+                    Tot calendarul de evenimente →
+                  </a>
+                </div>
+              </>
+            )}
+          </div>
+        </section>
+      </ScrollReveal>
+
+      {/* ── CTA ORGANIZATORI ── */}
+      <ScrollReveal>
+        <section className="py-14 px-4 bg-gradient-to-br from-[#fff4f0] to-white">
+          <div className="max-w-5xl mx-auto">
+            <div className="bg-white rounded-3xl shadow-[0_4px_32px_rgba(255,90,46,0.10)] border border-orange-100 overflow-hidden">
+              <div className="flex flex-col lg:flex-row items-center gap-0">
+                {/* Text side */}
+                <div className="flex-1 p-8 sm:p-12 text-center lg:text-left">
+                  <p className="text-4xl mb-4">🏠</p>
+                  <h2 className="text-2xl sm:text-3xl font-black text-[#1a1a2e] mb-3 leading-snug">
+                    Ai o locație pentru copii<br className="hidden sm:block" /> în Sibiu?
+                  </h2>
+                  <p className="text-gray-500 font-medium text-base mb-7 max-w-md leading-relaxed">
+                    Adaugă grădinița, centrul de activități, locul de joacă sau atelierul tău și ajungi la mii de părinți din Sibiu.
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
+                    <a
+                      href="/adauga-locatia-ta"
+                      className="inline-block bg-[#ff5a2e] hover:bg-[#f03d12] active:scale-[0.98] text-white font-black px-8 py-4 rounded-2xl text-base transition-all shadow-[0_4px_16px_rgba(255,90,46,0.3)]"
+                    >
+                      + Adaugă locația ta gratuit
+                    </a>
+                    <a
+                      href="#"
+                      className="inline-block bg-orange-50 hover:bg-orange-100 text-[#ff5a2e] font-black px-6 py-4 rounded-2xl text-base transition-colors"
+                    >
+                      Cum funcționează?
+                    </a>
+                  </div>
+                  <p className="mt-4 text-sm text-gray-400 font-medium">
+                    Fără cont. Publicare în maxim 48 ore.
+                  </p>
+                </div>
+
+                {/* Illustration side */}
+                <div className="w-full lg:w-72 h-48 lg:h-auto lg:self-stretch bg-gradient-to-br from-orange-50 to-orange-100 flex items-center justify-center p-8 shrink-0">
+                  <svg viewBox="0 0 240 200" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full max-w-[200px]">
+                    {/* Background circles */}
+                    <circle cx="180" cy="40" r="55" fill="#ff5a2e" opacity="0.08"/>
+                    <circle cx="50" cy="170" r="45" fill="#ff5a2e" opacity="0.06"/>
+                    {/* Main building */}
+                    <rect x="75" y="95" width="90" height="95" rx="6" fill="#ff5a2e" opacity="0.22"/>
+                    {/* Roof */}
+                    <polygon points="65,100 120,52 175,100" fill="#ff5a2e" opacity="0.38"/>
+                    {/* Door */}
+                    <rect x="108" y="140" width="24" height="50" rx="4" fill="white" opacity="0.85"/>
+                    <circle cx="129" cy="165" r="2.5" fill="#ff5a2e" opacity="0.5"/>
+                    {/* Windows */}
+                    <rect x="83" y="110" width="24" height="20" rx="3" fill="white" opacity="0.75"/>
+                    <rect x="133" y="110" width="24" height="20" rx="3" fill="white" opacity="0.75"/>
+                    {/* Cross on windows */}
+                    <line x1="95" y1="110" x2="95" y2="130" stroke="#ff5a2e" strokeWidth="1" opacity="0.3"/>
+                    <line x1="83" y1="120" x2="107" y2="120" stroke="#ff5a2e" strokeWidth="1" opacity="0.3"/>
+                    <line x1="145" y1="110" x2="145" y2="130" stroke="#ff5a2e" strokeWidth="1" opacity="0.3"/>
+                    <line x1="133" y1="120" x2="157" y2="120" stroke="#ff5a2e" strokeWidth="1" opacity="0.3"/>
+                    {/* Small side building */}
+                    <rect x="175" y="120" width="45" height="70" rx="4" fill="#ff5a2e" opacity="0.14"/>
+                    <polygon points="170,124 197,102 224,124" fill="#ff5a2e" opacity="0.22"/>
+                    {/* Tree trunk */}
+                    <rect x="35" y="155" width="8" height="35" rx="3" fill="#ff5a2e" opacity="0.25"/>
+                    {/* Tree top */}
+                    <circle cx="39" cy="145" r="22" fill="#ff5a2e" opacity="0.18"/>
+                    {/* Ground */}
+                    <rect x="10" y="188" width="220" height="8" rx="4" fill="#ff5a2e" opacity="0.08"/>
+                    {/* Balloons */}
+                    <circle cx="198" cy="55" r="14" fill="#ff5a2e" opacity="0.28"/>
+                    <line x1="198" y1="69" x2="193" y2="90" stroke="#ff5a2e" strokeWidth="1.5" opacity="0.28"/>
+                    <circle cx="216" cy="38" r="10" fill="#ff5a2e" opacity="0.20"/>
+                    <line x1="216" y1="48" x2="211" y2="68" stroke="#ff5a2e" strokeWidth="1.5" opacity="0.20"/>
+                    {/* Stars */}
+                    <text x="18" y="45" fontSize="16" opacity="0.35">⭐</text>
+                    <text x="195" y="155" fontSize="12" opacity="0.25">✨</text>
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </ScrollReveal>
 
       {/* ── NEWSLETTER ── */}
-      <section id="newsletter" className="bg-[#ff5a2e] py-10 px-4">
+      <section id="newsletter" className="bg-[#ff5a2e] py-12 px-4">
         <div className="max-w-xl mx-auto text-center text-white">
           <h2 className="text-2xl sm:text-3xl font-black mb-3 leading-snug">
             Primești vineri ce e nou în Sibiu 🎉
@@ -389,7 +606,7 @@ export default async function Home() {
               placeholder="adresa@email.ro"
               className="flex-1 bg-white text-gray-700 placeholder-gray-400 font-semibold rounded-xl px-5 py-4 outline-none text-base"
             />
-            <button className="bg-white text-[#ff5a2e] font-black px-6 py-4 rounded-xl hover:bg-orange-50 transition-colors text-base whitespace-nowrap">
+            <button className="bg-white text-[#ff5a2e] font-black px-6 py-4 rounded-xl hover:bg-orange-50 active:scale-[0.98] transition-all text-base whitespace-nowrap">
               Abonează-mă
             </button>
           </div>
@@ -400,24 +617,96 @@ export default async function Home() {
       </section>
 
       {/* ── FOOTER ── */}
-      <footer className="border-t border-gray-100 bg-gray-50">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-5">
-            <div className="flex items-center gap-2">
-              <span className="text-xl">🧡</span>
-              <span className="font-black text-[#ff5a2e] text-lg">KidsApp</span>
-              <span className="text-gray-400 font-medium text-base">— Sibiu</span>
+      <footer className="bg-[#1a1a2e] text-white">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-12 pb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-10">
+
+            {/* Brand */}
+            <div className="sm:col-span-2 lg:col-span-1">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-2xl">🧡</span>
+                <span className="font-black text-[#ff5a2e] text-xl">KidsApp</span>
+                <span className="text-gray-400 font-medium">Sibiu</span>
+              </div>
+              <p className="text-gray-400 text-sm font-medium leading-relaxed">
+                Descoperă cele mai frumoase locuri pentru copiii din Sibiu. Activități, spectacole, locuri de joacă.
+              </p>
+              <div className="flex gap-3 mt-5">
+                {["📘", "📸", "🎵"].map((icon, i) => (
+                  <button key={i} className="w-9 h-9 bg-white/10 hover:bg-[#ff5a2e] rounded-lg flex items-center justify-center text-base transition-colors">
+                    {icon}
+                  </button>
+                ))}
+              </div>
             </div>
-            <nav className="flex flex-wrap justify-center gap-5 text-base font-semibold text-gray-500">
-              <a href="#" className="hover:text-[#ff5a2e] transition-colors">Despre noi</a>
-              <a href="#" className="hover:text-[#ff5a2e] transition-colors">Contact</a>
-              <a href="#" className="hover:text-[#ff5a2e] transition-colors">Adaugă locația</a>
-              <a href="#" className="hover:text-[#ff5a2e] transition-colors">Confidențialitate</a>
-            </nav>
+
+            {/* Categorii */}
+            <div>
+              <p className="font-black text-white text-sm mb-4 uppercase tracking-wide">Categorii</p>
+              <div className="flex flex-col gap-2.5">
+                {[
+                  { label: "Locuri de joacă", href: "/locuri-de-joaca" },
+                  { label: "Educație", href: "/educatie" },
+                  { label: "Cursuri & Ateliere", href: "/cursuri-ateliere" },
+                  { label: "Sport", href: "/sport" },
+                  { label: "Spectacole", href: "/spectacole" },
+                  { label: "Evenimente", href: "/evenimente" },
+                ].map((link) => (
+                  <a key={link.label} href={link.href} className="text-gray-400 hover:text-[#ff5a2e] text-sm font-semibold transition-colors">
+                    {link.label}
+                  </a>
+                ))}
+              </div>
+            </div>
+
+            {/* Utile */}
+            <div>
+              <p className="font-black text-white text-sm mb-4 uppercase tracking-wide">Utile</p>
+              <div className="flex flex-col gap-2.5">
+                {[
+                  { label: "📅 Calendar evenimente", href: "/calendar" },
+                  { label: "+ Adaugă locația ta", href: "/adauga-locatia-ta" },
+                  { label: "❤️ Favorite", href: "/favorite" },
+                  { label: "Dashboard organizator", href: "/dashboard" },
+                  { label: "Despre KidsApp", href: "#" },
+                  { label: "Contact", href: "#" },
+                ].map((link) => (
+                  <a key={link.label} href={link.href} className="text-gray-400 hover:text-[#ff5a2e] text-sm font-semibold transition-colors">
+                    {link.label}
+                  </a>
+                ))}
+              </div>
+            </div>
+
+            {/* Info */}
+            <div>
+              <p className="font-black text-white text-sm mb-4 uppercase tracking-wide">Info</p>
+              <div className="flex flex-col gap-2.5">
+                {[
+                  { label: "Politica de confidențialitate", href: "#" },
+                  { label: "Termeni și condiții", href: "#" },
+                  { label: "GDPR", href: "#" },
+                ].map((link) => (
+                  <a key={link.label} href={link.href} className="text-gray-400 hover:text-[#ff5a2e] text-sm font-semibold transition-colors">
+                    {link.label}
+                  </a>
+                ))}
+                <div className="mt-4 bg-white/5 rounded-xl p-3">
+                  <p className="text-xs text-gray-500 font-semibold mb-1">📍 Sibiu, România</p>
+                  <p className="text-xs text-gray-500 font-medium">contact@kidsapp.ro</p>
+                </div>
+              </div>
+            </div>
           </div>
-          <p className="text-center text-sm text-gray-400 font-medium mt-6">
-            © 2025 KidsApp Sibiu. Făcut cu 🧡 pentru familiile din Sibiu.
-          </p>
+
+          <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <p className="text-sm text-gray-500 font-medium">
+              © 2026 KidsApp Sibiu. Făcut cu 🧡 pentru familiile din Sibiu.
+            </p>
+            <p className="text-xs text-gray-600 font-medium">
+              Toate drepturile rezervate
+            </p>
+          </div>
         </div>
       </footer>
 

@@ -1,6 +1,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
+import { adminClient } from "@/utils/supabase/admin";
 import DescriptionCollapse from "./DescriptionCollapse";
 import ListingGallery from "./ListingGallery";
 import ReviewSection from "./ReviewSection";
@@ -64,9 +65,9 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
 
   const photos: string[] = listing.images ?? [];
 
-  // Fetch upcoming events for this listing
+  // Fetch upcoming events for this listing (adminClient bypasses RLS on events table)
   const today = new Date().toISOString().split("T")[0];
-  const { data: upcomingEventsRaw } = await supabase
+  const { data: upcomingEventsRaw } = await adminClient
     .from("events")
     .select("id, title, description, event_date, start_time, end_time, price, thumbnail_url")
     .eq("listing_id", params.id)
