@@ -8,6 +8,7 @@ import EventCalendar from "./EventCalendar";
 import UpdatesManager from "./UpdatesManager";
 import ReviewsPanel from "./ReviewsPanel";
 import StatsPanel from "./StatsPanel";
+import PromoSection from "./PromoSection";
 import { adminClient } from "@/utils/supabase/admin";
 
 export const dynamic = "force-dynamic";
@@ -85,24 +86,34 @@ export default async function DashboardPage({
     .eq("listing_id", activeListingId)
     .order("created_at", { ascending: false });
 
-  // Stats: total views + last 30 days
-  const { count: totalViews } = await adminClient
-    .from("listing_views")
-    .select("id", { count: "exact", head: true })
-    .eq("listing_id", activeListingId);
-
+  // Stats: total views + last 30 days + week comparison
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-  const { data: recentViews } = await adminClient
-    .from("listing_views")
-    .select("viewed_at")
-    .eq("listing_id", activeListingId)
-    .gte("viewed_at", thirtyDaysAgo);
+  const sevenDaysAgo  = new Date(Date.now() -  7 * 24 * 60 * 60 * 1000).toISOString();
+  const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
+
+  const [
+    { count: totalViews },
+    { data: recentViews },
+    { count: thisWeekViews },
+    { count: lastWeekViews },
+    { count: favCount },
+    { count: activeEventsCount },
+  ] = await Promise.all([
+    adminClient.from("listing_views").select("id", { count: "exact", head: true }).eq("listing_id", activeListingId),
+    adminClient.from("listing_views").select("viewed_at").eq("listing_id", activeListingId).gte("viewed_at", thirtyDaysAgo),
+    adminClient.from("listing_views").select("id", { count: "exact", head: true }).eq("listing_id", activeListingId).gte("viewed_at", sevenDaysAgo),
+    adminClient.from("listing_views").select("id", { count: "exact", head: true }).eq("listing_id", activeListingId).gte("viewed_at", fourteenDaysAgo).lt("viewed_at", sevenDaysAgo),
+    adminClient.from("user_favorites").select("id", { count: "exact", head: true }).eq("listing_id", activeListingId),
+    adminClient.from("events").select("id", { count: "exact", head: true }).eq("listing_id", activeListingId).gte("event_date", new Date().toISOString().split("T")[0]),
+  ]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const reviewList = (reviews ?? []) as any[];
   const avgRating = reviewList.length > 0
     ? reviewList.reduce((s: number, r: { rating: number }) => s + r.rating, 0) / reviewList.length
     : null;
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://kidsapp.ro";
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const allListings = (claims as any[]).map((c) => ({ id: c.listing_id, name: c.listings?.name ?? c.listing_id }));
@@ -151,9 +162,15 @@ export default async function DashboardPage({
         <StatsPanel
           totalViews={totalViews ?? 0}
           recentViews={recentViews ?? []}
+          thisWeekViews={thisWeekViews ?? 0}
+          lastWeekViews={lastWeekViews ?? 0}
           reviewCount={reviewList.length}
           avgRating={avgRating}
+          favCount={favCount ?? 0}
+          activeEventsCount={activeEventsCount ?? 0}
         />
+
+        <PromoSection listingId={listing.id} listingName={listing.name} siteUrl={siteUrl} />
 
         <ListingEditor listing={listing} />
 

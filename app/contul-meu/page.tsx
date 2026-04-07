@@ -5,6 +5,7 @@ import ListingCard, { type Listing } from "@/app/components/ListingCard";
 import SignOutButton from "./SignOutButton";
 import AvatarUpload from "./AvatarUpload";
 import Navbar from "@/app/components/Navbar";
+import { getReviewLevel } from "@/utils/reviewLevel";
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("ro-RO", { month: "long", year: "numeric" });
@@ -61,6 +62,8 @@ export default async function ContulMeuPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const reviews = (reviewsData ?? []) as unknown as ReviewRow[];
 
+  const reviewLevel = getReviewLevel(reviews.length);
+
   return (
     <div className="min-h-screen bg-gray-50">
 
@@ -78,14 +81,22 @@ export default async function ContulMeuPage() {
           <div className="min-w-0">
             <h1 className="text-xl font-black text-[#1a1a2e] leading-tight truncate">{displayName}</h1>
             <p className="text-sm text-gray-400 font-medium mt-0.5 truncate">{user.email}</p>
-            <div className="flex items-center gap-3 mt-2 text-xs font-bold text-gray-500">
-              <span className="flex items-center gap-1">
+            <div className="flex flex-wrap items-center gap-2 mt-2">
+              <span className="text-xs font-bold text-gray-500 flex items-center gap-1">
                 <span className="text-red-400">❤️</span> {totalFavorites} favorite
               </span>
-              <span className="text-gray-200">·</span>
-              <span className="flex items-center gap-1">
+              <span className="text-gray-200 text-xs">·</span>
+              <span className="text-xs font-bold text-gray-500 flex items-center gap-1">
                 <span className="text-yellow-400">⭐</span> {reviews.length} recenzii
               </span>
+              {reviewLevel && (
+                <>
+                  <span className="text-gray-200 text-xs">·</span>
+                  <span className={`text-xs font-black px-2.5 py-1 rounded-full ${reviewLevel.bg} ${reviewLevel.text}`}>
+                    {reviewLevel.emoji} {reviewLevel.label}
+                  </span>
+                </>
+              )}
             </div>
           </div>
         </section>

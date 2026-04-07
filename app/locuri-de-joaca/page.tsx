@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import CategoryShell from "@/app/components/CategoryShell";
 import FilteredLocuri from "./FilteredLocuri";
 import { getListingBadges } from "@/utils/getListingBadges";
+import { getDynamicBadges } from "@/utils/getDynamicBadges";
 
 export const metadata = {
   title: "Locuri de Joacă în Sibiu",
@@ -15,14 +16,17 @@ export default async function LocuriDeJoacaPage() {
   const supabase = createClient(await cookies());
   const { data: listings } = await supabase
     .from("listings")
-    .select("id, name, category, description, address, price, age_min, age_max, schedule, is_verified, images")
+    .select("id, name, category, description, address, price, age_min, age_max, schedule, is_verified, images, created_at, claimed_by")
     .eq("category", "loc-de-joaca")
     .order("is_featured", { ascending: false })
     .order("name");
 
   const raw = listings ?? [];
-  const badges = await getListingBadges(raw.map((l) => l.id));
-  const items = raw.map((l) => ({ ...l, hot_badge: badges[l.id] ?? null }));
+  const [orgBadges, { cardBadge: dynBadge }] = await Promise.all([
+    getListingBadges(raw.map((l) => l.id)),
+    getDynamicBadges(raw.map((l) => ({ id: l.id, created_at: l.created_at, claimed_by: l.claimed_by }))),
+  ]);
+  const items = raw.map((l) => ({ ...l, hot_badge: orgBadges[l.id] ?? dynBadge[l.id] ?? null }));
 
   return (
     <CategoryShell

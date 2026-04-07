@@ -49,6 +49,7 @@ proprii printr-un dashboard dedicat.
 - [ ] Email automat la aprobare claim
 - [ ] Scraper Gong rulat săptămânal (`node scripts/scrape-gong.js`)
 - [ ] SQL în Supabase (dacă nu s-a rulat): `ALTER TABLE events ADD COLUMN IF NOT EXISTS thumbnail_url text; ALTER TABLE events ADD COLUMN IF NOT EXISTS gallery_urls text[] DEFAULT '{}';`
+- [ ] Schimbă `ADMIN_PASSWORD` din `admin123` în ceva puternic (min 20 caractere, litere+cifre+simboluri) în `.env.local` și în Vercel Environment Variables (`openssl rand -base64 20`)
 
 ---
 

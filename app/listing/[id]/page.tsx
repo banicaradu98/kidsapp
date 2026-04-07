@@ -10,6 +10,9 @@ import FavoriteButton from "@/app/components/FavoriteButton";
 import Navbar from "@/app/components/Navbar";
 import ClaimButton from "./ClaimButton";
 import ViewTracker from "./ViewTracker";
+import LiveViewers from "./LiveViewers";
+import QRCodeButton from "./QRCodeButton";
+import { getDynamicBadges } from "@/utils/getDynamicBadges";
 
 const CATEGORY_META: Record<string, { emoji: string; label: string; tagColor: string; gradientFrom: string; gradientTo: string }> = {
   "loc-de-joaca": { emoji: "🛝", label: "Loc de joacă",   tagColor: "bg-orange-100 text-orange-700", gradientFrom: "from-orange-100", gradientTo: "to-orange-200" },
@@ -143,6 +146,21 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
 
   const upcomingEvents = upcomingEventsRaw ?? [];
 
+  // Dynamic badges for this listing
+  const { allBadges: dynBadgesMap } = await getDynamicBadges([
+    { id: listing.id, created_at: listing.created_at, claimed_by: listing.claimed_by },
+  ]);
+  const dynBadges = dynBadgesMap[listing.id] ?? [];
+
+  // Urgency: views today (server-side initial value; client refreshes every 30s)
+  const todayStart = new Date();
+  todayStart.setUTCHours(0, 0, 0, 0);
+  const { count: todayViews } = await adminClient
+    .from("listing_views")
+    .select("id", { count: "exact", head: true })
+    .eq("listing_id", listing.id)
+    .gte("viewed_at", todayStart.toISOString());
+
   // Fetch active listing updates (public RLS allows anon read)
   const nowIso = new Date().toISOString();
   const { data: listingUpdatesRaw } = await supabase
@@ -224,13 +242,18 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
                   ✓ Verificat
                 </span>
               )}
+              {dynBadges.map((b) => (
+                <span key={b.type} className={`${b.bg} ${b.text} text-xs font-bold px-3 py-1.5 rounded-full`}>
+                  {b.emoji} {b.label}
+                </span>
+              ))}
             </div>
 
             {/* Title + rating */}
             <h2 className="text-2xl sm:text-3xl font-black text-[#1a1a2e] leading-tight mb-2">
               {listing.name}
             </h2>
-            <div className="flex items-center gap-2 text-sm font-semibold text-gray-500 mb-5 flex-wrap">
+            <div className="flex items-center gap-2 text-sm font-semibold text-gray-500 mb-2 flex-wrap">
               {avgRating !== null ? (
                 <>
                   <span className="text-yellow-400">{"★".repeat(Math.round(avgRating))}</span>
@@ -244,6 +267,9 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
               )}
               {listing.city && <span>· 📍 {listing.city}</span>}
             </div>
+
+            {/* Urgency signals — views today + live viewers */}
+            <LiveViewers listingId={listing.id} initialToday={todayViews ?? 0} />
 
             {/* Info chips — horizontal scroll on mobile */}
             <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1 mb-6">
@@ -461,6 +487,10 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
                     </a>
                   )}
                   <FavoriteButton listingId={listing.id} variant="detail" />
+                  <QRCodeButton
+                    url={`${process.env.NEXT_PUBLIC_SITE_URL ?? "https://kidsapp.ro"}/listing/${listing.id}`}
+                    name={listing.name}
+                  />
                 </div>
               </div>
 
