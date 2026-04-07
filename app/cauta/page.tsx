@@ -6,6 +6,7 @@ import Navbar from "@/app/components/Navbar";
 import SearchBar from "@/app/components/SearchBar";
 import ListingCard, { CATEGORY_META } from "@/app/components/ListingCard";
 import { getListingBadges } from "@/utils/getListingBadges";
+import { expandQuery, buildOrFilter } from "@/utils/searchUtils";
 import SearchFilters from "./SearchFilters";
 import type { Metadata } from "next";
 
@@ -27,12 +28,6 @@ export async function generateMetadata({
   };
 }
 
-function sanitize(q: string): string {
-  return q
-    .replace(/[\\%_]/g, "\\$&")
-    .replace(/[(),]/g, "");
-}
-
 const CATEGORY_SUGGESTIONS = [
   { emoji: "🛝", label: "Locuri de joacă", href: "/locuri-de-joaca" },
   { emoji: "🎓", label: "Educație",         href: "/educatie" },
@@ -49,7 +44,6 @@ export default async function CautaPage({
 }) {
   const { q: rawQ = "", cat = "", sort = "relevanta" } = await searchParams;
   const q = rawQ.trim();
-  const safeQ = sanitize(q);
 
   const supabase = createClient(await cookies());
 
@@ -57,11 +51,15 @@ export default async function CautaPage({
   let orgEvents: ReturnType<typeof Array<object>> = [];
 
   if (q.length >= 2) {
+    const terms = expandQuery(q);
+    const listingFilter = buildOrFilter(terms, ["name", "description", "subcategory", "address", "category"]);
+    const eventFilter = buildOrFilter(terms, ["title", "description"]);
+
     // Build listing query
     let listingQuery = supabase
       .from("listings")
       .select("id, name, category, subcategory, description, address, price, age_min, age_max, schedule, is_verified, images")
-      .or(`name.ilike.%${safeQ}%,description.ilike.%${safeQ}%,subcategory.ilike.%${safeQ}%,address.ilike.%${safeQ}%`)
+      .or(listingFilter)
       .eq("is_verified", true);
 
     if (cat) listingQuery = listingQuery.eq("category", cat);
@@ -85,25 +83,15 @@ export default async function CautaPage({
 
     // Events search (adminClient — no public RLS)
     if (!cat || cat === "eveniment" || cat === "spectacol") {
-      let evQuery = adminClient
+      const evOrderField = sort === "nou" ? "created_at" : "event_date";
+      const { data: evData } = await adminClient
         .from("events")
         .select("id, title, description, event_date, start_time, price, thumbnail_url, listing_id, listings(id, name, category, address)")
-        .or(`title.ilike.%${safeQ}%,description.ilike.%${safeQ}%`)
+        .or(eventFilter)
         .gte("event_date", new Date().toISOString().split("T")[0])
-        .order("event_date", { ascending: true })
+        .order(evOrderField, { ascending: evOrderField === "event_date" })
         .limit(10);
 
-      if (sort === "nou") {
-        evQuery = adminClient
-          .from("events")
-          .select("id, title, description, event_date, start_time, price, thumbnail_url, listing_id, listings(id, name, category, address)")
-          .or(`title.ilike.%${safeQ}%,description.ilike.%${safeQ}%`)
-          .gte("event_date", new Date().toISOString().split("T")[0])
-          .order("created_at", { ascending: false })
-          .limit(10);
-      }
-
-      const { data: evData } = await evQuery;
       orgEvents = evData ?? [];
     }
   }
