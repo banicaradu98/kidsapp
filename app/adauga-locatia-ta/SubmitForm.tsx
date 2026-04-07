@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { submitListingRequest } from "./actions";
 import ImageUploader from "@/app/admin/_components/ImageUploader";
@@ -62,11 +63,23 @@ function SuccessState() {
 
 export default function SubmitForm() {
   const [state, formAction] = useFormState(submitListingRequest, { success: false, error: null });
+  const tsRef = useRef<HTMLInputElement>(null);
+
+  // Set timestamp when form mounts — used server-side to detect bots (< 3s)
+  useEffect(() => {
+    if (tsRef.current) tsRef.current.value = String(Date.now());
+  }, []);
 
   if (state.success) return <SuccessState />;
 
   return (
     <form action={formAction} noValidate>
+      {/* Anti-spam: honeypot field — hidden from users, bots fill it */}
+      <div style={{ position: "absolute", left: "-9999px", top: 0, height: 0, overflow: "hidden" }} aria-hidden="true">
+        <input type="text" name="website_url" tabIndex={-1} autoComplete="off" />
+      </div>
+      {/* Anti-spam: timestamp — server checks elapsed time */}
+      <input type="hidden" name="_ts" ref={tsRef} />
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
 
         {/* ── Informații despre locație ── */}

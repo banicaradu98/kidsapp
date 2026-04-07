@@ -3,8 +3,15 @@ import { cookies } from "next/headers";
 import { adminClient } from "@/utils/supabase/admin";
 import { NextRequest, NextResponse } from "next/server";
 import { expandQuery, buildOrFilter } from "@/utils/searchUtils";
+import { rateLimit, getIp } from "@/utils/rateLimiter";
 
 export async function GET(req: NextRequest) {
+  // Rate limit: max 60 requests per IP per minute
+  const ip = getIp(req.headers);
+  if (!rateLimit(`search:${ip}`, 60, 60 * 1000)) {
+    return NextResponse.json({ listings: [], events: [] }, { status: 429 });
+  }
+
   const raw = req.nextUrl.searchParams.get("q")?.trim() ?? "";
   if (raw.length < 2) return NextResponse.json({ listings: [], events: [] });
 

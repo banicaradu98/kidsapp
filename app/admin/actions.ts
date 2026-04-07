@@ -1,22 +1,29 @@
 "use server";
 
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { adminClient } from "@/utils/supabase/admin";
+import { rateLimit, getIp } from "@/utils/rateLimiter";
 
 // ── AUTH ──────────────────────────────────────────────────────────
 export async function loginAction(
   _prevState: { error: string },
   formData: FormData
 ): Promise<{ error: string }> {
+  // Rate limit: max 5 attempts per IP per 15 minutes
+  const ip = getIp(await headers());
+  if (!rateLimit(`admin-login:${ip}`, 5, 15 * 60 * 1000)) {
+    return { error: "Prea multe încercări. Așteaptă 15 minute." };
+  }
+
   const password = formData.get("password") as string;
   if (password && password === process.env.ADMIN_PASSWORD) {
     (await cookies()).set("admin_session", process.env.ADMIN_PASSWORD!, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 7,
+      sameSite: "strict",
+      maxAge: 60 * 60 * 8, // 8 hours (down from 7 days)
       path: "/",
     });
     redirect("/admin");

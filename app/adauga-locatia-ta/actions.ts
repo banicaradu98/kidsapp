@@ -1,60 +1,128 @@
 "use server";
 
+import { headers } from "next/headers";
 import { adminClient } from "@/utils/supabase/admin";
+import { rateLimit, getIp } from "@/utils/rateLimiter";
+import { sanitizeText, isValidEmail, isAllowedValue } from "@/utils/sanitize";
+
+const ALLOWED_CATEGORIES = [
+  "loc-de-joaca",
+  "educatie",
+  "curs-atelier",
+  "sport",
+  "spectacol",
+  "eveniment",
+] as const;
 
 export async function submitListingRequest(
   _prevState: { success: boolean; error: string | null },
   formData: FormData
 ): Promise<{ success: boolean; error: string | null }> {
-  const name        = (formData.get("name")         as string)?.trim();
-  const category    = (formData.get("category")     as string) || null;
-  const description = (formData.get("description")  as string)?.trim() || null;
-  const address     = (formData.get("address")      as string)?.trim() || null;
-  const phone       = (formData.get("phone")        as string)?.trim() || null;
-  const contactName = (formData.get("contact_name") as string)?.trim() || null;
-  const contactEmail= (formData.get("contact_email")as string)?.trim() || null;
+  // ── Rate limiting: max 3 submissions per IP per hour ──────────────
+  const ip = getIp(await headers());
+  if (!rateLimit(`submit:${ip}`, 3, 60 * 60 * 1000)) {
+    return { success: false, error: "Prea multe cereri. Încearcă din nou mai târziu." };
+  }
+
+  // ── Honeypot: bots fill this hidden field, humans don't ───────────
+  const honeypot = (formData.get("website_url") as string) ?? "";
+  if (honeypot.trim()) {
+    // Silently succeed to confuse bots
+    return { success: true, error: null };
+  }
+
+  // ── Timestamp check: submission in < 3s = likely bot ─────────────
+  const tsRaw = formData.get("_ts") as string | null;
+  if (tsRaw) {
+    const elapsed = Date.now() - parseInt(tsRaw, 10);
+    if (!isNaN(elapsed) && elapsed < 3000) {
+      return { success: false, error: "Formular trimis prea rapid. Te rugăm completează cu atenție." };
+    }
+  }
+
+  // ── Sanitize & validate all fields ───────────────────────────────
+  const name        = sanitizeText(formData.get("name") as string, 100);
+  const category    = (formData.get("category") as string)?.trim() ?? "";
+  const description = sanitizeText(formData.get("description") as string, 5000);
+  const address     = sanitizeText(formData.get("address") as string, 200);
+  const phone       = sanitizeText(formData.get("phone") as string, 20);
+  const contactName = sanitizeText(formData.get("contact_name") as string, 100);
+  const contactEmail= sanitizeText(formData.get("contact_email") as string, 254);
 
   if (!name || !category || !description || !address || !phone || !contactName || !contactEmail) {
     return { success: false, error: "Te rugăm completează toate câmpurile obligatorii." };
   }
 
-  const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRe.test(contactEmail)) {
+  if (!isAllowedValue(category, [...ALLOWED_CATEGORIES])) {
+    return { success: false, error: "Categorie invalidă." };
+  }
+
+  if (!isValidEmail(contactEmail)) {
     return { success: false, error: "Adresa de email nu este validă." };
   }
 
-  const website = formData.get("website") as string | null;
-  const normalizedWebsite = website?.trim()
-    ? /^https?:\/\//i.test(website.trim()) ? website.trim() : `https://${website.trim()}`
+  // ── Optional fields ───────────────────────────────────────────────
+  const subcategory  = sanitizeText(formData.get("subcategory") as string, 100) || null;
+  const price        = sanitizeText(formData.get("price") as string, 100) || null;
+  const priceDetails = sanitizeText(formData.get("price_details") as string, 1000) || null;
+  const schedule     = sanitizeText(formData.get("schedule") as string, 200) || null;
+  const notes        = sanitizeText(formData.get("notes") as string, 1000) || null;
+
+  const ageMinRaw = formData.get("age_min");
+  const ageMaxRaw = formData.get("age_max");
+  const ageMin = ageMinRaw ? Math.min(18, Math.max(0, parseInt(ageMinRaw as string, 10))) : null;
+  const ageMax = ageMaxRaw ? Math.min(18, Math.max(0, parseInt(ageMaxRaw as string, 10))) : null;
+
+  const websiteRaw = sanitizeText(formData.get("website") as string, 500);
+  const website = websiteRaw
+    ? /^https?:\/\//i.test(websiteRaw) ? websiteRaw : `https://${websiteRaw}`
     : null;
 
+  // Images: only accept valid https URLs from our Supabase bucket
   const imagesJson = formData.get("images_json") as string | null;
   let images: string[] = [];
-  try { images = imagesJson ? JSON.parse(imagesJson) : []; } catch { images = []; }
+  try {
+    const parsed = imagesJson ? JSON.parse(imagesJson) : [];
+    if (Array.isArray(parsed)) {
+      const supabaseHost = process.env.NEXT_PUBLIC_SUPABASE_URL
+        ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).host
+        : null;
+      images = parsed
+        .filter((u: unknown): u is string => typeof u === "string")
+        .filter((u) => {
+          try {
+            const url = new URL(u);
+            return url.protocol === "https:" && (!supabaseHost || url.host === supabaseHost);
+          } catch { return false; }
+        })
+        .slice(0, 5);
+    }
+  } catch { images = []; }
 
   const { error } = await adminClient.from("listings").insert({
     name,
     category,
-    subcategory:   (formData.get("subcategory")  as string)?.trim() || null,
+    subcategory,
     description,
     address,
     city:          "Sibiu",
-    price:         (formData.get("price")        as string)?.trim() || null,
-    price_details: (formData.get("price_details") as string)?.trim() || null,
-    age_min:       formData.get("age_min")  ? Number(formData.get("age_min"))  : null,
-    age_max:       formData.get("age_max")  ? Number(formData.get("age_max"))  : null,
-    schedule:      (formData.get("schedule")     as string)?.trim() || null,
+    price,
+    price_details: priceDetails,
+    age_min:       isNaN(ageMin as number) ? null : ageMin,
+    age_max:       isNaN(ageMax as number) ? null : ageMax,
+    schedule,
     phone,
-    website:       normalizedWebsite,
+    website,
     contact_name:  contactName,
     contact_email: contactEmail,
+    notes,
     images,
     is_verified:   false,
     is_featured:   false,
   });
 
   if (error) {
-    console.error("Submit listing error:", error.message);
+    console.error("[submitListingRequest] DB error:", error.message);
     return { success: false, error: "A apărut o eroare. Te rugăm încearcă din nou." };
   }
 
