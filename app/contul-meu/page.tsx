@@ -75,7 +75,7 @@ export default async function ContulMeuPage() {
         <section className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 flex items-center gap-5">
           <AvatarUpload
             userId={user.id}
-            initialAvatarUrl={user.user_metadata?.avatar_url ?? null}
+            initialAvatarUrl={user.user_metadata?.avatar_url ?? user.user_metadata?.picture ?? null}
             initials={initials}
           />
           <div className="min-w-0">

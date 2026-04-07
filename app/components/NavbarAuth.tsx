@@ -101,7 +101,11 @@ export default function NavbarAuth() {
         aria-label="Contul meu"
         title={displayName}
       >
-        <UserAvatar avatarUrl={user.user_metadata?.avatar_url} initials={initials} size={36} />
+        <UserAvatar
+          avatarUrl={user.user_metadata?.avatar_url ?? user.user_metadata?.picture ?? null}
+          initials={initials}
+          size={36}
+        />
       </button>
 
       {showDropdown && (

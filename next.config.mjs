@@ -47,6 +47,21 @@ const nextConfig = {
       },
     ];
   },
+
+  images: {
+    remotePatterns: [
+      // Google profile photos (OAuth avatar)
+      { protocol: "https", hostname: "lh3.googleusercontent.com" },
+      { protocol: "https", hostname: "lh4.googleusercontent.com" },
+      { protocol: "https", hostname: "lh5.googleusercontent.com" },
+      { protocol: "https", hostname: "lh6.googleusercontent.com" },
+      // Supabase Storage (listing images + custom avatars)
+      ...(process.env.NEXT_PUBLIC_SUPABASE_URL
+        ? [{ protocol: "https", hostname: new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname }]
+        : [{ protocol: "https", hostname: "*.supabase.co" }]
+      ),
+    ],
+  },
 };
 
 export default nextConfig;
