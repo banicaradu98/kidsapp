@@ -1,4 +1,5 @@
 import ImageUploader from "./ImageUploader";
+import RichTextEditor from "@/app/components/RichTextEditor";
 
 const CATEGORIES = [
   { value: "loc-de-joaca", label: "🛝 Loc de joacă" },
@@ -78,7 +79,7 @@ export default function ListingFormFields({ d = {} }: { d?: DefaultValues }) {
 
       <div className="sm:col-span-2">
         <Field label="Descriere">
-          <textarea name="description" rows={4} defaultValue={d.description ?? ""} placeholder="Descriere detaliată a locului..." className={`${inputCls} resize-none`} />
+          <RichTextEditor name="description" defaultValue={d.description ?? ""} placeholder="Descriere detaliată a locului..." minHeight={100} />
         </Field>
       </div>
 
@@ -99,7 +100,7 @@ export default function ListingFormFields({ d = {} }: { d?: DefaultValues }) {
 
       <div className="sm:col-span-2">
         <Field label="Detalii preț (pachete, abonamente etc.)">
-          <textarea name="price_details" rows={4} defaultValue={d.price_details ?? ""} placeholder={"ex:\nAbonament lunar: 150 lei\nZi: 25 lei/copil\nPărinții intră gratuit"} className={`${inputCls} resize-none`} />
+          <RichTextEditor name="price_details" defaultValue={d.price_details ?? ""} placeholder={"ex: Abonament lunar: 150 lei · Zi: 25 lei/copil · Părinții intră gratuit"} minHeight={80} />
         </Field>
       </div>
 

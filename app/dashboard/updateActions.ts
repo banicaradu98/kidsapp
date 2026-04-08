@@ -4,7 +4,19 @@ import { cookies } from "next/headers";
 import { createClient } from "@/utils/supabase/server";
 import { adminClient } from "@/utils/supabase/admin";
 
-type UpdateType = "noutate" | "reducere" | "grupa_noua" | "schimbare" | "eveniment_special" | "inchis_temporar";
+type UpdateType =
+  | "noutate"
+  | "reducere"
+  | "grupa_noua"
+  | "schimbare"
+  | "eveniment_special"
+  | "inchis_temporar"
+  | "lansare_noua"
+  | "inscrieri_deschise"
+  | "rezultate_premii"
+  | "oferta_speciala"
+  | "anunt_important"
+  | "none";
 
 interface UpdatePayload {
   listing_id: string;
@@ -42,7 +54,7 @@ export async function addUpdate(payload: UpdatePayload) {
       user_id: user.id,
       type: payload.type,
       title: payload.title.trim(),
-      message: payload.message.trim(),
+      message: payload.message,
       expires_at: payload.expires_at || null,
     })
     .select()

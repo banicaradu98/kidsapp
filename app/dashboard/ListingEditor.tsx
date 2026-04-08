@@ -2,11 +2,14 @@
 
 import { useState } from "react";
 import { createClient } from "@/utils/supabase/client";
+import RichTextEditor from "@/app/components/RichTextEditor";
+import RichTextDisplay from "@/app/components/RichTextDisplay";
 
 interface Listing {
   id: string;
   name: string;
   description: string | null;
+  price_details: string | null;
   schedule: string | null;
   price: string | null;
   phone: string | null;
@@ -23,12 +26,13 @@ export default function ListingEditor({ listing }: { listing: Listing }) {
   const [saved, setSaved] = useState(false);
 
   const [form, setForm] = useState({
-    description: listing.description ?? "",
-    schedule:    listing.schedule    ?? "",
-    price:       listing.price       ?? "",
-    phone:       listing.phone       ?? "",
-    website:     listing.website     ?? "",
-    address:     listing.address     ?? "",
+    description:   listing.description   ?? "",
+    price_details: listing.price_details ?? "",
+    schedule:      listing.schedule      ?? "",
+    price:         listing.price         ?? "",
+    phone:         listing.phone         ?? "",
+    website:       listing.website       ?? "",
+    address:       listing.address       ?? "",
   });
 
   function set(k: keyof typeof form, v: string) {
@@ -43,12 +47,13 @@ export default function ListingEditor({ listing }: { listing: Listing }) {
     const { error: err } = await supabase
       .from("listings")
       .update({
-        description: form.description || null,
-        schedule:    form.schedule    || null,
-        price:       form.price       || null,
-        phone:       form.phone       || null,
-        website:     form.website     || null,
-        address:     form.address     || null,
+        description:   form.description   || null,
+        price_details: form.price_details || null,
+        schedule:      form.schedule      || null,
+        price:         form.price         || null,
+        phone:         form.phone         || null,
+        website:       form.website       || null,
+        address:       form.address       || null,
       })
       .eq("id", listing.id);
 
@@ -90,13 +95,30 @@ export default function ListingEditor({ listing }: { listing: Listing }) {
           {listing.description && (
             <div>
               <p className="text-xs font-bold text-gray-400 mb-1">Descriere</p>
-              <p className="text-gray-600 font-medium leading-relaxed line-clamp-3">{listing.description}</p>
+              <div className="text-gray-600 font-medium leading-relaxed line-clamp-3">
+                <RichTextDisplay html={listing.description} />
+              </div>
+            </div>
+          )}
+          {listing.price_details && (
+            <div>
+              <p className="text-xs font-bold text-gray-400 mb-1">Detalii preț</p>
+              <div className="text-gray-600 font-medium leading-relaxed line-clamp-2">
+                <RichTextDisplay html={listing.price_details} />
+              </div>
             </div>
           )}
         </div>
       ) : (
         <div className="flex flex-col gap-4">
-          <Field label="Descriere" value={form.description} onChange={(v) => set("description", v)} multiline />
+          <div>
+            <label className="block text-xs font-bold text-gray-500 mb-1.5">Descriere</label>
+            <RichTextEditor key={`desc-${editing}`} value={form.description} onChange={(v) => set("description", v)} placeholder="Descriere detaliată..." minHeight={100} />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-gray-500 mb-1.5">Detalii preț</label>
+            <RichTextEditor key={`price-${editing}`} value={form.price_details} onChange={(v) => set("price_details", v)} placeholder="Pachete, abonamente, reduceri..." minHeight={80} />
+          </div>
           <Field label="Program" value={form.schedule} onChange={(v) => set("schedule", v)} placeholder="Ex: Luni-Vineri 09:00-18:00" />
           <Field label="Preț" value={form.price} onChange={(v) => set("price", v)} placeholder="Ex: 30 lei/copil" />
           <Field label="Telefon" value={form.phone} onChange={(v) => set("phone", v)} placeholder="+40 xxx xxx xxx" />
@@ -118,17 +140,13 @@ function Row({ label, value }: { label: string; value: string | null | undefined
   );
 }
 
-function Field({ label, value, onChange, placeholder, multiline }: {
-  label: string; value: string; onChange: (v: string) => void; placeholder?: string; multiline?: boolean;
+function Field({ label, value, onChange, placeholder }: {
+  label: string; value: string; onChange: (v: string) => void; placeholder?: string;
 }) {
   return (
     <div>
       <label className="block text-xs font-bold text-gray-500 mb-1.5">{label}</label>
-      {multiline ? (
-        <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={4} placeholder={placeholder} className={inputCls + " resize-none"} />
-      ) : (
-        <input type="text" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className={inputCls} />
-      )}
+      <input type="text" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className={inputCls} />
     </div>
   );
 }

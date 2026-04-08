@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { adminClient } from "@/utils/supabase/admin";
 import type { Metadata } from "next";
 import DescriptionCollapse from "./DescriptionCollapse";
+import RichTextDisplay from "@/app/components/RichTextDisplay";
 import ListingGallery from "./ListingGallery";
 import ReviewSection from "./ReviewSection";
 import FavoriteButton from "@/app/components/FavoriteButton";
@@ -25,12 +26,18 @@ const CATEGORY_META: Record<string, { emoji: string; label: string; tagColor: st
 const DEFAULT_META = { emoji: "📍", label: "Activitate", tagColor: "bg-gray-100 text-gray-700", gradientFrom: "from-gray-100", gradientTo: "to-gray-200" };
 
 const UPDATE_TYPE_META: Record<string, { emoji: string; bg: string; text: string; border: string }> = {
-  noutate:           { emoji: "ℹ️",  bg: "bg-blue-50",   text: "text-blue-700",   border: "border-blue-100"   },
-  reducere:          { emoji: "🔥", bg: "bg-red-50",    text: "text-red-700",    border: "border-red-100"    },
-  grupa_noua:        { emoji: "👥", bg: "bg-green-50",  text: "text-green-700",  border: "border-green-100"  },
-  schimbare:         { emoji: "📍", bg: "bg-purple-50", text: "text-purple-700", border: "border-purple-100" },
-  eveniment_special: { emoji: "🎉", bg: "bg-yellow-50", text: "text-yellow-700", border: "border-yellow-100" },
-  inchis_temporar:   { emoji: "🔒", bg: "bg-gray-50",   text: "text-gray-600",   border: "border-gray-200"   },
+  noutate:            { emoji: "ℹ️",  bg: "bg-blue-50",    text: "text-blue-700",    border: "border-blue-100"    },
+  reducere:           { emoji: "🔥", bg: "bg-red-50",     text: "text-red-700",     border: "border-red-100"     },
+  grupa_noua:         { emoji: "👥", bg: "bg-green-50",   text: "text-green-700",   border: "border-green-100"   },
+  schimbare:          { emoji: "📍", bg: "bg-purple-50",  text: "text-purple-700",  border: "border-purple-100"  },
+  eveniment_special:  { emoji: "🎉", bg: "bg-yellow-50",  text: "text-yellow-700",  border: "border-yellow-100"  },
+  inchis_temporar:    { emoji: "🔒", bg: "bg-gray-50",    text: "text-gray-600",    border: "border-gray-200"    },
+  lansare_noua:       { emoji: "🆕", bg: "bg-teal-50",    text: "text-teal-700",    border: "border-teal-100"    },
+  inscrieri_deschise: { emoji: "🎓", bg: "bg-indigo-50",  text: "text-indigo-700",  border: "border-indigo-100"  },
+  rezultate_premii:   { emoji: "🏆", bg: "bg-amber-50",   text: "text-amber-700",   border: "border-amber-100"   },
+  oferta_speciala:    { emoji: "🌟", bg: "bg-orange-50",  text: "text-orange-700",  border: "border-orange-100"  },
+  anunt_important:    { emoji: "📢", bg: "bg-rose-50",    text: "text-rose-700",    border: "border-rose-100"    },
+  none:               { emoji: "",   bg: "bg-gray-50",    text: "text-gray-700",    border: "border-gray-200"    },
 };
 
 function updateRelativeTime(dateStr: string): string {
@@ -306,9 +313,9 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
               <section className="mb-6">
                 <h3 className="text-lg font-black text-[#1a1a2e] mb-3">💰 Prețuri</h3>
                 <div className="bg-orange-50 border border-orange-100 rounded-2xl p-5">
-                  <p className="text-sm font-semibold text-gray-700 whitespace-pre-line leading-relaxed">
-                    {listing.price_details}
-                  </p>
+                  <div className="text-sm font-semibold text-gray-700 leading-relaxed">
+                    <RichTextDisplay html={listing.price_details} />
+                  </div>
                 </div>
               </section>
             )}
@@ -321,17 +328,22 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
                   {listingUpdates.map((upd) => {
                     const tm = UPDATE_TYPE_META[upd.type] ?? UPDATE_TYPE_META["noutate"];
                     const daysLeft = upd.expires_at ? updateDaysUntil(upd.expires_at) : null;
+                    const isNone = upd.type === "none";
                     return (
                       <div key={upd.id} className={`${tm.bg} border ${tm.border} rounded-2xl p-4`}>
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex items-start gap-3 min-w-0">
-                            <span className="text-xl mt-0.5 shrink-0">{tm.emoji}</span>
+                            {!isNone && tm.emoji && (
+                              <span className="text-xl mt-0.5 shrink-0">{tm.emoji}</span>
+                            )}
                             <div className="min-w-0">
                               {upd.title && (
                                 <p className={`font-black text-sm leading-snug ${tm.text} mb-1`}>{upd.title}</p>
                               )}
                               {upd.message && (
-                                <p className="text-sm font-medium text-gray-600 leading-relaxed">{upd.message}</p>
+                                <div className="text-sm font-medium text-gray-600 leading-relaxed">
+                                  <RichTextDisplay html={upd.message} />
+                                </div>
                               )}
                             </div>
                           </div>
@@ -423,7 +435,9 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
                             {dateLabel}{timeStr ? ` · ${timeStr}` : ""}
                           </p>
                           {ev.description && (
-                            <p className="text-sm text-gray-500 font-medium mt-1 line-clamp-2">{ev.description}</p>
+                            <div className="text-sm text-gray-500 font-medium mt-1 line-clamp-2">
+                              <RichTextDisplay html={ev.description} />
+                            </div>
                           )}
                           {ev.price != null && (
                             <p className="text-sm font-black text-[#ff5a2e] mt-1">{ev.price} lei</p>

@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { submitListingRequest } from "./actions";
 import ImageUploader from "@/app/admin/_components/ImageUploader";
+import RichTextEditor from "@/app/components/RichTextEditor";
 
 const inputCls = "w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700 outline-none focus:border-[#ff5a2e] focus:ring-2 focus:ring-[#ff5a2e]/20 transition-all bg-white placeholder-gray-400";
 const labelCls = "block text-sm font-bold text-gray-700 mb-1.5";
@@ -108,13 +109,7 @@ export default function SubmitForm() {
 
         <div className="sm:col-span-2">
           <Field label="Descriere" required>
-            <textarea
-              name="description"
-              rows={4}
-              required
-              placeholder="Descrie pe scurt locul tău — ce oferi, ce face special, pentru ce vârste..."
-              className={`${inputCls} resize-none`}
-            />
+            <RichTextEditor name="description" placeholder="Descrie pe scurt locul tău — ce oferi, ce face special, pentru ce vârste..." minHeight={100} />
           </Field>
         </div>
 
@@ -133,12 +128,7 @@ export default function SubmitForm() {
 
         <div className="sm:col-span-2">
           <Field label="Detalii preț (opțional)">
-            <textarea
-              name="price_details"
-              rows={3}
-              placeholder="Pachete, abonamente, reduceri etc."
-              className={`${inputCls} resize-none`}
-            />
+            <RichTextEditor name="price_details" placeholder="Pachete, abonamente, reduceri etc." minHeight={80} />
           </Field>
         </div>
 
@@ -188,12 +178,7 @@ export default function SubmitForm() {
 
         <div className="sm:col-span-2">
           <Field label="Mesaj pentru echipa KidsApp (opțional)">
-            <textarea
-              name="notes"
-              rows={3}
-              placeholder="Orice informație suplimentară care ne-ar ajuta să verificăm mai rapid locația..."
-              className={`${inputCls} resize-none`}
-            />
+            <RichTextEditor name="notes" placeholder="Orice informație suplimentară care ne-ar ajuta să verificăm mai rapid locația..." minHeight={80} />
           </Field>
         </div>
 

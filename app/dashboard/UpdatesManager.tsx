@@ -2,8 +2,22 @@
 
 import { useState } from "react";
 import { addUpdate, deleteUpdate } from "./updateActions";
+import RichTextEditor from "@/app/components/RichTextEditor";
+import RichTextDisplay from "@/app/components/RichTextDisplay";
 
-type UpdateType = "noutate" | "reducere" | "grupa_noua" | "schimbare" | "eveniment_special" | "inchis_temporar";
+type UpdateType =
+  | "noutate"
+  | "reducere"
+  | "grupa_noua"
+  | "schimbare"
+  | "eveniment_special"
+  | "inchis_temporar"
+  | "lansare_noua"
+  | "inscrieri_deschise"
+  | "rezultate_premii"
+  | "oferta_speciala"
+  | "anunt_important"
+  | "none";
 
 interface ListingUpdate {
   id: string;
@@ -21,12 +35,18 @@ interface Props {
 }
 
 const TYPE_META: Record<UpdateType, { emoji: string; label: string; bg: string; text: string }> = {
-  noutate:          { emoji: "ℹ️",  label: "Noutate generală",    bg: "bg-blue-50",   text: "text-blue-700"   },
-  reducere:         { emoji: "🔥", label: "Reducere flash",       bg: "bg-red-50",    text: "text-red-700"    },
-  grupa_noua:       { emoji: "👥", label: "Formăm grupă nouă",    bg: "bg-green-50",  text: "text-green-700"  },
-  schimbare:        { emoji: "📍", label: "Schimbare sediu",      bg: "bg-purple-50", text: "text-purple-700" },
-  eveniment_special:{ emoji: "🎉", label: "Eveniment special",    bg: "bg-yellow-50", text: "text-yellow-700" },
-  inchis_temporar:  { emoji: "🔒", label: "Închis temporar",      bg: "bg-gray-50",   text: "text-gray-600"   },
+  noutate:            { emoji: "ℹ️",  label: "Noutate generală",      bg: "bg-blue-50",    text: "text-blue-700"   },
+  reducere:           { emoji: "🔥", label: "Reducere flash",         bg: "bg-red-50",     text: "text-red-700"    },
+  grupa_noua:         { emoji: "👥", label: "Formăm grupă nouă",      bg: "bg-green-50",   text: "text-green-700"  },
+  schimbare:          { emoji: "📍", label: "Schimbare sediu",        bg: "bg-purple-50",  text: "text-purple-700" },
+  eveniment_special:  { emoji: "🎉", label: "Eveniment special",      bg: "bg-yellow-50",  text: "text-yellow-700" },
+  inchis_temporar:    { emoji: "🔒", label: "Închis temporar",        bg: "bg-gray-50",    text: "text-gray-600"   },
+  lansare_noua:       { emoji: "🆕", label: "Lansare nouă",           bg: "bg-teal-50",    text: "text-teal-700"   },
+  inscrieri_deschise: { emoji: "🎓", label: "Înscrieri deschise",     bg: "bg-indigo-50",  text: "text-indigo-700" },
+  rezultate_premii:   { emoji: "🏆", label: "Rezultate & Premii",     bg: "bg-amber-50",   text: "text-amber-700"  },
+  oferta_speciala:    { emoji: "🌟", label: "Ofertă specială",        bg: "bg-orange-50",  text: "text-orange-700" },
+  anunt_important:    { emoji: "📢", label: "Anunț important",        bg: "bg-rose-50",    text: "text-rose-700"   },
+  none:               { emoji: "",   label: "Fără etichetă",          bg: "bg-gray-50",    text: "text-gray-700"   },
 };
 
 const TYPE_OPTIONS = Object.entries(TYPE_META) as [UpdateType, (typeof TYPE_META)[UpdateType]][];
@@ -48,6 +68,11 @@ function daysUntil(dateStr: string): number {
   return Math.ceil((new Date(dateStr).getTime() - Date.now()) / 86400000);
 }
 
+function isEmptyHtml(html: string): boolean {
+  if (!html) return true;
+  return html.replace(/<[^>]*>/g, "").trim() === "";
+}
+
 const emptyForm = { type: "noutate" as UpdateType, title: "", message: "", expires_at: "" };
 
 export default function UpdatesManager({ listingId, initialUpdates }: Props) {
@@ -57,13 +82,14 @@ export default function UpdatesManager({ listingId, initialUpdates }: Props) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [formKey, setFormKey] = useState(0);
 
   function set<K extends keyof typeof emptyForm>(k: K, v: (typeof emptyForm)[K]) {
     setForm((f) => ({ ...f, [k]: v }));
   }
 
   async function handleSave() {
-    if (!form.title.trim() || !form.message.trim()) {
+    if (!form.title.trim() || isEmptyHtml(form.message)) {
       setError("Titlul și mesajul sunt obligatorii.");
       return;
     }
@@ -86,6 +112,7 @@ export default function UpdatesManager({ listingId, initialUpdates }: Props) {
 
     setUpdates((prev) => [result.data as ListingUpdate, ...prev]);
     setForm(emptyForm);
+    setFormKey((k) => k + 1);
     setShowForm(false);
     setSaving(false);
   }
@@ -119,7 +146,9 @@ export default function UpdatesManager({ listingId, initialUpdates }: Props) {
 
           {/* Type select */}
           <div>
-            <label className="block text-xs font-bold text-gray-500 mb-1.5">Tip *</label>
+            <label className="block text-xs font-bold text-gray-500 mb-1.5">
+              Etichetă <span className="text-gray-400 font-medium">(opțional)</span>
+            </label>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {TYPE_OPTIONS.map(([key, meta]) => (
                 <button
@@ -132,7 +161,7 @@ export default function UpdatesManager({ listingId, initialUpdates }: Props) {
                       : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
                   }`}
                 >
-                  <span>{meta.emoji}</span>
+                  {meta.emoji && <span>{meta.emoji}</span>}
                   <span className="leading-tight text-xs">{meta.label}</span>
                 </button>
               ))}
@@ -148,21 +177,23 @@ export default function UpdatesManager({ listingId, initialUpdates }: Props) {
               value={form.title}
               onChange={(e) => set("title", e.target.value.slice(0, 60))}
               className={inputCls}
-              placeholder={`ex: ${TYPE_META[form.type].emoji} ${TYPE_META[form.type].label}`}
+              placeholder={
+                form.type !== "none"
+                  ? `ex: ${TYPE_META[form.type].emoji} ${TYPE_META[form.type].label}`
+                  : "ex: Informație importantă"
+              }
             />
           </div>
 
           {/* Message */}
           <div>
-            <label className="block text-xs font-bold text-gray-500 mb-1.5">
-              Mesaj * <span className="text-gray-400 font-medium">({form.message.length}/280)</span>
-            </label>
-            <textarea
+            <label className="block text-xs font-bold text-gray-500 mb-1.5">Mesaj *</label>
+            <RichTextEditor
+              key={formKey}
               value={form.message}
-              onChange={(e) => set("message", e.target.value.slice(0, 280))}
-              rows={3}
-              className={inputCls + " resize-none"}
+              onChange={(v) => set("message", v)}
               placeholder="Detalii pentru părinți..."
+              minHeight={80}
             />
           </div>
 
@@ -184,7 +215,7 @@ export default function UpdatesManager({ listingId, initialUpdates }: Props) {
 
           <div className="flex gap-3 justify-end">
             <button
-              onClick={() => { setShowForm(false); setError(null); setForm(emptyForm); }}
+              onClick={() => { setShowForm(false); setError(null); setForm(emptyForm); setFormKey((k) => k + 1); }}
               className="text-sm font-bold text-gray-400 hover:text-gray-600"
             >
               Anulează
@@ -211,20 +242,24 @@ export default function UpdatesManager({ listingId, initialUpdates }: Props) {
       ) : (
         <div className="flex flex-col divide-y divide-gray-50">
           {updates.map((u) => {
-            const meta = TYPE_META[u.type];
+            const meta = TYPE_META[u.type] ?? TYPE_META["noutate"];
             const expiryDays = u.expires_at ? daysUntil(u.expires_at) : null;
             const isExpired = expiryDays !== null && expiryDays <= 0;
             return (
               <div key={u.id} className={`py-3 flex items-start gap-3 ${isExpired ? "opacity-40" : ""}`}>
-                <div className={`w-9 h-9 rounded-xl ${meta.bg} flex items-center justify-center text-lg shrink-0`}>
-                  {meta.emoji}
-                </div>
+                {u.type !== "none" && meta.emoji && (
+                  <div className={`w-9 h-9 rounded-xl ${meta.bg} flex items-center justify-center text-lg shrink-0`}>
+                    {meta.emoji}
+                  </div>
+                )}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="text-sm font-black text-[#1a1a2e]">{u.title}</p>
-                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${meta.bg} ${meta.text}`}>
-                      {meta.label}
-                    </span>
+                    {u.type !== "none" && (
+                      <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${meta.bg} ${meta.text}`}>
+                        {meta.label}
+                      </span>
+                    )}
                     {isExpired && (
                       <span className="text-[10px] font-bold bg-gray-100 text-gray-400 px-2 py-0.5 rounded-full">
                         Expirat
@@ -236,7 +271,9 @@ export default function UpdatesManager({ listingId, initialUpdates }: Props) {
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-gray-500 font-medium mt-0.5 line-clamp-2">{u.message}</p>
+                  <div className="text-xs text-gray-500 font-medium mt-0.5 line-clamp-2">
+                    <RichTextDisplay html={u.message} />
+                  </div>
                   <p className="text-[10px] text-gray-400 font-medium mt-1">{relativeTime(u.created_at)}</p>
                 </div>
                 <button

@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { addEvent, updateEvent, deleteEvent, updateEventImages } from "./eventActions";
+import RichTextEditor from "@/app/components/RichTextEditor";
 
 interface Event {
   id: string;
@@ -332,12 +333,12 @@ export default function EventsManager({ listingId, initialEvents }: Props) {
           {/* Description */}
           <div>
             <label className="block text-xs font-bold text-gray-500 mb-1.5">Descriere</label>
-            <textarea
+            <RichTextEditor
+              key={editingId ?? "new-event"}
               value={form.description}
-              onChange={(e) => set("description", e.target.value)}
-              rows={2}
-              className={inputCls + " resize-none"}
+              onChange={(v) => set("description", v)}
               placeholder="Scurtă descriere..."
+              minHeight={80}
             />
           </div>
 
