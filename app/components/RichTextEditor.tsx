@@ -6,6 +6,7 @@ import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
 import TextAlign from "@tiptap/extension-text-align";
 import Link from "@tiptap/extension-link";
+import Placeholder from "@tiptap/extension-placeholder";
 import { Table } from "@tiptap/extension-table";
 import { TableRow } from "@tiptap/extension-table-row";
 import { TableCell } from "@tiptap/extension-table-cell";
@@ -69,6 +70,7 @@ export default function RichTextEditor({
       Underline,
       TextAlign.configure({ types: ["heading", "paragraph"] }),
       Link.configure({ openOnClick: false }),
+      Placeholder.configure({ placeholder }),
       Table.configure({ resizable: false }),
       TableRow,
       TableHeader,
@@ -235,9 +237,6 @@ export default function RichTextEditor({
         style={{ minHeight }}
         onClick={() => editor.chain().focus().run()}
       >
-        {editor.isEmpty && !editor.isFocused && (
-          <p className="text-gray-400 pointer-events-none absolute">{placeholder}</p>
-        )}
         <EditorContent editor={editor} className="rich-text" />
       </div>
 
