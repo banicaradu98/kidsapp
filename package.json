@@ -26,6 +26,7 @@
     "@tiptap/pm": "^3.22.2",
     "@tiptap/react": "^3.22.2",
     "@tiptap/starter-kit": "^3.22.2",
+    "browser-image-compression": "^2.0.2",
     "cheerio": "^1.2.0",
     "next": "14.2.35",
     "qrcode.react": "^4.2.0",

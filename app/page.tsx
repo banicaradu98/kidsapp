@@ -60,11 +60,10 @@ export default async function Home() {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
 
-  // Category counts
+  // Category counts — toate listingurile, indiferent de status verificare
   const { data: allListingsForCount } = await supabase
     .from("listings")
-    .select("category")
-    .eq("is_verified", true);
+    .select("category");
 
   const catCounts: Record<string, number> = {};
   for (const l of allListingsForCount ?? []) {

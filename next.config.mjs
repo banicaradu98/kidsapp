@@ -30,7 +30,7 @@ const securityHeaders = [
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
-      `img-src 'self' data: blob: https://${supabaseHost} https://lh3.googleusercontent.com https://lh4.googleusercontent.com https://maps.gstatic.com https://maps.googleapis.com`,
+      `img-src 'self' data: blob: https://${supabaseHost} https://lh3.googleusercontent.com https://lh4.googleusercontent.com https://maps.gstatic.com https://maps.googleapis.com https://www.teatrulgong.ro https://teatrulgong.ro`,
       "frame-src https://maps.google.com https://www.google.com https://accounts.google.com",
       `connect-src 'self' https://${supabaseHost} https://*.supabase.co https://*.supabase.io wss://${supabaseHost}`,
       "form-action 'self' https://accounts.google.com",
@@ -60,6 +60,9 @@ const nextConfig = {
         ? [{ protocol: "https", hostname: new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname }]
         : [{ protocol: "https", hostname: "*.supabase.co" }]
       ),
+      // Teatrul Gong — imagini scraped
+      { protocol: "https", hostname: "www.teatrulgong.ro" },
+      { protocol: "https", hostname: "teatrulgong.ro" },
     ],
   },
 };

@@ -2,6 +2,21 @@
 
 import { useState, useRef } from "react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
+import imageCompression from "browser-image-compression";
+
+const COMPRESSION_OPTIONS = {
+  maxSizeMB: 1,
+  maxWidthOrHeight: 1920,
+  useWebWorker: true,
+};
+
+async function compressFile(file: File): Promise<File> {
+  try {
+    return await imageCompression(file, COMPRESSION_OPTIONS);
+  } catch {
+    return file; // fallback la original dacă compresia eșuează
+  }
+}
 
 function reorder(list: string[], from: number, to: number): string[] {
   const result = [...list];
@@ -34,12 +49,13 @@ export default function ImageUploader({ defaultImages = [], endpoint = "/api/upl
     const remaining = maxFiles - images.length;
     const toUpload = Array.from(files).slice(0, remaining);
     for (const file of toUpload) {
-      if (file.size > 5 * 1024 * 1024) {
-        setError(`"${file.name}" depășește 5MB`);
+      if (file.size > 20 * 1024 * 1024) {
+        setError(`"${file.name}" depășește 20MB`);
         continue;
       }
+      const compressed = await compressFile(file);
       const fd = new FormData();
-      fd.append("file", file);
+      fd.append("file", compressed);
       const res = await fetch(endpoint, { method: "POST", body: fd });
       const data = await res.json();
       if (data.url) newUrls.push(data.url as string);
@@ -132,7 +148,7 @@ export default function ImageUploader({ defaultImages = [], endpoint = "/api/upl
             {uploading ? "Se încarcă..." : "Adaugă fotografii"}
           </p>
           <p className="text-xs text-gray-400 text-center">
-            JPG, PNG, WebP · max 5MB / fotografie
+            JPG, PNG, WebP · comprimate automat la upload
             {maxFiles < 20 && ` · max ${maxFiles} poze`}
           </p>
         </label>

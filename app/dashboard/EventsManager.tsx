@@ -3,6 +3,21 @@
 import { useRef, useState } from "react";
 import { addEvent, updateEvent, deleteEvent, updateEventImages } from "./eventActions";
 import RichTextEditor from "@/app/components/RichTextEditor";
+import imageCompression from "browser-image-compression";
+
+const COMPRESSION_OPTIONS = {
+  maxSizeMB: 1,
+  maxWidthOrHeight: 1920,
+  useWebWorker: true,
+};
+
+async function compressFile(file: File): Promise<File> {
+  try {
+    return await imageCompression(file, COMPRESSION_OPTIONS);
+  } catch {
+    return file;
+  }
+}
 
 interface Event {
   id: string;
@@ -55,8 +70,9 @@ async function uploadImage(
   opts: { eventId: string; type: "thumbnail" | "gallery"; galleryIndex?: number } |
         { listingId: string; type: "thumbnail" | "gallery"; galleryIndex?: number }
 ): Promise<string | null> {
+  const compressed = await compressFile(file);
   const fd = new FormData();
-  fd.append("file", file);
+  fd.append("file", compressed);
   if ("eventId" in opts) {
     fd.append("event_id", opts.eventId);
   } else {
