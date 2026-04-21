@@ -34,6 +34,7 @@ interface DefaultValues {
   images?: string[];
   // Event-specific
   event_date?: string | null;
+  event_end_date?: string | null;
   start_time?: string | null;
   end_time?: string | null;
 }
@@ -76,6 +77,8 @@ function toInputTime(t: string | null | undefined): string {
 export default function ListingFormFields({ d = {} }: { d?: DefaultValues }) {
   const [category, setCategory] = useState(d.category ?? "");
   const isEvent = EVENT_CATEGORIES.includes(category);
+  // Track event_date value to enforce min on event_end_date
+  const [startDateVal, setStartDateVal] = useState(toInputDate(d.event_date));
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -119,18 +122,27 @@ export default function ListingFormFields({ d = {} }: { d?: DefaultValues }) {
         <>
           <SectionHeader title="Data & Ora evenimentului" />
 
-          <Field label="Data evenimentului" required>
+          <Field label="Data început" required>
             <input
               name="event_date"
               type="date"
-              defaultValue={toInputDate(d.event_date)}
+              value={startDateVal}
+              onChange={(e) => setStartDateVal(e.target.value)}
               className={inputCls}
             />
           </Field>
 
-          <div /> {/* spacer col */}
+          <Field label="Data sfârșit (opțional, pentru evenimente multi-zi)">
+            <input
+              name="event_end_date"
+              type="date"
+              defaultValue={toInputDate(d.event_end_date)}
+              min={startDateVal || undefined}
+              className={inputCls}
+            />
+          </Field>
 
-          <Field label="Oră început">
+          <Field label="Ora început">
             <input
               name="start_time"
               type="time"
@@ -139,7 +151,7 @@ export default function ListingFormFields({ d = {} }: { d?: DefaultValues }) {
             />
           </Field>
 
-          <Field label="Oră sfârșit (opțional)">
+          <Field label="Ora sfârșit (opțional)">
             <input
               name="end_time"
               type="time"

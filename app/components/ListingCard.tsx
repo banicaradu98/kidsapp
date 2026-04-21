@@ -15,6 +15,8 @@ export interface Listing {
   is_verified?: boolean;
   images?: string[] | null;
   event_date?: string | null;
+  event_end_date?: string | null;
+  start_time?: string | null;
   hot_badge?: { type: string; label: string; emoji: string; bg: string; text: string } | null;
 }
 

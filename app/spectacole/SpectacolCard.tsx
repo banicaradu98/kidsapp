@@ -1,17 +1,5 @@
 import { Listing, CATEGORY_META, DEFAULT_META } from "@/app/components/ListingCard";
-
-const DAYS_RO = ["Duminică", "Luni", "Marți", "Miercuri", "Joi", "Vineri", "Sâmbătă"];
-const MONTHS_RO = ["ian", "feb", "mar", "apr", "mai", "iun", "iul", "aug", "sep", "oct", "nov", "dec"];
-
-function formatEventDate(iso: string | null | undefined) {
-  if (!iso) return null;
-  const d = new Date(iso);
-  return {
-    dayName: DAYS_RO[d.getDay()],
-    date: `${d.getDate()} ${MONTHS_RO[d.getMonth()]}`,
-    time: `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`,
-  };
-}
+import { formatEventDate } from "@/utils/dateUtils";
 
 function getVenueName(address: string | null): string | null {
   if (!address) return null;
@@ -21,7 +9,7 @@ function getVenueName(address: string | null): string | null {
 
 export default function SpectacolCard({ listing }: { listing: Listing }) {
   const meta = CATEGORY_META[listing.category ?? ""] ?? DEFAULT_META;
-  const dateInfo = formatEventDate(listing.event_date);
+  const dateDisplay = formatEventDate(listing.event_date, listing.event_end_date, listing.start_time);
   const isFree = listing.price?.toLowerCase() === "gratuit";
   const cover = listing.images?.[0];
   const venueName = getVenueName(listing.address);
@@ -50,12 +38,13 @@ export default function SpectacolCard({ listing }: { listing: Listing }) {
       {/* Content */}
       <div className="flex-1 p-3 sm:p-4 flex flex-col gap-2 min-w-0 justify-between">
         <div className="flex flex-col gap-1.5">
-          {/* Data + ora */}
-          {dateInfo && (
-            <div className="inline-flex items-center gap-1 bg-[#ff5a2e]/10 text-[#ff5a2e] rounded-lg px-2.5 py-1 w-fit">
-              <span className="text-xs font-black whitespace-nowrap">
-                {dateInfo.dayName}, {dateInfo.date} · {dateInfo.time}
-              </span>
+          {/* Data */}
+          {dateDisplay && (
+            <div className="inline-flex flex-col gap-0.5 bg-[#ff5a2e]/10 text-[#ff5a2e] rounded-lg px-2.5 py-1 w-fit">
+              <span className="text-xs font-black whitespace-nowrap">{dateDisplay.primary}</span>
+              {dateDisplay.secondary && (
+                <span className="text-[10px] font-bold whitespace-nowrap opacity-80">{dateDisplay.secondary}</span>
+              )}
             </div>
           )}
 

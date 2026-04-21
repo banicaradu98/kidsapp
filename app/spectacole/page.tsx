@@ -14,7 +14,7 @@ export default async function SpectacolePage() {
   const supabase = createClient(await cookies());
   const { data: listings } = await supabase
     .from("listings")
-    .select("id, name, category, description, address, price, age_min, age_max, schedule, is_verified, images, event_date")
+    .select("id, name, category, description, address, price, age_min, age_max, schedule, is_verified, images, event_date, event_end_date, start_time")
     .eq("category", "spectacol")
     .order("event_date", { ascending: true, nullsFirst: false });
 

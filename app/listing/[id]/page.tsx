@@ -14,6 +14,7 @@ import ViewTracker from "./ViewTracker";
 import LiveViewers from "./LiveViewers";
 import QRCodeButton from "./QRCodeButton";
 import { getDynamicBadges } from "@/utils/getDynamicBadges";
+import { formatEventDate } from "@/utils/dateUtils";
 
 const CATEGORY_META: Record<string, { emoji: string; label: string; tagColor: string; gradientFrom: string; gradientTo: string }> = {
   "loc-de-joaca": { emoji: "🛝", label: "Loc de joacă",   tagColor: "bg-orange-100 text-orange-700", gradientFrom: "from-orange-100", gradientTo: "to-orange-200" },
@@ -137,6 +138,9 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
   const meta = CATEGORY_META[listing.category ?? ""] ?? DEFAULT_META;
   const age = formatAge(listing.age_min, listing.age_max);
   const isFree = listing.price?.toLowerCase() === "gratuit";
+  const eventDateDisplay = (listing.category === "spectacol" || listing.category === "eveniment")
+    ? formatEventDate(listing.event_date, listing.event_end_date, listing.start_time)
+    : null;
   const wa = whatsappLink(listing.phone);
 
   const photos: string[] = listing.images ?? [];
@@ -296,6 +300,15 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
                 <div className="flex-none bg-green-50 border border-green-100 rounded-2xl px-4 py-3 min-w-[200px]">
                   <p className="text-xs text-gray-400 font-semibold mb-0.5">Program</p>
                   <p className="text-sm font-bold text-green-700 whitespace-pre-line">{listing.schedule}</p>
+                </div>
+              )}
+              {eventDateDisplay && (
+                <div className="flex-none bg-rose-50 border border-rose-100 rounded-2xl px-4 py-3 min-w-[160px]">
+                  <p className="text-xs text-gray-400 font-semibold mb-0.5">Data</p>
+                  <p className="text-sm font-black text-rose-700 leading-snug">{eventDateDisplay.primary}</p>
+                  {eventDateDisplay.secondary && (
+                    <p className="text-xs font-bold text-rose-500 mt-0.5">{eventDateDisplay.secondary}</p>
+                  )}
                 </div>
               )}
             </div>

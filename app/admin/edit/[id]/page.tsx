@@ -44,9 +44,10 @@ export default async function EditPage({ params }: { params: { id: string } }) {
             is_verified:  listing.is_verified,
             is_featured:  listing.is_featured,
             images:       listing.images ?? [],
-            event_date:   listing.event_date,
-            start_time:   listing.start_time,
-            end_time:     listing.end_time,
+            event_date:     listing.event_date,
+            event_end_date: listing.event_end_date,
+            start_time:     listing.start_time,
+            end_time:       listing.end_time,
           }} />
 
           <div className="flex items-center gap-3 mt-8 pt-6 border-t border-gray-100">
