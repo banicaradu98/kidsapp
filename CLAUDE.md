@@ -34,6 +34,14 @@ proprii printr-un dashboard dedicat.
 - **OG image generată dinamic** — `/opengraph-image` via Next.js edge runtime
 - **Metadata SEO completă** — globală în layout.tsx, dinamică per pagină și per listing
 - **Homepage redesignat** — hero cu pattern coral, categorii vizuale cu contor locații, featured cu rating, events cu border coral, footer complet
+- **Redesign premium** — Playfair Display (font-display) + DM Sans (body), hero cu animații entrance, carduri cu hover lift (`hover:-translate-y-0.5 shadow-md`)
+- **Compresie imagini client-side** — `browser-image-compression` (maxSizeMB:1, maxWidthOrHeight:1920) aplicată în toate formularele cu upload (marketplace, dashboard, adauga-locatia-ta, one-time events)
+- **Marketplace second-hand** — `/marketplace` cu filtre client-side, `MarketplaceCard`, pagina detaliu `/marketplace/[id]`, formular `/marketplace/adauga`; tabele Supabase: `marketplace_listings`, `marketplace_messages`, `marketplace_favorites`; bucket Storage: `marketplace-images`
+- **Mesagerie internă marketplace** — thread-uri grupate pe listing, badge mesaje necitite în navbar cu polling la 30s
+- **Tab Marketplace în /contul-meu** — anunțurile mele (CRUD status), mesaje (thread expand + reply), favorite marketplace
+- **Secțiune marketplace pe homepage** — 4 anunțuri recente cu badge tip (VÂND/DONEZ/ÎNCHIRIEZ)
+- **Date picker în admin** — `ListingFormFields.tsx` (client component cu useState), afișează `event_date` / `start_time` / `end_time` dinamic când categoria e spectacol sau eveniment; salvat în `extractData` din `actions.ts`
+- **Evenimente one-time din dashboard** — `OneTimeEventForm.tsx` + `oneTimeEventActions.ts`: inserare listing cu `is_verified=false` + flux aprobare admin existent; categorii: eveniment / spectacol / curs-atelier
 
 ### Backlog — de făcut înainte de lansare ⏳
 - [ ] `UPDATE listings SET is_verified = false WHERE claimed_by IS NULL` — toate 33 listingurile importate sunt `is_verified=true`; trebuie resetate cele fără owner

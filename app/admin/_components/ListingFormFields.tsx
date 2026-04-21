@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import ImageUploader from "./ImageUploader";
 import RichTextEditor from "@/app/components/RichTextEditor";
 
@@ -9,6 +12,8 @@ const CATEGORIES = [
   { value: "spectacol",    label: "🎭 Spectacol" },
   { value: "eveniment",    label: "🎪 Eveniment" },
 ];
+
+const EVENT_CATEGORIES = ["spectacol", "eveniment"];
 
 interface DefaultValues {
   name?: string;
@@ -27,6 +32,10 @@ interface DefaultValues {
   is_verified?: boolean;
   is_featured?: boolean;
   images?: string[];
+  // Event-specific
+  event_date?: string | null;
+  start_time?: string | null;
+  end_time?: string | null;
 }
 
 const inputCls = "w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-700 outline-none focus:border-[#ff5a2e] focus:ring-2 focus:ring-[#ff5a2e]/20 transition-all bg-white";
@@ -51,7 +60,23 @@ function SectionHeader({ title }: { title: string }) {
   );
 }
 
+/** Convert a timestamptz string to YYYY-MM-DD for <input type="date"> */
+function toInputDate(dateStr: string | null | undefined): string {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return "";
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
+}
+
+/** Truncate Postgres time "HH:MM:SS" to "HH:MM" for <input type="time"> */
+function toInputTime(t: string | null | undefined): string {
+  return t ? t.slice(0, 5) : "";
+}
+
 export default function ListingFormFields({ d = {} }: { d?: DefaultValues }) {
+  const [category, setCategory] = useState(d.category ?? "");
+  const isEvent = EVENT_CATEGORIES.includes(category);
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
 
@@ -65,7 +90,13 @@ export default function ListingFormFields({ d = {} }: { d?: DefaultValues }) {
       </div>
 
       <Field label="Categorie" required>
-        <select name="category" required defaultValue={d.category ?? ""} className={inputCls}>
+        <select
+          name="category"
+          required
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          className={inputCls}
+        >
           <option value="" disabled>Alege categoria...</option>
           {CATEGORIES.map(c => (
             <option key={c.value} value={c.value}>{c.label}</option>
@@ -82,6 +113,42 @@ export default function ListingFormFields({ d = {} }: { d?: DefaultValues }) {
           <RichTextEditor name="description" defaultValue={d.description ?? ""} placeholder="Descriere detaliată a locului..." minHeight={100} />
         </Field>
       </div>
+
+      {/* ── Data & Ora — doar pentru Spectacol / Eveniment ── */}
+      {isEvent && (
+        <>
+          <SectionHeader title="Data & Ora evenimentului" />
+
+          <Field label="Data evenimentului" required>
+            <input
+              name="event_date"
+              type="date"
+              defaultValue={toInputDate(d.event_date)}
+              className={inputCls}
+            />
+          </Field>
+
+          <div /> {/* spacer col */}
+
+          <Field label="Oră început">
+            <input
+              name="start_time"
+              type="time"
+              defaultValue={toInputTime(d.start_time)}
+              className={inputCls}
+            />
+          </Field>
+
+          <Field label="Oră sfârșit (opțional)">
+            <input
+              name="end_time"
+              type="time"
+              defaultValue={toInputTime(d.end_time)}
+              className={inputCls}
+            />
+          </Field>
+        </>
+      )}
 
       {/* ── Detalii ── */}
       <SectionHeader title="Detalii" />

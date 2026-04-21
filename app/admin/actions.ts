@@ -66,6 +66,10 @@ function extractData(formData: FormData) {
     is_verified: formData.get("is_verified") === "on",
     is_featured: formData.get("is_featured") === "on",
     images,
+    // Event-specific (only set when category is spectacol/eveniment)
+    event_date: (formData.get("event_date") as string) || null,
+    start_time: (formData.get("start_time") as string) || null,
+    end_time:   (formData.get("end_time")   as string) || null,
   };
 }
 

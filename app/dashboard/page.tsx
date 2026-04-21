@@ -9,6 +9,7 @@ import UpdatesManager from "./UpdatesManager";
 import ReviewsPanel from "./ReviewsPanel";
 import StatsPanel from "./StatsPanel";
 import PromoSection from "./PromoSection";
+import OneTimeEventForm from "./OneTimeEventForm";
 import { adminClient } from "@/utils/supabase/admin";
 
 export const dynamic = "force-dynamic";
@@ -175,6 +176,8 @@ export default async function DashboardPage({
         <ListingEditor listing={listing} />
 
         <EventsManager listingId={listing.id} initialEvents={events ?? []} />
+
+        <OneTimeEventForm />
 
         <EventCalendar events={events ?? []} />
 
