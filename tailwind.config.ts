@@ -54,6 +54,7 @@ const config: Config = {
       },
       fontFamily: {
         rounded: ["Nunito", "system-ui", "sans-serif"],
+        display: ["var(--font-playfair)", "Georgia", "serif"],
       },
       boxShadow: {
         card: "0 2px 16px 0 rgba(0,0,0,0.07)",

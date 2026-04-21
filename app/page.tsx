@@ -146,44 +146,37 @@ export default async function Home() {
       <Navbar />
 
       {/* ── HERO ── */}
-      <section className="relative bg-gradient-to-br from-[#fff4f0] via-[#fff8f5] to-white pt-12 pb-14 px-4 sm:pt-20 sm:pb-20 overflow-hidden">
-        {/* Dot pattern background */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            backgroundImage: "radial-gradient(circle, #ff5a2e 1.5px, transparent 1.5px)",
-            backgroundSize: "28px 28px",
-            opacity: 0.07,
-          }}
-        />
-        {/* Decorative blobs */}
-        <div className="absolute -top-16 -right-16 w-64 h-64 bg-[#ff5a2e] rounded-full opacity-[0.06] pointer-events-none" />
-        <div className="absolute bottom-0 -left-20 w-80 h-80 bg-[#ff5a2e] rounded-full opacity-[0.04] pointer-events-none" />
+      <section className="relative bg-gradient-to-b from-white to-[#fff5f3] pt-14 pb-16 px-4 sm:pt-24 sm:pb-28 overflow-hidden">
+        {/* Subtle decorative blobs */}
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-[#ff5a2e] rounded-full opacity-[0.04] pointer-events-none translate-x-1/3 -translate-y-1/4" />
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#ff5a2e] rounded-full opacity-[0.03] pointer-events-none -translate-x-1/3 translate-y-1/4" />
 
-        <div className="relative max-w-3xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 bg-orange-100 text-orange-700 text-sm font-bold px-4 py-2 rounded-full mb-6 shadow-sm">
+        <div className="relative max-w-4xl mx-auto text-center">
+          <div className="inline-flex items-center gap-2 bg-white border border-orange-100 text-[#ff5a2e] text-xs font-semibold uppercase tracking-widest px-4 py-2 rounded-full mb-8 shadow-sm">
             <span>📍</span> Sibiu, România
           </div>
 
-          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-[#1a1a2e] leading-[1.08] mb-5 text-balance">
+          <h1 className="font-display text-5xl sm:text-6xl lg:text-7xl font-bold text-[#1a1a2e] leading-[1.06] mb-6 text-balance animate-entrance animate-entrance-delay-1">
             Ce facem cu copilul<br />
             <span className="text-[#ff5a2e]">în Sibiu?</span>
           </h1>
-          <p className="text-gray-500 text-lg sm:text-xl font-medium mb-8 max-w-xl mx-auto leading-relaxed">
+          <p className="text-gray-500 text-xl leading-relaxed mb-10 max-w-xl mx-auto animate-entrance animate-entrance-delay-2">
             Descoperă sute de activități, locuri de joacă și evenimente pentru copii de toate vârstele.
           </p>
 
           {/* Search bar */}
-          <SearchBar />
+          <div className="animate-entrance animate-entrance-delay-3">
+            <SearchBar />
+          </div>
 
           {/* Popular tags */}
-          <div className="flex flex-wrap justify-center gap-2 mt-5">
-            <span className="text-sm text-gray-400 font-semibold self-center mr-1">Popular:</span>
+          <div className="flex flex-wrap justify-center gap-2 mt-6">
+            <span className="text-xs text-gray-400 font-medium uppercase tracking-wider self-center mr-1">Popular:</span>
             {POPULAR_TAGS.map((tag) => (
               <a
                 key={tag.label}
                 href={tag.href}
-                className="inline-flex items-center gap-1.5 bg-white hover:bg-orange-50 border border-gray-200 hover:border-[#ff5a2e] text-gray-600 hover:text-[#ff5a2e] text-sm font-bold px-3 py-1.5 rounded-full transition-all duration-150 shadow-sm active:scale-95"
+                className="inline-flex items-center gap-1.5 bg-white hover:bg-[#fff5f3] border border-gray-200 hover:border-[#ff5a2e] text-gray-600 hover:text-[#ff5a2e] text-sm font-medium px-3 py-1.5 rounded-full transition-all duration-200 shadow-sm"
               >
                 <span>{tag.icon}</span> {tag.label}
               </a>
@@ -194,13 +187,16 @@ export default async function Home() {
 
       {/* ── CATEGORIES ── */}
       <ScrollReveal>
-        <section className="py-12 sm:py-16">
+        <section className="py-14 sm:py-20">
           <div className="max-w-6xl mx-auto">
-            <div className="flex items-center justify-between mb-6 px-4 sm:px-6">
-              <h2 className="text-2xl sm:text-3xl font-black text-[#1a1a2e]">Explorează după categorie</h2>
+            <div className="flex items-center justify-between mb-8 px-4 sm:px-6">
+              <div>
+                <h2 className="font-display text-2xl sm:text-3xl font-bold text-[#1a1a2e]">Explorează după categorie</h2>
+                <p className="text-sm text-gray-400 mt-1">Alege ce se potrivește copilului tău</p>
+              </div>
             </div>
 
-            {/* Mobile tiny: horizontal scroll */}
+            {/* Mobile: horizontal scroll */}
             <div className="flex gap-3 overflow-x-auto scrollbar-hide px-4 sm:px-6 pb-2 sm:hidden snap-x snap-mandatory">
               {CATEGORIES.map((cat) => {
                 const meta = CATEGORY_META[cat.key];
@@ -209,11 +205,11 @@ export default async function Home() {
                   <a
                     key={cat.key}
                     href={cat.href}
-                    className={`flex-none snap-start ${meta.iconBg} rounded-2xl p-4 flex flex-col items-center gap-2 min-w-[110px] active:scale-95 transition-transform border border-white hover:shadow-md`}
+                    className="flex-none snap-start bg-[#f9f9f9] hover:bg-white rounded-2xl p-4 flex flex-col items-center gap-2 min-w-[110px] active:scale-95 transition-all duration-200 border border-transparent hover:border-[#ff5a2e]/30 hover:shadow-sm"
                   >
                     <span className="text-4xl">{meta.emoji}</span>
-                    <span className="text-sm font-black text-gray-700 text-center leading-tight">{meta.shortLabel}</span>
-                    {count > 0 && <span className="text-xs font-bold text-gray-400">{count} locuri</span>}
+                    <span className="text-sm font-semibold text-gray-700 text-center leading-tight group-hover:text-[#ff5a2e]">{meta.shortLabel}</span>
+                    {count > 0 && <span className="text-xs text-gray-400">{count} locuri</span>}
                   </a>
                 );
               })}
@@ -221,28 +217,22 @@ export default async function Home() {
 
             {/* sm+: 2-col grid → lg: 3-col grid */}
             <div className="hidden sm:grid grid-cols-2 lg:grid-cols-3 gap-4 px-4 sm:px-6">
-              {CATEGORIES.map((cat, i) => {
+              {CATEGORIES.map((cat) => {
                 const meta = CATEGORY_META[cat.key];
                 const count = catCounts[cat.key] ?? 0;
                 return (
                   <a
                     key={cat.key}
                     href={cat.href}
-                    style={{ animationDelay: `${i * 60}ms` }}
-                    className={`group bg-gradient-to-br ${meta.gradientFrom} ${meta.gradientTo} rounded-3xl p-6 flex flex-col items-center gap-3 hover:shadow-[0_8px_32px_rgba(0,0,0,0.10)] hover:-translate-y-1.5 transition-all duration-250 border border-white`}
+                    className="group bg-[#f9f9f9] hover:bg-white rounded-2xl p-7 flex flex-col items-center gap-3 hover:shadow-md border border-transparent hover:border-[#ff5a2e]/20 transition-all duration-300 hover:-translate-y-1"
                   >
-                    <div className={`w-16 h-16 ${meta.iconBg} rounded-2xl flex items-center justify-center text-4xl group-hover:scale-110 transition-transform duration-200 shadow-sm`}>
-                      {meta.emoji}
-                    </div>
+                    <span className="text-5xl group-hover:scale-110 transition-transform duration-300">{meta.emoji}</span>
                     <div className="text-center">
-                      <p className="font-black text-[#1a1a2e] text-base leading-snug">{meta.label}</p>
+                      <p className="font-semibold text-[#1a1a2e] text-base group-hover:text-[#ff5a2e] transition-colors duration-200">{meta.label}</p>
                       {count > 0 && (
-                        <p className="text-xs font-bold text-gray-400 mt-0.5">{count} {count === 1 ? "loc" : "locuri"}</p>
+                        <p className="text-xs text-gray-400 mt-0.5">{count} {count === 1 ? "loc" : "locuri"}</p>
                       )}
                     </div>
-                    <span className={`text-xs font-bold px-3 py-1 rounded-full ${meta.tagColor} group-hover:opacity-100 opacity-0 transition-opacity duration-200`}>
-                      Explorează →
-                    </span>
                   </a>
                 );
               })}
@@ -253,12 +243,12 @@ export default async function Home() {
 
       {/* ── FEATURED ── */}
       <ScrollReveal>
-        <section className="pb-14 sm:pb-16 bg-gray-50/60">
-          <div className="max-w-6xl mx-auto pt-12 sm:pt-16">
-            <div className="flex items-center justify-between mb-6 px-4 sm:px-6">
+        <section className="pb-14 sm:pb-16 bg-[#f7f7f7]">
+          <div className="max-w-6xl mx-auto pt-14 sm:pt-20">
+            <div className="flex items-center justify-between mb-8 px-4 sm:px-6">
               <div>
-                <h2 className="text-2xl sm:text-3xl font-black text-[#1a1a2e]">❤️ Recomandate de părinți</h2>
-                <p className="text-sm font-semibold text-gray-400 mt-0.5">Locuri iubite de familiile din Sibiu</p>
+                <h2 className="font-display text-2xl sm:text-3xl font-bold text-[#1a1a2e]">Recomandate de părinți</h2>
+                <p className="text-sm text-gray-400 mt-1">Locuri iubite de familiile din Sibiu</p>
               </div>
               <a href="#" className="text-base font-bold text-[#ff5a2e] hover:underline hidden sm:block shrink-0 ml-4">
                 Vezi toate →
@@ -406,12 +396,12 @@ export default async function Home() {
 
       {/* ── EVENTS THIS WEEK ── */}
       <ScrollReveal>
-        <section className="py-12 sm:py-16">
+        <section className="py-14 sm:py-20">
           <div className="max-w-6xl mx-auto">
-            <div className="flex items-center justify-between mb-6 px-4 sm:px-6">
+            <div className="flex items-center justify-between mb-8 px-4 sm:px-6">
               <div>
-                <h2 className="text-2xl sm:text-3xl font-black text-[#1a1a2e]">📅 Ce se întâmplă în Sibiu</h2>
-                <p className="text-sm font-semibold text-gray-400 mt-0.5">Săptămâna aceasta</p>
+                <h2 className="font-display text-2xl sm:text-3xl font-bold text-[#1a1a2e]">Ce se întâmplă în Sibiu</h2>
+                <p className="text-sm text-gray-400 mt-1">Săptămâna aceasta</p>
               </div>
               <a href="/calendar" className="text-base font-bold text-[#ff5a2e] hover:underline hidden sm:block shrink-0 ml-4">
                 Tot calendarul →

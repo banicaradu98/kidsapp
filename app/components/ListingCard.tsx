@@ -45,7 +45,7 @@ export default function ListingCard({ listing, variant = "default" }: { listing:
       <FavoriteButton listingId={listing.id} />
       <a
         href={`/listing/${listing.id}`}
-        className="flex flex-col sm:flex-row bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.07)] hover:shadow-[0_6px_24px_rgba(0,0,0,0.12)] border border-gray-100 overflow-hidden transition-all duration-200 active:scale-[.99] group"
+        className="flex flex-col sm:flex-row bg-white rounded-2xl shadow-sm hover:shadow-md hover:-translate-y-0.5 overflow-hidden transition-all duration-300 active:scale-[.99] group"
       >
       {/* Thumb — 4:3 pe mobil, w-32 full-height pe desktop */}
       <div className="sm:w-32 sm:shrink-0 aspect-[4/3] sm:aspect-auto sm:h-auto overflow-hidden">
@@ -54,11 +54,11 @@ export default function ListingCard({ listing, variant = "default" }: { listing:
           <img
             src={listing.images[0]}
             alt=""
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           />
         ) : (
           <div className={`w-full h-full bg-gradient-to-br ${meta.gradientFrom} ${meta.gradientTo} flex items-center justify-center`}>
-            <span className="text-5xl group-hover:scale-110 transition-transform duration-200">{meta.emoji}</span>
+            <span className="text-5xl group-hover:scale-110 transition-transform duration-300">{meta.emoji}</span>
           </div>
         )}
       </div>
@@ -66,41 +66,41 @@ export default function ListingCard({ listing, variant = "default" }: { listing:
       {/* Content */}
       <div className="flex-1 p-4 flex flex-col justify-between gap-2">
         <div>
-          <div className="flex flex-wrap items-center gap-2 mb-1">
-            <span className={`${meta.tagColor} text-xs font-bold px-2.5 py-1 rounded-full`}>{meta.label}</span>
+          <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
+            <span className={`${meta.tagColor} text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full`}>{meta.label}</span>
             {listing.is_verified && (
-              <span className="bg-green-100 text-green-700 text-xs font-bold px-2.5 py-1 rounded-full">✓ Verificat</span>
+              <span className="bg-green-50 text-green-600 text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full">✓ Verificat</span>
             )}
             {listing.hot_badge && (
-              <span className={`${listing.hot_badge.bg} ${listing.hot_badge.text} text-xs font-black px-2.5 py-1 rounded-full`}>
+              <span className={`${listing.hot_badge.bg} ${listing.hot_badge.text} text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full`}>
                 {listing.hot_badge.emoji} {listing.hot_badge.label}
               </span>
             )}
             {age && (
-              <span className="bg-blue-50 text-blue-600 text-xs font-bold px-2.5 py-1 rounded-full">👶 {age}</span>
+              <span className="bg-blue-50 text-blue-600 text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full">👶 {age}</span>
             )}
           </div>
-          <h3 className="text-base font-black text-[#1a1a2e] leading-snug">{listing.name}</h3>
+          <h3 className="text-base font-bold text-[#1a1a2e] leading-snug">{listing.name}</h3>
           {listing.description && (
-            <p className="text-sm text-gray-500 font-medium leading-relaxed mt-1 line-clamp-2">{listing.description}</p>
+            <p className="text-sm text-gray-500 leading-relaxed mt-1 line-clamp-2">{listing.description}</p>
           )}
         </div>
 
-        <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex items-center justify-between gap-2 flex-wrap pt-2 border-t border-gray-50">
           <div className="flex flex-col gap-0.5">
-            {listing.address && <span className="text-xs text-gray-400 font-semibold">📍 {listing.address}</span>}
+            {listing.address && <span className="text-xs text-gray-400">📍 {listing.address}</span>}
             {variant === "event" && listing.schedule && (
-              <span className="text-xs text-gray-400 font-semibold">📅 {listing.schedule}</span>
+              <span className="text-xs text-gray-400">📅 {listing.schedule}</span>
             )}
           </div>
           <div className="flex items-center gap-3">
             {listing.price && (
-              <span className={`text-base font-black ${isFree ? "text-green-600" : "text-[#ff5a2e]"}`}>
+              <span className={`font-display text-base font-bold ${isFree ? "text-green-600" : "text-[#ff5a2e]"}`}>
                 {listing.price}
               </span>
             )}
-            <span className="text-sm font-bold text-[#ff5a2e] border border-[#ff5a2e] px-3 py-1.5 rounded-xl hover:bg-orange-50 transition-colors whitespace-nowrap">
-              Vezi detalii →
+            <span className="text-xs font-semibold text-[#ff5a2e] border border-[#ff5a2e]/40 px-3 py-1.5 rounded-full hover:bg-[#fff5f3] transition-colors whitespace-nowrap">
+              Vezi →
             </span>
           </div>
         </div>

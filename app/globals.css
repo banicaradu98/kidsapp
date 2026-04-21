@@ -14,8 +14,26 @@ html {
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: "Nunito", system-ui, sans-serif;
+  font-family: var(--font-dm-sans), "DM Sans", system-ui, sans-serif;
 }
+
+/* ── Display font (Playfair Display) — used on headings ── */
+.font-display {
+  font-family: var(--font-playfair), "Playfair Display", Georgia, serif;
+}
+
+/* ── Entrance animations ── */
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-entrance {
+  animation: fadeSlideUp 0.6s ease-out forwards;
+}
+.animate-entrance-delay-1 { animation-delay: 0.05s; opacity: 0; }
+.animate-entrance-delay-2 { animation-delay: 0.15s; opacity: 0; }
+.animate-entrance-delay-3 { animation-delay: 0.25s; opacity: 0; }
 
 /* ── Rich text content (TipTap output) ── */
 .rich-text h2 { font-size: 1.3rem; font-weight: 700; margin: 1rem 0 0.5rem; }
