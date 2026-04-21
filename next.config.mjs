@@ -56,6 +56,7 @@ const nextConfig = {
       { protocol: "https", hostname: "lh5.googleusercontent.com" },
       { protocol: "https", hostname: "lh6.googleusercontent.com" },
       // Supabase Storage (listing images + custom avatars)
+      { protocol: "https", hostname: "isritlsmzejsxrygflih.supabase.co" },
       ...(process.env.NEXT_PUBLIC_SUPABASE_URL
         ? [{ protocol: "https", hostname: new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname }]
         : [{ protocol: "https", hostname: "*.supabase.co" }]

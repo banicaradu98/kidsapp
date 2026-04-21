@@ -34,6 +34,37 @@ function extractBgUrl(styleStr) {
   return match ? match[1] : null;
 }
 
+// Descarcă o imagine de la URL și o uploadează în Supabase Storage
+// Returnează URL-ul public din Supabase sau null dacă eșuează
+async function uploadImageToSupabase(imageUrl) {
+  try {
+    const res = await fetch(imageUrl, {
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; KidsApp-scraper/1.0)" },
+    });
+    if (!res.ok) return null;
+
+    const contentType = res.headers.get("content-type") ?? "image/jpeg";
+    const ext = contentType.includes("png") ? "png" : contentType.includes("webp") ? "webp" : "jpg";
+    const buffer = Buffer.from(await res.arrayBuffer());
+    const path = `gong/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+
+    const { error } = await supabase.storage
+      .from("listings-images")
+      .upload(path, buffer, { contentType, upsert: false });
+
+    if (error) {
+      console.warn(`  ⚠️  Upload imagine eșuat: ${error.message}`);
+      return null;
+    }
+
+    const { data } = supabase.storage.from("listings-images").getPublicUrl(path);
+    return data.publicUrl;
+  } catch (err) {
+    console.warn(`  ⚠️  Eroare download imagine: ${err.message}`);
+    return null;
+  }
+}
+
 // Extrage prețul dintr-un text ("12 lei", "25 lei/bilet" etc.)
 function extractPrice(text) {
   const match = text.match(/(\d+)\s*lei/i);
@@ -139,6 +170,14 @@ async function scrape() {
     // Fetch detalii (preț + descriere) de pe pagina individuală
     const detail = ev.href ? await fetchEventDetail(ev.href) : {};
 
+    // Uploadează imaginea în Supabase Storage (evităm hotlink-ul de pe teatrulgong.ro)
+    let supabaseImageUrl = null;
+    if (ev.imageUrl) {
+      process.stdout.write(`  📸 Upload imagine...`);
+      supabaseImageUrl = await uploadImageToSupabase(ev.imageUrl);
+      console.log(supabaseImageUrl ? " ✓" : " ✗ (lipsă)");
+    }
+
     // Construiește schedule din event_date
     let schedule = null;
     if (ev.event_date) {
@@ -164,7 +203,7 @@ async function scrape() {
       website: "www.teatrulgong.ro",
       is_verified: true,
       is_featured: false,
-      images: ev.imageUrl ? [ev.imageUrl] : [],
+      images: supabaseImageUrl ? [supabaseImageUrl] : (ev.imageUrl ? [ev.imageUrl] : []),
     };
 
     // Verifică duplicate după name + schedule
