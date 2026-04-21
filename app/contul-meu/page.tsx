@@ -1,15 +1,12 @@
 import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import ListingCard, { type Listing } from "@/app/components/ListingCard";
+import type { Listing } from "@/app/components/ListingCard";
 import SignOutButton from "./SignOutButton";
 import AvatarUpload from "./AvatarUpload";
 import Navbar from "@/app/components/Navbar";
 import { getReviewLevel } from "@/utils/reviewLevel";
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("ro-RO", { month: "long", year: "numeric" });
-}
+import ContulMeuTabs from "./ContulMeuTabs";
 
 export default async function ContulMeuPage() {
   const cookieStore = await cookies();
@@ -101,99 +98,13 @@ export default async function ContulMeuPage() {
           </div>
         </section>
 
-        {/* ── FAVORITE ── */}
-        <section>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-black text-[#1a1a2e]">❤️ Locații favorite</h2>
-            {totalFavorites > 0 && (
-              <a
-                href="/favorite"
-                className="text-sm font-bold text-[#ff5a2e] hover:underline"
-              >
-                Vezi toate ({totalFavorites}) →
-              </a>
-            )}
-          </div>
-
-          {favListings.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center">
-              <p className="text-3xl mb-3">🤍</p>
-              <p className="font-bold text-gray-600 mb-1">Nicio locație salvată</p>
-              <p className="text-sm text-gray-400 font-medium mb-4">
-                Explorează și apasă ❤️ pe locurile care îți plac
-              </p>
-              <a
-                href="/"
-                className="inline-block bg-[#ff5a2e] hover:bg-[#f03d12] text-white font-black text-sm px-5 py-2.5 rounded-xl transition-colors"
-              >
-                Explorează locuri
-              </a>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-3">
-              {favListings.map((listing) => (
-                <div key={listing.id} className="relative">
-                  <ListingCard listing={listing} />
-                </div>
-              ))}
-              {totalFavorites > 3 && (
-                <a
-                  href="/favorite"
-                  className="block text-center bg-orange-50 hover:bg-orange-100 text-[#ff5a2e] font-black text-sm py-4 rounded-2xl transition-colors"
-                >
-                  Vezi toate {totalFavorites} locațiile favorite →
-                </a>
-              )}
-            </div>
-          )}
-        </section>
-
-        {/* ── REVIEWS ── */}
-        <section>
-          <h2 className="text-lg font-black text-[#1a1a2e] mb-4">⭐ Review-urile mele</h2>
-
-          {reviews.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center">
-              <p className="text-3xl mb-3">⭐</p>
-              <p className="font-bold text-gray-600 mb-1">Nu ai lăsat niciun review</p>
-              <p className="text-sm text-gray-400 font-medium">
-                Vizitează o locație și împărtășește experiența ta cu alți părinți.
-              </p>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-3">
-              {reviews.map((r) => (
-                <div key={r.id} className="bg-white rounded-2xl border border-gray-100 p-4">
-                  <div className="flex items-start justify-between gap-3 mb-2">
-                    <div>
-                      {r.listings ? (
-                        <a
-                          href={`/listing/${r.listings.id}`}
-                          className="font-black text-[#1a1a2e] text-base hover:text-[#ff5a2e] transition-colors leading-snug"
-                        >
-                          {r.listings.name}
-                        </a>
-                      ) : (
-                        <p className="font-black text-gray-400 text-base">Locație ștearsă</p>
-                      )}
-                      <p className="text-xs text-gray-400 font-medium mt-0.5">{formatDate(r.created_at)}</p>
-                    </div>
-                    <div className="flex items-center gap-0.5 shrink-0">
-                      {[1, 2, 3, 4, 5].map((n) => (
-                        <span key={n} className={n <= r.rating ? "text-yellow-400" : "text-gray-200"}>
-                          ★
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                  {r.text && (
-                    <p className="text-sm text-gray-600 font-medium leading-relaxed">{r.text}</p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
+        {/* ── TABS: Favorite / Recenzii / Marketplace ── */}
+        <ContulMeuTabs
+          favListings={favListings}
+          totalFavorites={totalFavorites}
+          reviews={reviews}
+          userId={user.id}
+        />
 
         {/* ── DECONECTARE ── */}
         <section className="pb-8">

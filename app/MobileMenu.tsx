@@ -15,6 +15,7 @@ const LINKS = [
   { icon: "⚽", label: "Sport",             href: "/sport"            },
   { icon: "🎭", label: "Spectacole",         href: "/spectacole"       },
   { icon: "🎪", label: "Evenimente",         href: "/evenimente"       },
+  { icon: "🛍️", label: "Marketplace",        href: "/marketplace"      },
   { icon: "📩", label: "Newsletter",         href: "/#newsletter"      },
 ];
 

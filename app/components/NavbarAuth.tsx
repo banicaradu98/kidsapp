@@ -15,6 +15,17 @@ export default function NavbarAuth() {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const [hasDashboard, setHasDashboard] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  function fetchUnread(userId: string) {
+    const supabase = createClient();
+    supabase
+      .from("marketplace_messages")
+      .select("id", { count: "exact", head: true })
+      .eq("receiver_id", userId)
+      .eq("read", false)
+      .then(({ count }) => setUnreadCount(count ?? 0));
+  }
 
   useEffect(() => {
     const supabase = createClient();
@@ -27,6 +38,7 @@ export default function NavbarAuth() {
         fetch("/api/my-claims")
           .then((r) => r.json())
           .then(({ claims }) => setHasDashboard(claims.length > 0));
+        fetchUnread(session.user.id);
       }
     });
 
@@ -37,6 +49,7 @@ export default function NavbarAuth() {
       setReady(true);
       if (event === "SIGNED_OUT") {
         setHasDashboard(false);
+        setUnreadCount(0);
       } else if (event === "SIGNED_IN") {
         // Small delay for Google OAuth — ensures the session cookie is fully
         // written before the API route reads it server-side.
@@ -44,12 +57,20 @@ export default function NavbarAuth() {
           fetch("/api/my-claims")
             .then((r) => r.json())
             .then(({ claims }) => setHasDashboard(claims.length > 0));
+          if (session?.user) fetchUnread(session.user.id);
         }, 500);
       }
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Poll unread count every 30s when user is logged in
+  useEffect(() => {
+    if (!user) return;
+    const id = setInterval(() => fetchUnread(user.id), 30_000);
+    return () => clearInterval(id);
+  }, [user]);
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -97,15 +118,22 @@ export default function NavbarAuth() {
     <div className="relative hidden md:block" ref={dropdownRef}>
       <button
         onClick={() => setShowDropdown((v) => !v)}
-        className="w-9 h-9 rounded-full overflow-hidden hover:opacity-90 transition-opacity shrink-0"
+        className="relative w-9 h-9 rounded-full overflow-visible hover:opacity-90 transition-opacity shrink-0"
         aria-label="Contul meu"
         title={displayName}
       >
-        <UserAvatar
-          avatarUrl={user.user_metadata?.avatar_url ?? user.user_metadata?.picture ?? null}
-          initials={initials}
-          size={36}
-        />
+        <div className="w-9 h-9 rounded-full overflow-hidden">
+          <UserAvatar
+            avatarUrl={user.user_metadata?.avatar_url ?? user.user_metadata?.picture ?? null}
+            initials={initials}
+            size={36}
+          />
+        </div>
+        {unreadCount > 0 && (
+          <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-[#ff5a2e] text-white text-[10px] font-black rounded-full flex items-center justify-center px-0.5 z-10 shadow-sm">
+            {unreadCount > 9 ? "9+" : unreadCount}
+          </span>
+        )}
       </button>
 
       {showDropdown && (

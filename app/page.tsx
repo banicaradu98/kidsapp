@@ -70,6 +70,14 @@ export default async function Home() {
     if (l.category) catCounts[l.category] = (catCounts[l.category] ?? 0) + 1;
   }
 
+  // Latest marketplace listings for homepage preview
+  const { data: marketplacePreview } = await adminClient
+    .from("marketplace_listings")
+    .select("id, title, price, type, images, category, created_at, profiles(full_name)")
+    .eq("status", "activ")
+    .order("created_at", { ascending: false })
+    .limit(4);
+
   // Featured listings with images + reviews for rating
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: featuredRaw } = await supabase
@@ -240,6 +248,71 @@ export default async function Home() {
           </div>
         </section>
       </ScrollReveal>
+
+      {/* ── MARKETPLACE PREVIEW ── */}
+      {marketplacePreview && marketplacePreview.length > 0 && (
+        <ScrollReveal>
+          <section className="py-14 sm:py-20 bg-[#f7f7f7]">
+            <div className="max-w-6xl mx-auto">
+              <div className="flex items-center justify-between mb-8 px-4 sm:px-6">
+                <div>
+                  <h2 className="font-display text-2xl sm:text-3xl font-bold text-[#1a1a2e]">Marketplace părinți</h2>
+                  <p className="text-sm text-gray-400 mt-1">Cumpără, vinde sau donează obiecte pentru copii</p>
+                </div>
+                <a href="/marketplace" className="text-base font-bold text-[#ff5a2e] hover:underline hidden sm:block shrink-0 ml-4">
+                  Vezi toate anunțurile →
+                </a>
+              </div>
+
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 px-4 sm:px-6">
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                {(marketplacePreview as any[]).map((item) => {
+                  const TYPE_LABELS: Record<string, { label: string; color: string }> = {
+                    vand:      { label: "VÂND",      color: "bg-[#ff5a2e] text-white" },
+                    donez:     { label: "DONEZ",     color: "bg-emerald-500 text-white" },
+                    inchiriez: { label: "ÎNCHIRIEZ", color: "bg-sky-500 text-white" },
+                  };
+                  const typeMeta = TYPE_LABELS[item.type] ?? { label: item.type?.toUpperCase(), color: "bg-gray-200 text-gray-700" };
+                  const coverImg = item.images?.[0] ?? null;
+                  return (
+                    <a
+                      key={item.id}
+                      href={`/marketplace/${item.id}`}
+                      className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 group block"
+                    >
+                      <div className="aspect-[4/3] bg-gray-100 overflow-hidden relative">
+                        {coverImg ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={coverImg} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-4xl text-gray-300">🛍️</div>
+                        )}
+                        <span className={`absolute top-2 left-2 text-[10px] font-black px-2 py-0.5 rounded-full ${typeMeta.color}`}>
+                          {typeMeta.label}
+                        </span>
+                      </div>
+                      <div className="p-3">
+                        <p className="font-bold text-[#1a1a2e] text-sm leading-snug line-clamp-2 mb-1">{item.title}</p>
+                        {item.price != null && item.type !== "donez" ? (
+                          <p className="font-display text-base font-bold text-[#ff5a2e]">{item.price} lei</p>
+                        ) : item.type === "donez" ? (
+                          <p className="text-sm font-bold text-emerald-600">Gratuit</p>
+                        ) : null}
+                      </div>
+                    </a>
+                  );
+                })}
+              </div>
+
+              <div className="mt-5 text-center sm:hidden px-4">
+                <a href="/marketplace" className="inline-block w-full bg-orange-50 text-[#ff5a2e] font-black text-base py-4 rounded-2xl">
+                  Toate anunțurile →
+                </a>
+              </div>
+            </div>
+          </section>
+        </ScrollReveal>
+      )}
 
       {/* ── FEATURED ── */}
       <ScrollReveal>

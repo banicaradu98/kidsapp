@@ -21,6 +21,7 @@ export default function Navbar() {
           <a href="/sport"            className="px-3 py-2 rounded-lg hover:text-[#ff5a2e] transition-colors duration-200">⚽ Sport</a>
           <a href="/spectacole"       className="px-3 py-2 rounded-lg hover:text-[#ff5a2e] transition-colors duration-200">🎭 Spectacole</a>
           <a href="/evenimente"       className="px-3 py-2 rounded-lg hover:text-[#ff5a2e] transition-colors duration-200">🎪 Evenimente</a>
+          <a href="/marketplace"      className="px-3 py-2 rounded-lg hover:text-[#ff5a2e] transition-colors duration-200">🛍️ Marketplace</a>
         </nav>
 
         <NavbarAuth />
