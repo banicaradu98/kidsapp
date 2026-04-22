@@ -112,7 +112,7 @@ export default function GdprPage() {
             <ul className="list-disc pl-6 mt-3 space-y-2">
               <li><strong>Dreptul de acces (Art. 15):</strong> poți solicita o copie a datelor pe care le deținem despre tine</li>
               <li><strong>Dreptul la rectificare (Art. 16):</strong> poți corecta datele inexacte direct din contul tău sau contactându-ne</li>
-              <li><strong>Dreptul la ștergere (Art. 17):</strong> „dreptul de a fi uitat" — poți solicita ștergerea datelor tale</li>
+              <li><strong>Dreptul la ștergere (Art. 17):</strong> &ldquo;dreptul de a fi uitat&rdquo; — poți solicita ștergerea datelor tale</li>
               <li><strong>Dreptul la restricționarea prelucrării (Art. 18):</strong> poți solicita limitarea prelucrării în anumite circumstanțe</li>
               <li><strong>Dreptul la portabilitatea datelor (Art. 20):</strong> poți solicita datele tale într-un format structurat, utilizat frecvent și citibil automat</li>
               <li><strong>Dreptul la opoziție (Art. 21):</strong> poți obiecta față de prelucrarea bazată pe interes legitim</li>
