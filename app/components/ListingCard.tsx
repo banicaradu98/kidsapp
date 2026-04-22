@@ -50,7 +50,7 @@ export default function ListingCard({ listing, variant = "default" }: { listing:
         className="flex flex-col sm:flex-row bg-white rounded-2xl shadow-sm hover:shadow-md hover:-translate-y-0.5 overflow-hidden transition-all duration-300 active:scale-[.99] group"
       >
       {/* Thumb — 4:3 pe mobil, w-32 full-height pe desktop */}
-      <div className="sm:w-32 sm:shrink-0 aspect-[4/3] sm:aspect-auto sm:h-auto overflow-hidden">
+      <div className="relative w-full aspect-[4/3] overflow-hidden sm:w-32 sm:shrink-0 sm:aspect-auto sm:h-auto">
         {listing.images?.[0] ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
