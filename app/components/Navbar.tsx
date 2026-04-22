@@ -18,7 +18,7 @@ export default function Navbar() {
               objectFit: 'cover',
               objectPosition: 'center',
               margin: '-15px 0',
-              transform: 'scale(1.4)',
+              transform: 'scale(1.82)',
               transformOrigin: 'left center',
             }}
           />
