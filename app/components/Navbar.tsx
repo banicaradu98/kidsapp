@@ -9,7 +9,7 @@ export default function Navbar() {
 
         {/* Logo */}
         <Link href="/" className="flex items-center shrink-0">
-          <img src="/images/logo-moosey.png" alt="Moosey" className="h-16 w-auto object-contain" />
+          <img src="/images/logo-moosey.png" alt="Moosey" className="h-30 w-auto object-contain" />
         </Link>
 
         {/* Desktop nav */}
