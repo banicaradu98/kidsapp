@@ -1,7 +1,6 @@
-import { createClient } from "@/utils/supabase/server";
-import { cookies } from "next/headers";
+import { adminClient } from "@/utils/supabase/admin";
 import CategoryShell from "@/app/components/CategoryShell";
-import SectionedEvenimente from "./SectionedEvenimente";
+import FilteredEvenimente from "./FilteredEvenimente";
 
 export const metadata = {
   title: "Evenimente pentru Copii în Sibiu",
@@ -11,12 +10,11 @@ export const metadata = {
 };
 
 export default async function EvenimentePage() {
-  const supabase = createClient(await cookies());
-  const { data: listings } = await supabase
+  const { data: listings } = await adminClient
     .from("listings")
-    .select("id, name, category, description, address, price, age_min, age_max, schedule, is_verified, images")
+    .select("id, name, category, description, address, price, age_min, age_max, schedule, is_verified, images, event_date, event_end_date, start_time")
     .eq("category", "eveniment")
-    .order("created_at", { ascending: true });
+    .order("event_date", { ascending: true, nullsFirst: false });
 
   const items = listings ?? [];
 
@@ -27,7 +25,7 @@ export default async function EvenimentePage() {
       emoji="🎉"
       count={items.length}
     >
-      <SectionedEvenimente listings={items} />
+      <FilteredEvenimente listings={items} />
     </CategoryShell>
   );
 }
