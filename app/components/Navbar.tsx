@@ -16,7 +16,7 @@ export default function Navbar() {
               height: '80px',
               width: 'auto',
               objectFit: 'contain',
-              margin: '-15px 8px -15px -12px',
+              margin: '-15px 24px -15px -12px',
               transform: 'scale(1.82)',
               transformOrigin: 'left center',
             }}
