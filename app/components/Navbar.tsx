@@ -5,7 +5,7 @@ import NavbarAuth from "./NavbarAuth";
 export default function Navbar() {
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-[#f0f0f0]">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between gap-3">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
 
         {/* Logo */}
         <Link href="/" className="flex items-center shrink-0">
@@ -13,12 +13,10 @@ export default function Navbar() {
             src="/images/logo-moosey.png"
             alt="Moosey"
             style={{
-              height: '80px',
+              height: '52px',
               width: 'auto',
               objectFit: 'contain',
               objectPosition: 'center',
-              marginTop: '-10px',
-              marginBottom: '-10px',
             }}
           />
         </Link>
