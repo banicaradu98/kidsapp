@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { signInWithGoogle, signInWithEmail, signUp } from "@/utils/supabase/auth";
+import { triggerCelebration } from "./MascotCelebration";
 
 interface Props {
   onClose: () => void;
@@ -80,6 +81,7 @@ export default function AuthModal({ onClose }: Props) {
       setLoading(false);
     } else if (data.session) {
       // Email confirmation disabled — user is logged in immediately
+      triggerCelebration();
       onClose();
       window.location.reload();
     } else {

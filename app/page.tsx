@@ -7,6 +7,7 @@ import ScrollReveal from "./components/ScrollReveal";
 import SearchBar from "./components/SearchBar";
 import { adminClient } from "@/utils/supabase/admin";
 import type { Metadata } from "next";
+import MascotHeroRun from "./components/MascotHeroRun";
 
 export const metadata: Metadata = {
   title: "Ce facem cu copilul în Sibiu? — Moosey",
@@ -192,14 +193,7 @@ export default async function Home() {
           </div>
         </div>
 
-        {/* Mascotă elan — slide-in din dreapta */}
-        <div className="absolute bottom-0 right-0 pointer-events-none">
-          <img
-            src="/images/moosey_transparent.png"
-            alt="Moosey"
-            className="h-48 md:h-64 w-auto object-contain mascot-enter"
-          />
-        </div>
+        <MascotHeroRun />
       </section>
 
       {/* ── CATEGORIES ── */}

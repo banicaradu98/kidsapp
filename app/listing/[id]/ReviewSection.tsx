@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import AuthModal from "@/app/components/AuthModal";
+import { triggerCelebration } from "@/app/components/MascotCelebration";
 
 interface Review {
   id: string;
@@ -128,6 +129,7 @@ export default function ReviewSection({ listingId, initialReviews }: Props) {
     setShowForm(false);
     setRating(0);
     setText("");
+    if (!userReviewId) triggerCelebration();
     setSubmitting(false);
     // Re-check userReviewId
     const { data } = await supabase

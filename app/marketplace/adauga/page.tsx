@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import imageCompression from "browser-image-compression";
 import Navbar from "@/app/components/Navbar";
+import { triggerCelebration } from "@/app/components/MascotCelebration";
 
 // ── Constants ──────────────────────────────────────────────────────────────
 
@@ -238,6 +239,7 @@ export default function AdaugaPage() {
       return;
     }
 
+    triggerCelebration();
     router.push(`/marketplace/${newListing.id}`);
   }
 
