@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Playfair_Display, DM_Sans } from "next/font/google";
 import "./globals.css";
 import MascotFloat from "./components/MascotFloat";
-import MascotProgressBar from "./components/MascotProgressBar";
 import MascotCelebration from "./components/MascotCelebration";
 
 const playfair = Playfair_Display({
@@ -88,7 +87,6 @@ export default function RootLayout({
   return (
     <html lang="ro">
       <body className={`${playfair.variable} ${dmSans.variable} font-[family-name:var(--font-dm-sans)] antialiased`}>
-        <MascotProgressBar />
         {children}
         <MascotFloat />
         <MascotCelebration />
