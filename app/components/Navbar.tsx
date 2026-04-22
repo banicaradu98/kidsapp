@@ -15,9 +15,8 @@ export default function Navbar() {
             style={{
               height: '80px',
               width: 'auto',
-              objectFit: 'cover',
-              objectPosition: 'center',
-              margin: '-15px 0',
+              objectFit: 'contain',
+              margin: '-15px 8px -15px -12px',
               transform: 'scale(1.82)',
               transformOrigin: 'left center',
             }}
