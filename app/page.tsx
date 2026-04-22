@@ -191,6 +191,15 @@ export default async function Home() {
             ))}
           </div>
         </div>
+
+        {/* Mascotă elan — slide-in din dreapta */}
+        <div className="absolute bottom-0 right-0 pointer-events-none">
+          <img
+            src="/images/moosey_transparent.png"
+            alt="Moosey"
+            className="h-48 md:h-64 w-auto object-contain mascot-enter"
+          />
+        </div>
       </section>
 
       {/* ── CATEGORIES ── */}
