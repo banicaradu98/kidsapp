@@ -294,26 +294,6 @@ export default function ListingPage() {
         </div>
       </main>
 
-      {/* ── FOOTER ── */}
-      <footer className="border-t border-gray-100 bg-gray-50 mt-8">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center">
-              <img src="/images/logo-moosey.png" alt="Moosey" style={{ height: "80px", width: "auto", objectFit: "contain" }} />
-            </div>
-            <nav className="flex flex-wrap justify-center gap-5 text-sm font-semibold text-gray-500">
-              <a href="/politica-de-confidentialitate" className="hover:text-[#ff5a2e] transition-colors">Confidențialitate</a>
-              <a href="/termeni-si-conditii" className="hover:text-[#ff5a2e] transition-colors">Termeni</a>
-              <a href="/gdpr" className="hover:text-[#ff5a2e] transition-colors">GDPR</a>
-              <a href="/adauga-locatia-ta" className="hover:text-[#ff5a2e] transition-colors">Adaugă locația</a>
-            </nav>
-          </div>
-          <p className="text-center text-xs text-gray-400 font-medium mt-6">
-            © 2025 Moosey. Făcut cu 🧡 pentru familiile din Sibiu.
-          </p>
-        </div>
-      </footer>
-
     </div>
   );
 }
