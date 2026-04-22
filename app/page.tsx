@@ -697,18 +697,15 @@ export default async function Home() {
             {/* Brand */}
             <div className="sm:col-span-2 lg:col-span-1">
               <div className="flex items-center mb-3">
-                <img src="/images/logo-moosey.png" alt="Moosey" className="h-10 w-auto object-contain brightness-0 invert" />
+                <img
+                  src="/images/logo-moosey.png"
+                  alt="Moosey"
+                  style={{ height: "80px", width: "auto", objectFit: "contain" }}
+                />
               </div>
               <p className="text-gray-400 text-sm font-medium leading-relaxed">
                 Descoperă cele mai frumoase locuri pentru copiii din Sibiu. Activități, spectacole, locuri de joacă.
               </p>
-              <div className="flex gap-3 mt-5">
-                {["📘", "📸", "🎵"].map((icon, i) => (
-                  <button key={i} className="w-9 h-9 bg-white/10 hover:bg-[#ff5a2e] rounded-lg flex items-center justify-center text-base transition-colors">
-                    {icon}
-                  </button>
-                ))}
-              </div>
             </div>
 
             {/* Categorii */}
@@ -754,9 +751,9 @@ export default async function Home() {
               <p className="font-black text-white text-sm mb-4 uppercase tracking-wide">Info</p>
               <div className="flex flex-col gap-2.5">
                 {[
-                  { label: "Politica de confidențialitate", href: "#" },
-                  { label: "Termeni și condiții", href: "#" },
-                  { label: "GDPR", href: "#" },
+                  { label: "Politica de confidențialitate", href: "/politica-de-confidentialitate" },
+                  { label: "Termeni și condiții", href: "/termeni-si-conditii" },
+                  { label: "GDPR", href: "/gdpr" },
                 ].map((link) => (
                   <a key={link.label} href={link.href} className="text-gray-400 hover:text-[#ff5a2e] text-sm font-semibold transition-colors">
                     {link.label}
@@ -764,7 +761,7 @@ export default async function Home() {
                 ))}
                 <div className="mt-4 bg-white/5 rounded-xl p-3">
                   <p className="text-xs text-gray-500 font-semibold mb-1">📍 Sibiu, România</p>
-                  <p className="text-xs text-gray-500 font-medium">contact@kidsapp.ro</p>
+                  <p className="text-xs text-gray-500 font-medium">hello@moosey.ro</p>
                 </div>
               </div>
             </div>

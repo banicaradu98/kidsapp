@@ -20,8 +20,19 @@ export default function AdaugaLocatiaPage() {
           >
             ←
           </a>
-          <a href="/" className="flex items-center">
-            <img src="/images/logo-moosey.png" alt="Moosey" className="h-10 w-auto object-contain" />
+          <a href="/" className="flex items-center shrink-0 overflow-visible">
+            <img
+              src="/images/logo-moosey.png"
+              alt="Moosey"
+              style={{
+                height: '80px',
+                width: 'auto',
+                objectFit: 'contain',
+                margin: '-15px 24px -15px -12px',
+                transform: 'scale(1.82)',
+                transformOrigin: 'left center',
+              }}
+            />
           </a>
         </div>
       </header>

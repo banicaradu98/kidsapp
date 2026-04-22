@@ -40,7 +40,7 @@ export default function CategoryShell({
       {/* Footer */}
       <footer className="border-t border-gray-200 bg-white mt-8 py-8 px-4 text-center">
         <div className="flex items-center justify-center gap-2 mb-2">
-          <img src="/images/logo-moosey.png" alt="Moosey" className="h-8 w-auto object-contain" />
+          <img src="/images/logo-moosey.png" alt="Moosey" style={{ height: "80px", width: "auto", objectFit: "contain" }} />
         </div>
         <p className="text-sm text-gray-400 font-medium">© 2025 · Făcut cu drag pentru familiile din Sibiu</p>
       </footer>

@@ -35,8 +35,19 @@ export default function ListingPage() {
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-gray-100 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <a href="/" className="flex items-center">
-              <img src="/images/logo-moosey.png" alt="Moosey" className="h-10 w-auto object-contain" />
+            <a href="/" className="flex items-center shrink-0 overflow-visible">
+              <img
+                src="/images/logo-moosey.png"
+                alt="Moosey"
+                style={{
+                  height: '80px',
+                  width: 'auto',
+                  objectFit: 'contain',
+                  margin: '-15px 24px -15px -12px',
+                  transform: 'scale(1.82)',
+                  transformOrigin: 'left center',
+                }}
+              />
             </a>
           </div>
           <nav className="flex items-center gap-2 text-sm text-gray-500">
@@ -288,13 +299,13 @@ export default function ListingPage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center">
-              <img src="/images/logo-moosey.png" alt="Moosey" className="h-8 w-auto object-contain" />
+              <img src="/images/logo-moosey.png" alt="Moosey" style={{ height: "80px", width: "auto", objectFit: "contain" }} />
             </div>
             <nav className="flex flex-wrap justify-center gap-5 text-sm font-semibold text-gray-500">
-              <a href="#" className="hover:text-[#ff5a2e] transition-colors">Despre noi</a>
-              <a href="#" className="hover:text-[#ff5a2e] transition-colors">Contact</a>
-              <a href="#" className="hover:text-[#ff5a2e] transition-colors">Adaugă locația</a>
-              <a href="#" className="hover:text-[#ff5a2e] transition-colors">Confidențialitate</a>
+              <a href="/politica-de-confidentialitate" className="hover:text-[#ff5a2e] transition-colors">Confidențialitate</a>
+              <a href="/termeni-si-conditii" className="hover:text-[#ff5a2e] transition-colors">Termeni</a>
+              <a href="/gdpr" className="hover:text-[#ff5a2e] transition-colors">GDPR</a>
+              <a href="/adauga-locatia-ta" className="hover:text-[#ff5a2e] transition-colors">Adaugă locația</a>
             </nav>
           </div>
           <p className="text-center text-xs text-gray-400 font-medium mt-6">
