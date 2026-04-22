@@ -94,7 +94,7 @@ export async function generateMetadata(
     description,
     alternates: { canonical: `/listing/${params.id}` },
     openGraph: {
-      title: `${title} — KidsApp Sibiu`,
+      title: `${title} — Moosey`,
       description,
       url: `/listing/${params.id}`,
       type: "website",
@@ -104,7 +104,7 @@ export async function generateMetadata(
     },
     twitter: {
       card: "summary_large_image",
-      title: `${title} — KidsApp Sibiu`,
+      title: `${title} — Moosey`,
       description,
       ...(coverImg ? { images: [coverImg] } : {}),
     },

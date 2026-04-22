@@ -7,7 +7,7 @@ export const metadata = {
   title: "Spectacole pentru Copii în Sibiu",
   description: "Spectacole de teatru, circ, magie și animație pentru copii în Sibiu. Calendar complet cu spectacole la Teatrul Gong și alte scene din Sibiu.",
   alternates: { canonical: "/spectacole" },
-  openGraph: { title: "Spectacole pentru Copii în Sibiu — KidsApp", description: "Teatru, circ și spectacole pentru copii la Teatrul Gong și alte locuri din Sibiu.", url: "/spectacole" },
+  openGraph: { title: "Spectacole pentru Copii în Sibiu — Moosey", description: "Teatru, circ și spectacole pentru copii la Teatrul Gong și alte locuri din Sibiu.", url: "/spectacole" },
 };
 
 export default async function SpectacolePage() {

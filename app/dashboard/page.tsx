@@ -42,7 +42,7 @@ export default async function DashboardPage({
           <p className="text-5xl mb-5">🔒</p>
           <h1 className="text-2xl font-black text-[#1a1a2e] mb-3">Nu ai nicio locație revendicată</h1>
           <p className="text-gray-500 font-medium mb-6 leading-relaxed">
-            Găsește locația ta pe KidsApp și apasă &bdquo;Revendică pagina&rdquo; pentru a obține acces la dashboard.
+            Găsește locația ta pe Moosey și apasă &bdquo;Revendică pagina&rdquo; pentru a obține acces la dashboard.
           </p>
           <a href="/" className="inline-block bg-[#ff5a2e] hover:bg-[#f03d12] text-white font-black px-6 py-3 rounded-xl transition-colors">
             Caută locația mea →

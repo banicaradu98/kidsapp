@@ -52,9 +52,8 @@ function MenuPanel({ onClose, user, onSignOut, onOpenAuth }: { onClose: () => vo
         borderBottom: "1px solid #f3f4f6",
         flexShrink: 0,
       }}>
-        <a href="/" onClick={onClose} style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
-          <span style={{ fontSize: 24 }}>🧡</span>
-          <span style={{ fontSize: 20, fontWeight: 900, color: "#ff5a2e" }}>KidsApp</span>
+        <a href="/" onClick={onClose} style={{ display: "flex", alignItems: "center", textDecoration: "none" }}>
+          <img src="/images/logo-moosey.png" alt="Moosey" style={{ height: 40, width: "auto", objectFit: "contain" }} />
         </a>
         <button
           onClick={onClose}

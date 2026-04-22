@@ -106,7 +106,7 @@ export default function AuthModal({ onClose }: Props) {
         <div className="flex items-start justify-between px-6 pt-6 pb-0">
           <div>
             <span className="text-3xl">🧡</span>
-            <h2 className="text-xl font-black text-[#1a1a2e] mt-2">Bun venit pe KidsApp!</h2>
+            <h2 className="text-xl font-black text-[#1a1a2e] mt-2">Bun venit pe Moosey!</h2>
             <p className="text-sm text-gray-500 font-medium mt-0.5">
               Salvează locuri preferate și lasă recenzii
             </p>

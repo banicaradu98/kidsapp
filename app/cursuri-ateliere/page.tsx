@@ -9,7 +9,7 @@ export const metadata = {
   title: "Cursuri și Ateliere pentru Copii în Sibiu",
   description: "Cursuri de desen, muzică, robotică, dans, limbi străine și ateliere creative pentru copii din Sibiu. Descoperă activitățile potrivite pentru copilul tău.",
   alternates: { canonical: "/cursuri-ateliere" },
-  openGraph: { title: "Cursuri și Ateliere pentru Copii în Sibiu — KidsApp", description: "Desen, muzică, robotică, dans și ateliere creative pentru copii în Sibiu.", url: "/cursuri-ateliere" },
+  openGraph: { title: "Cursuri și Ateliere pentru Copii în Sibiu — Moosey", description: "Desen, muzică, robotică, dans și ateliere creative pentru copii în Sibiu.", url: "/cursuri-ateliere" },
 };
 
 export default async function CursuriAtelierePage() {

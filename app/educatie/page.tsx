@@ -9,7 +9,7 @@ export const metadata = {
   title: "Grădinițe și Educație în Sibiu",
   description: "Grădinițe, after-school, creșe și centre educaționale pentru copii din Sibiu. Găsește locul potrivit pentru copilul tău.",
   alternates: { canonical: "/educatie" },
-  openGraph: { title: "Grădinițe și Educație în Sibiu — KidsApp", description: "Grădinițe, after-school, creșe și centre educaționale în Sibiu.", url: "/educatie" },
+  openGraph: { title: "Grădinițe și Educație în Sibiu — Moosey", description: "Grădinițe, after-school, creșe și centre educaționale în Sibiu.", url: "/educatie" },
 };
 
 export default async function EducatiePage() {

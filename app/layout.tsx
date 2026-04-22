@@ -19,8 +19,8 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://kidsapp.ro";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "KidsApp Sibiu — Activități și locuri pentru copii",
-    template: "%s — KidsApp Sibiu",
+    default: "Moosey — Activități și locuri pentru copii",
+    template: "%s — Moosey",
   },
   description:
     "Descoperă cele mai frumoase locuri de joacă, cursuri, ateliere, sport și spectacole pentru copii din Sibiu. Gratuit pentru părinți.",
@@ -34,15 +34,15 @@ export const metadata: Metadata = {
     "sport copii sibiu",
     "ce facem cu copilul sibiu",
   ],
-  authors: [{ name: "KidsApp Sibiu", url: siteUrl }],
-  creator: "KidsApp Sibiu",
-  publisher: "KidsApp Sibiu",
+  authors: [{ name: "Moosey", url: siteUrl }],
+  creator: "Moosey",
+  publisher: "Moosey",
   openGraph: {
     type: "website",
     locale: "ro_RO",
     url: siteUrl,
-    siteName: "KidsApp Sibiu",
-    title: "KidsApp Sibiu — Activități și locuri pentru copii",
+    siteName: "Moosey",
+    title: "Moosey — Activități și locuri pentru copii",
     description:
       "Descoperă cele mai frumoase locuri de joacă, cursuri, ateliere, sport și spectacole pentru copii din Sibiu.",
     images: [
@@ -50,13 +50,13 @@ export const metadata: Metadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "KidsApp Sibiu — Activități pentru copii",
+        alt: "Moosey — Activități pentru copii",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "KidsApp Sibiu — Activități și locuri pentru copii",
+    title: "Moosey — Activități și locuri pentru copii",
     description:
       "Descoperă sute de activități, locuri de joacă și evenimente pentru copii din Sibiu.",
     images: ["/og-image.png"],

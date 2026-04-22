@@ -9,12 +9,12 @@ import { adminClient } from "@/utils/supabase/admin";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Ce facem cu copilul în Sibiu? — KidsApp",
+  title: "Ce facem cu copilul în Sibiu? — Moosey",
   description:
     "Sute de activități, locuri de joacă și evenimente pentru copii din Sibiu. Găsește grădinițe, cursuri, ateliere, spectacole și locuri de joacă — gratuit pentru părinți.",
   alternates: { canonical: "/" },
   openGraph: {
-    title: "KidsApp Sibiu — Ce facem cu copilul în Sibiu?",
+    title: "Moosey — Ce facem cu copilul în Sibiu?",
     description:
       "Sute de activități, locuri de joacă și evenimente pentru copii din Sibiu. Gratuit pentru părinți.",
     url: "/",
@@ -688,10 +688,8 @@ export default async function Home() {
 
             {/* Brand */}
             <div className="sm:col-span-2 lg:col-span-1">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-2xl">🧡</span>
-                <span className="font-black text-[#ff5a2e] text-xl">KidsApp</span>
-                <span className="text-gray-400 font-medium">Sibiu</span>
+              <div className="flex items-center mb-3">
+                <img src="/images/logo-moosey.png" alt="Moosey" className="h-10 w-auto object-contain brightness-0 invert" />
               </div>
               <p className="text-gray-400 text-sm font-medium leading-relaxed">
                 Descoperă cele mai frumoase locuri pentru copiii din Sibiu. Activități, spectacole, locuri de joacă.
@@ -733,7 +731,7 @@ export default async function Home() {
                   { label: "+ Adaugă locația ta", href: "/adauga-locatia-ta" },
                   { label: "❤️ Favorite", href: "/favorite" },
                   { label: "Dashboard organizator", href: "/dashboard" },
-                  { label: "Despre KidsApp", href: "#" },
+                  { label: "Despre Moosey", href: "#" },
                   { label: "Contact", href: "#" },
                 ].map((link) => (
                   <a key={link.label} href={link.href} className="text-gray-400 hover:text-[#ff5a2e] text-sm font-semibold transition-colors">
@@ -766,7 +764,7 @@ export default async function Home() {
 
           <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
             <p className="text-sm text-gray-500 font-medium">
-              © 2026 KidsApp Sibiu. Făcut cu 🧡 pentru familiile din Sibiu.
+              © 2026 Moosey. Făcut cu 🧡 pentru familiile din Sibiu.
             </p>
             <p className="text-xs text-gray-600 font-medium">
               Toate drepturile rezervate

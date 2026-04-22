@@ -6,7 +6,7 @@ export const metadata = {
   title: "Evenimente pentru Copii în Sibiu",
   description: "Evenimente, festivaluri și activități de weekend pentru copii și familii din Sibiu. Descoperă ce se întâmplă în Sibiu această săptămână.",
   alternates: { canonical: "/evenimente" },
-  openGraph: { title: "Evenimente pentru Copii în Sibiu — KidsApp", description: "Evenimente, festivaluri și activități de weekend pentru familii din Sibiu.", url: "/evenimente" },
+  openGraph: { title: "Evenimente pentru Copii în Sibiu — Moosey", description: "Evenimente, festivaluri și activități de weekend pentru familii din Sibiu.", url: "/evenimente" },
 };
 
 export default async function EvenimentePage() {

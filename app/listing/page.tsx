@@ -35,10 +35,8 @@ export default function ListingPage() {
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-gray-100 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <a href="/" className="flex items-center gap-2">
-              <span className="text-2xl">🧡</span>
-              <span className="text-xl font-black text-[#ff5a2e] tracking-tight">KidsApp</span>
-              <span className="hidden sm:inline text-sm font-semibold text-gray-400 ml-1">Sibiu</span>
+            <a href="/" className="flex items-center">
+              <img src="/images/logo-moosey.png" alt="Moosey" className="h-10 w-auto object-contain" />
             </a>
           </div>
           <nav className="flex items-center gap-2 text-sm text-gray-500">
@@ -289,10 +287,8 @@ export default function ListingPage() {
       <footer className="border-t border-gray-100 bg-gray-50 mt-8">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <span className="text-xl">🧡</span>
-              <span className="font-black text-[#ff5a2e]">KidsApp</span>
-              <span className="text-gray-400 font-medium text-sm">— Sibiu</span>
+            <div className="flex items-center">
+              <img src="/images/logo-moosey.png" alt="Moosey" className="h-8 w-auto object-contain" />
             </div>
             <nav className="flex flex-wrap justify-center gap-5 text-sm font-semibold text-gray-500">
               <a href="#" className="hover:text-[#ff5a2e] transition-colors">Despre noi</a>
@@ -302,7 +298,7 @@ export default function ListingPage() {
             </nav>
           </div>
           <p className="text-center text-xs text-gray-400 font-medium mt-6">
-            © 2025 KidsApp Sibiu. Făcut cu 🧡 pentru familiile din Sibiu.
+            © 2025 Moosey. Făcut cu 🧡 pentru familiile din Sibiu.
           </p>
         </div>
       </footer>

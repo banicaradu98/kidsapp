@@ -1,3 +1,4 @@
+import Link from "next/link";
 import MobileMenu from "@/app/MobileMenu";
 import NavbarAuth from "./NavbarAuth";
 
@@ -7,11 +8,9 @@ export default function Navbar() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
 
         {/* Logo */}
-        <a href="/" className="flex items-center gap-2 shrink-0">
-          <span className="text-xl">🧡</span>
-          <span className="font-display text-xl font-bold text-[#ff5a2e]">KidsApp</span>
-          <span className="hidden sm:inline text-sm font-medium text-gray-400 ml-0.5">Sibiu</span>
-        </a>
+        <Link href="/" className="flex items-center shrink-0">
+          <img src="/images/logo-moosey.png" alt="Moosey" className="h-10 w-auto object-contain" />
+        </Link>
 
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-0.5 text-sm font-medium text-[#374151]">

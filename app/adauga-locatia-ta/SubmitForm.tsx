@@ -56,7 +56,7 @@ function SuccessState() {
         href="/"
         className="inline-block bg-[#ff5a2e] hover:bg-[#f03d12] text-white font-black px-6 py-3 rounded-xl transition-colors"
       >
-        ← Înapoi la KidsApp
+        ← Înapoi la Moosey
       </a>
     </div>
   );
@@ -177,7 +177,7 @@ export default function SubmitForm() {
         </Field>
 
         <div className="sm:col-span-2">
-          <Field label="Mesaj pentru echipa KidsApp (opțional)">
+          <Field label="Mesaj pentru echipa Moosey (opțional)">
             <RichTextEditor name="notes" placeholder="Orice informație suplimentară care ne-ar ajuta să verificăm mai rapid locația..." minHeight={80} />
           </Field>
         </div>

@@ -9,7 +9,7 @@ export const metadata = {
   title: "Sport pentru Copii în Sibiu",
   description: "Fotbal, înot, tenis, gimnastică, arte marțiale și alte activități sportive pentru copii din Sibiu. Înscrie-ți copilul la sport.",
   alternates: { canonical: "/sport" },
-  openGraph: { title: "Sport pentru Copii în Sibiu — KidsApp", description: "Fotbal, înot, tenis, gimnastică și sport pentru copii în Sibiu.", url: "/sport" },
+  openGraph: { title: "Sport pentru Copii în Sibiu — Moosey", description: "Fotbal, înot, tenis, gimnastică și sport pentru copii în Sibiu.", url: "/sport" },
 };
 
 export default async function SportPage() {

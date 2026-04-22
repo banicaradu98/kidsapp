@@ -22,8 +22,8 @@ export async function generateMetadata({
   return {
     title,
     description: q
-      ? `Rezultatele căutării pentru „${q}" pe KidsApp Sibiu — activități, locuri și cursuri pentru copii.`
-      : "Caută activități pentru copii în Sibiu pe KidsApp.",
+      ? `Rezultatele căutării pentru „${q}" pe Moosey — activități, locuri și cursuri pentru copii.`
+      : "Caută activități pentru copii în Sibiu pe Moosey.",
     robots: "noindex",
   };
 }
@@ -121,7 +121,7 @@ export default async function CautaPage({
           /* No query yet */
           <div className="text-center py-12">
             <p className="text-5xl mb-4">🔍</p>
-            <h1 className="text-2xl font-black text-[#1a1a2e] mb-2">Caută pe KidsApp</h1>
+            <h1 className="text-2xl font-black text-[#1a1a2e] mb-2">Caută pe Moosey</h1>
             <p className="text-gray-500 font-medium mb-8">
               Scrie cel puțin 2 caractere pentru a căuta activități, locuri sau cursuri pentru copii.
             </p>

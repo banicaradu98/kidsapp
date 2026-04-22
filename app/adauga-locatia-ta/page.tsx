@@ -2,7 +2,7 @@ import SubmitForm from "./SubmitForm";
 
 export const metadata = {
   title: "Adaugă locația ta",
-  description: "Adaugă grădinița, centrul de activități, locul de joacă sau atelierul tău pe KidsApp Sibiu. Gratuit. Ajungi la mii de părinți din Sibiu.",
+  description: "Adaugă grădinița, centrul de activități, locul de joacă sau atelierul tău pe Moosey. Gratuit. Ajungi la mii de părinți din Sibiu.",
   alternates: { canonical: "/adauga-locatia-ta" },
 };
 
@@ -20,10 +20,8 @@ export default function AdaugaLocatiaPage() {
           >
             ←
           </a>
-          <a href="/" className="flex items-center gap-2">
-            <span className="text-xl">🧡</span>
-            <span className="text-lg font-black text-[#ff5a2e]">KidsApp</span>
-            <span className="hidden sm:inline text-sm font-semibold text-gray-400">Sibiu</span>
+          <a href="/" className="flex items-center">
+            <img src="/images/logo-moosey.png" alt="Moosey" className="h-10 w-auto object-contain" />
           </a>
         </div>
       </header>
@@ -36,7 +34,7 @@ export default function AdaugaLocatiaPage() {
           </div>
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-[#1a1a2e] leading-tight mb-4">
             Adaugă locația ta<br />
-            <span className="text-[#ff5a2e]">pe KidsApp</span>
+            <span className="text-[#ff5a2e]">pe Moosey</span>
           </h1>
           <p className="text-gray-500 text-lg font-medium max-w-lg mx-auto leading-relaxed">
             Ajută părinții din Sibiu să îți descopere locul. Listare gratuită, publicare în maxim 48 de ore.
@@ -62,7 +60,7 @@ export default function AdaugaLocatiaPage() {
         {/* Trust indicators */}
         <div className="mt-8 text-center text-xs text-gray-400 font-medium">
           Datele tale de contact sunt private și nu vor fi afișate public.
-          Echipa KidsApp verifică fiecare listing înainte de publicare.
+          Echipa Moosey verifică fiecare listing înainte de publicare.
         </div>
       </main>
 

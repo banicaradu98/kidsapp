@@ -5,7 +5,7 @@ import { useState } from "react";
 const FAQS = [
   {
     q: "Este gratuit pentru părinți?",
-    a: "Da, complet gratuit. KidsApp e gratuit pentru toți părinții care vor să descopere activități pentru copii.",
+    a: "Da, complet gratuit. Moosey e gratuit pentru toți părinții care vor să descopere activități pentru copii.",
   },
   {
     q: "Cât costă să adaug locația mea?",

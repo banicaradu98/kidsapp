@@ -2,12 +2,12 @@ import Navbar from "@/app/components/Navbar";
 import FaqAccordion from "./FaqAccordion";
 
 export const metadata = {
-  title: "Cum funcționează KidsApp?",
+  title: "Cum funcționează Moosey?",
   description:
-    "Află cum funcționează KidsApp Sibiu — platforma care conectează părinții cu locurile și activitățile pentru copii. Simplu, rapid, gratuit.",
+    "Află cum funcționează Moosey — platforma care conectează părinții cu locurile și activitățile pentru copii. Simplu, rapid, gratuit.",
   alternates: { canonical: "/cum-functioneaza" },
   openGraph: {
-    title: "Cum funcționează KidsApp? — KidsApp Sibiu",
+    title: "Cum funcționează Moosey? — Moosey",
     description: "Desoperă cum să găsești sau să adaugi activități pentru copii în Sibiu.",
     url: "/cum-functioneaza",
   },
@@ -79,7 +79,7 @@ export default function CumFunctioneazaPage() {
         <div className="relative max-w-3xl mx-auto px-4 sm:px-6 py-20 sm:py-28 text-center">
           <p className="text-4xl mb-4">🧡</p>
           <h1 className="text-3xl sm:text-5xl font-black leading-tight mb-4">
-            Cum funcționează KidsApp?
+            Cum funcționează Moosey?
           </h1>
           <p className="text-base sm:text-xl text-gray-300 font-medium leading-relaxed max-w-xl mx-auto">
             Platforma care conectează părinții din Sibiu cu cele mai frumoase locuri și activități pentru copii.
