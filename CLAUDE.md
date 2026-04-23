@@ -1,4 +1,4 @@
-# KidsApp Sibiu — CLAUDE.md
+# Moosey — CLAUDE.md
 
 Platformă de listare a activităților pentru copii din Sibiu. Părinții descoperă locuri de joacă,
 grădinițe, cursuri, spectacole și evenimente. Organizatorii pot revendica și gestiona listingurile
@@ -6,7 +6,7 @@ proprii printr-un dashboard dedicat.
 
 ---
 
-## Status proiect (6 aprilie 2026)
+## Status proiect (23 aprilie 2026)
 
 ### Funcționalități live ✅
 - **33 listinguri** importate din Excel în Supabase
@@ -21,6 +21,7 @@ proprii printr-un dashboard dedicat.
 - **Google OAuth + Email** — ambele văd linkul "Dashboard locație" în navbar după aprobare
 - **Badge "Verificat"** — afișat strict când `is_verified = true`
 - **Avatar utilizator** — poză Google sau inițială coral; upload/ștergere din /contul-meu
+- **Editare nume profil** — inline în /contul-meu, salvat în auth.users + tabel profiles
 - **Favorite** — grupate pe categorii în /favorite
 - **Vizualizări listing** — tracked în `listing_views`, afișate în StatsPanel
 - **Tabel `events`** — evenimente organizatori cu thumbnail + galerie (3 poze), start_time, end_time, price
@@ -42,15 +43,19 @@ proprii printr-un dashboard dedicat.
 - **Secțiune marketplace pe homepage** — 4 anunțuri recente cu badge tip (VÂND/DONEZ/ÎNCHIRIEZ)
 - **Date picker în admin** — `ListingFormFields.tsx` (client component cu useState), afișează `event_date` / `start_time` / `end_time` dinamic când categoria e spectacol sau eveniment; salvat în `extractData` din `actions.ts`
 - **Evenimente one-time din dashboard** — `OneTimeEventForm.tsx` + `oneTimeEventActions.ts`: inserare listing cu `is_verified=false` + flux aprobare admin existent; categorii: eveniment / spectacol / curs-atelier
+- **Pagina listing redesign** — hero full-bleed cu gradient overlay, titlu suprapus, FavoriteButton pe imagine, "Alte locuri din aceeași categorie" la final
+- **Pagina /despre** — povestea Moosey, misiune, categorii, marketplace section, CTA partener
+- **Pagina /contact** — formular contact complet cu tabel `contact_messages` în Supabase + triggerCelebration() la succes
+- **Pagini legale bilingve (EN/RO toggle)** — /politica-de-confidentialitate, /termeni-si-conditii, /gdpr — conținut din docx-uri în `docs/`
+- **Footer global** — `FooterWrapper.tsx` ascunde footer pe `/admin/*` via `usePathname()`
+- **Search îmbunătățit** — autocomplete cu sugestii listings + events + categorii (🏷️), sinonime extinse (KEYWORD_MAP), normalizare diacritice, highlight coral pe termenii găsiți, filtre categorii + sort (Relevanță / Top cotat / Cele mai noi), popular searches clickabile
+- **Confirmare email** — reactivată în Supabase Auth cu SMTP Brevo
+- **Domeniu moosey.ro** — configurat în Vercel + Cloudflare DNS
 
 ### Backlog — de făcut înainte de lansare ⏳
 - [ ] `UPDATE listings SET is_verified = false WHERE claimed_by IS NULL` — toate 33 listingurile importate sunt `is_verified=true`; trebuie resetate cele fără owner
-- [ ] Reactivare confirmare email în Supabase + configurare SMTP Brevo
 - [ ] Facebook OAuth după înregistrare firmă
-- [ ] Domeniu propriu → setează `NEXT_PUBLIC_SITE_URL` în `.env.local` și în producție
-- [ ] Logo + rebranding + actualizare OG image și metadata SEO
 - [ ] Completare date listinguri (multe au "de verificat")
-- [ ] Pagina /despre
 - [ ] Pachete monetizare organizatori (Free/Standard/Pro/Premium)
 - [ ] Newsletter Brevo conectat (formular există, backend lipsă)
 - [ ] Mutare poze din `pending/` → `{listing-id}/` la aprobare (vezi secțiunea Storage)
@@ -58,6 +63,35 @@ proprii printr-un dashboard dedicat.
 - [ ] Scraper Gong rulat săptămânal (`node scripts/scrape-gong.js`)
 - [ ] SQL în Supabase (dacă nu s-a rulat): `ALTER TABLE events ADD COLUMN IF NOT EXISTS thumbnail_url text; ALTER TABLE events ADD COLUMN IF NOT EXISTS gallery_urls text[] DEFAULT '{}';`
 - [ ] Schimbă `ADMIN_PASSWORD` din `admin123` în ceva puternic (min 20 caractere, litere+cifre+simboluri) în `.env.local` și în Vercel Environment Variables (`openssl rand -base64 20`)
+
+---
+
+## Infrastructură și domeniu
+
+| Serviciu | Detalii |
+|----------|---------|
+| **Domeniu** | moosey.ro — cumpărat prin ROTLD |
+| **DNS** | Cloudflare — name servers configurați în ROTLD |
+| **Hosting** | Vercel — deploy automat din GitHub, domeniu moosey.ro conectat |
+| **Email** | Zoho Mail — hello@moosey.ro (MX, SPF, DKIM configurați în Cloudflare) |
+| **SMTP tranzacțional** | Brevo — smtp-relay.brevo.com:587, autentificat în Supabase Auth |
+| **Newsletter** | Brevo — domeniu autentificat cu DKIM și DMARC în Cloudflare |
+| **Repository** | GitHub — banicaradu98/kidsapp |
+
+---
+
+## Branding
+
+| Element | Detalii |
+|---------|---------|
+| **Nume** | Moosey (redenumit din KidsApp) |
+| **Logo** | `public/images/logo-moosey.png` — banner cu font retro coral |
+| **Mascotă** | `public/images/moosey_transparent.png` — elan cu adidași coral |
+| **Font headings** | Playfair Display (`font-display`, variabila `--font-playfair`) |
+| **Font body** | DM Sans (`--font-dm-sans`) |
+| **Font admin** | Nunito (nested layout `/admin/layout.tsx`) |
+| **Culoare brand** | `#ff5a2e` coral (hover `#f03d12`), text dark `#1a1a2e` |
+| **Animații mascotă** | confetti celebration (`MascotCelebration.tsx`), float navbar (`MascotFloat.tsx`) |
 
 ---
 
@@ -70,7 +104,8 @@ proprii printr-un dashboard dedicat.
 | TypeScript | 5 | Tipuri |
 | Tailwind CSS | 3.4.1 | Stilizare |
 | Supabase | @supabase/ssr 0.10 | Bază de date + Auth |
-| Font | Nunito (Google Fonts) | Tipografie globală |
+| Playfair Display + DM Sans | Google Fonts | Tipografie globală |
+| browser-image-compression | latest | Compresie imagini client-side |
 
 ---
 
@@ -81,12 +116,15 @@ NEXT_PUBLIC_SUPABASE_URL=...
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY=...   # anon key
 SUPABASE_SERVICE_ROLE_KEY=...                       # service role — DOAR server-side
 ADMIN_PASSWORD=...
-NEXT_PUBLIC_SITE_URL=https://kidsapp.ro             # domeniu producție (fallback dacă lipsă)
+NEXT_PUBLIC_SITE_URL=https://www.moosey.ro          # domeniu producție (fallback dacă lipsă)
 ```
 
 - `ADMIN_PASSWORD` — parolă plaintext pentru panoul `/admin`
 - `SUPABASE_SERVICE_ROLE_KEY` — folosit DOAR în `utils/supabase/admin.ts` (server-side); nu expune în browser
 - `NEXT_PUBLIC_SITE_URL` — folosit în sitemap.ts, robots.ts, layout.tsx pentru URL-uri absolute OG/canonical
+
+**Local dev:** `.env.local` setează `NEXT_PUBLIC_SITE_URL=http://localhost:3000`  
+**Producție:** setează `NEXT_PUBLIC_SITE_URL=https://www.moosey.ro` în Vercel Environment Variables
 
 ---
 
@@ -173,9 +211,8 @@ const { data: claims } = await adminClient
 
 ```
 app/
-├── page.tsx                        # Homepage redesignat (SSR, featured + events săptămâna aceasta)
-├── page.tsx.backup                 # Backup homepage înainte de redesign (6 apr 2026)
-├── layout.tsx                      # Root layout, font Nunito, metadata SEO globală
+├── page.tsx                        # Homepage (SSR, featured + events săptămâna aceasta)
+├── layout.tsx                      # Root layout, Playfair Display + DM Sans, metadata SEO globală
 ├── opengraph-image.tsx             # OG image generată dinamic (Next.js edge, 1200×630)
 ├── sitemap.ts                      # Sitemap automat — toate listingurile + pagini statice
 ├── robots.ts                       # Robots.txt — exclude /admin, /dashboard, /contul-meu
@@ -183,6 +220,7 @@ app/
 │
 ├── api/
 │   ├── my-claims/route.ts          # GET — verifică claims aprobate pt user curent (adminClient)
+│   ├── search/route.ts             # GET — autocomplete search cu rate limiting
 │   ├── upload/route.ts             # POST — upload poze listing (admin + organizator)
 │   ├── upload-event/route.ts       # POST — upload poze eveniment (event_id SAU listing_id pentru nou)
 │   └── upload-public/route.ts      # POST — upload poze din formularul public
@@ -194,13 +232,19 @@ app/
 ├── spectacole/page.tsx + SpectacolCard.tsx + FilteredSpectacole.tsx
 ├── evenimente/page.tsx + SectionedEvenimente.tsx
 ├── calendar/page.tsx               # Calendar evenimente (next 2 months), combină listings + events
+├── cauta/page.tsx + SearchFilters.tsx  # Search cu autocomplete, filtre, highlight, sinonime
 ├── gradinite/page.tsx              # Redirect permanent → /educatie
+├── despre/page.tsx                 # Pagina despre Moosey (7 secțiuni, mascotă)
+├── contact/page.tsx + ContactForm.tsx + contactActions.ts
+├── politica-de-confidentialitate/page.tsx + PrivacyContent.tsx   # bilingv EN/RO
+├── termeni-si-conditii/page.tsx + TerymeniContent.tsx             # bilingv EN/RO
+├── gdpr/page.tsx + GdprContent.tsx                                # bilingv EN/RO
 │
 ├── listing/[id]/
 │   ├── page.tsx                    # Pagina detaliu listing (generateMetadata + JSON-LD)
+│   ├── ListingGallery.tsx          # Hero full-bleed cu gradient overlay + title suprapus
 │   ├── ClaimButton.tsx             # Buton revendicare (client, verifică status claim)
 │   ├── ViewTracker.tsx             # Tracking vizualizări (client, insert la mount)
-│   ├── ListingGallery.tsx          # Galerie poze
 │   ├── ReviewSection.tsx           # Recenzii publice
 │   └── DescriptionCollapse.tsx     # Descriere expandabilă
 │
@@ -215,6 +259,7 @@ app/
 │
 ├── contul-meu/
 │   ├── page.tsx                    # Profil utilizator
+│   ├── ProfileCard.tsx             # Card profil cu editare nume inline (client)
 │   ├── AvatarUpload.tsx            # Upload/ștergere avatar (Supabase Storage "avatars")
 │   └── SignOutButton.tsx
 │
@@ -224,19 +269,24 @@ app/
 │   ├── page.tsx
 │   └── SubmitForm.tsx              # Formular public cerere listing nou
 │
+├── marketplace/
+│   ├── page.tsx                    # Lista anunțuri cu filtre client-side
+│   ├── [id]/page.tsx               # Detaliu anunț + mesagerie
+│   └── adauga/page.tsx             # Formular adăugare anunț
+│
 ├── admin/
 │   ├── page.tsx                    # Dashboard admin (statistici + tabel listings)
 │   ├── login/page.tsx
 │   ├── nou/page.tsx
 │   ├── edit/[id]/page.tsx
 │   ├── aprobare/page.tsx           # Aprobare cereri publice (is_verified=false)
-│   ├── revendicari/page.tsx        # Aprobare/respingere claims (force-dynamic, ClaimActions client)
+│   ├── revendicari/page.tsx        # Aprobare/respingere claims
 │   ├── layout.tsx
 │   ├── actions.ts                  # Server Actions: CRUD listings + approveClaim/rejectClaim
 │   └── _components/
-│       ├── AdminShell.tsx          # Layout cu sidebar (badge pending claims)
-│       ├── AdminNav.tsx            # Nav sidebar cu badge numeric
-│       ├── ClaimActions.tsx        # Butoane aprobare/respingere (client, router.refresh())
+│       ├── AdminShell.tsx
+│       ├── AdminNav.tsx
+│       ├── ClaimActions.tsx
 │       ├── ListingFormFields.tsx
 │       ├── ImageUploader.tsx
 │       └── DeleteButton.tsx
@@ -249,19 +299,39 @@ app/
 │   ├── AutoOpenAuth.tsx            # Deschide AuthModal automat (?login=1)
 │   ├── ScrollReveal.tsx            # Fade-in la scroll (IntersectionObserver, client)
 │   ├── CategoryShell.tsx           # Wrapper pagini categorie
-│   ├── ListingCard.tsx             # Card listing standard
-│   ├── FavoriteButton.tsx          # Buton favorit (client)
+│   ├── ListingCard.tsx             # Card listing standard (cu prop highlight pentru search)
+│   ├── FavoriteButton.tsx          # Buton favorit — variante: card / detail / hero
+│   ├── SearchBar.tsx               # Search cu autocomplete: listings + events + categorii
+│   ├── Footer.tsx                  # Footer global dark
+│   ├── FooterWrapper.tsx           # Ascunde footer pe /admin/* (usePathname)
+│   ├── MascotFloat.tsx             # Mascotă flotantă (bottom-right, confetti on click)
+│   ├── MascotCelebration.tsx       # Overlay confetti — triggerCelebration() din orice component
 │   └── EmptyState.tsx
 │
-public/                             # Director creat (6 apr); adaugă og-image.png manual dacă vrei fallback static
+public/
+├── images/
+│   ├── logo-moosey.png             # Logo banner retro coral
+│   └── moosey_transparent.png      # Mascota elan (folosit în hero, about, celebration)
 │
-utils/supabase/
-├── client.ts       # createBrowserClient — browser, anon key
-├── server.ts       # createServerClient — server, anon key + cookies
-├── admin.ts        # createClient service role — BYPASS RLS, doar server
-└── auth.ts         # signOut helper
+utils/
+├── supabase/
+│   ├── client.ts                   # createBrowserClient — browser, anon key
+│   ├── server.ts                   # createServerClient — server, anon key + cookies
+│   ├── admin.ts                    # createClient service role — BYPASS RLS, doar server
+│   └── auth.ts                     # signOut helper
+├── searchUtils.ts                  # normalizeText, sanitize, expandQuery, buildOrFilter, KEYWORD_MAP
+├── rateLimiter.ts                  # Rate limiting pentru /api/search
+├── getDynamicBadges.ts
+├── getListingBadges.ts
+├── reviewLevel.ts
+└── dateUtils.ts                    # formatEventDate, toInputDate
+
+scripts/
+├── scrape-gong.js                  # Scraper Teatrul Gong (Node 18+, cheerio)
+└── contact_messages.sql            # SQL creare tabel contact_messages
 
 middleware.ts       # Protejează /admin/* cu cookie admin_session
+docs/               # Documente legale originale (.docx)
 ```
 
 ---
@@ -288,6 +358,9 @@ middleware.ts       # Protejează /admin/* cu cookie admin_session
 | `is_featured` | boolean | Default false; apare pe homepage |
 | `images` | text[] | URL-uri Storage; prima = cover |
 | `event_date` | timestamptz | Nullable; scraper Gong; /spectacole |
+| `event_end_date` | timestamptz | Nullable; pentru evenimente multi-zi |
+| `start_time` | text | Nullable; format "HH:MM" |
+| `end_time` | text | Nullable; format "HH:MM" |
 | `contact_name` | text | Nullable; privat (din formularul public) |
 | `contact_email` | text | Nullable; privat |
 | `claimed_by` | uuid | Nullable; FK → auth.users.id |
@@ -335,17 +408,54 @@ ALTER TABLE events ADD COLUMN IF NOT EXISTS gallery_urls text[] DEFAULT '{}';
 
 **RLS**: Tabelul events nu are public read policy → toate query-urile publice folosesc `adminClient`.
 
-**Upload poze eveniment** — două fluxuri în `/api/upload-event`:
-- Eveniment **nou** (no event_id yet): trimite `listing_id`, path = `events/{listingId}/{timestamp}-thumbnail.ext`
-- Eveniment **existent** (editare): trimite `event_id`, path = `events/{eventId}/thumbnail.ext`
+### `marketplace_listings`
+| Coloană | Tip | Note |
+|---------|-----|------|
+| `id` | uuid | PK |
+| `user_id` | uuid | FK → auth.users.id |
+| `title` | text | |
+| `description` | text | Nullable |
+| `price` | numeric | Nullable |
+| `type` | text | 'vand' / 'donez' / 'inchiriez' |
+| `category` | text | Nullable |
+| `images` | text[] | URL-uri Storage bucket `marketplace-images` |
+| `status` | text | 'activ' / 'vandut' / 'rezervat' |
+| `created_at` | timestamptz | Auto |
 
-**Flux adăugare eveniment nou cu poze** (în EventsManager):
-1. Uploadează thumbnail → obține URL
-2. Uploadează galerie → obține URL-uri
-3. `addEvent({...payload, thumbnail_url, gallery_urls})` → INSERT cu URL-urile deja setate
+### `marketplace_messages`
+| Coloană | Tip | Note |
+|---------|-----|------|
+| `id` | uuid | PK |
+| `listing_id` | uuid | FK → marketplace_listings.id |
+| `sender_id` | uuid | FK → auth.users.id |
+| `receiver_id` | uuid | FK → auth.users.id |
+| `text` | text | |
+| `is_read` | boolean | Default false |
+| `created_at` | timestamptz | Auto |
+
+### `marketplace_favorites`
+| Coloană | Tip | Note |
+|---------|-----|------|
+| `id` | uuid | PK |
+| `user_id` | uuid | FK → auth.users.id |
+| `listing_id` | uuid | FK → marketplace_listings.id |
+| `created_at` | timestamptz | Auto |
+
+### `contact_messages`
+| Coloană | Tip | Note |
+|---------|-----|------|
+| `id` | uuid | PK |
+| `name` | text | NOT NULL |
+| `email` | text | NOT NULL |
+| `subject` | text | NOT NULL |
+| `message` | text | NOT NULL |
+| `created_at` | timestamptz | Auto |
+
+RLS: INSERT public (oricine poate trimite). SELECT doar via adminClient (service role).  
+**SQL:** `scripts/contact_messages.sql`
 
 ### `organizer_events` — DEPRECAT
-Tabelul vechi, nefolosit. Înlocuit complet de `events`. Paginile care interogau `organizer_events` au fost migrate la `events`.
+Tabelul vechi, nefolosit. Înlocuit complet de `events`.
 
 ### `listing_views`
 | Coloană | Tip | Note |
@@ -390,7 +500,7 @@ Tabelul vechi, nefolosit. Înlocuit complet de `events`. Paginile care interogau
 ```tsx
 // Pagini statice (categorii, calendar etc.)
 export const metadata = {
-  title: "Titlu pagină",           // → template → "Titlu pagină — KidsApp Sibiu"
+  title: "Titlu pagină",           // → template → "Titlu pagină — Moosey"
   description: "...",
   alternates: { canonical: "/url-relativ" },
   openGraph: { title: "...", description: "...", url: "/url-relativ" },
@@ -407,7 +517,7 @@ Schema tip: `LocalBusiness` / `ChildCare` (educatie) / `PerformingArtsTheater` (
 Câmpuri: `name`, `description`, `address`, `telephone`, `url`, `image`, `priceRange`, `aggregateRating`
 
 ### Title template
-`layout.tsx` setează `title.template = "%s — KidsApp Sibiu"`. Paginile setează doar `title: "Titlu local"` fără sufix.
+`layout.tsx` setează `title.template = "%s — Moosey"`. Paginile setează doar `title: "Titlu local"` fără sufix.
 
 ---
 
@@ -433,16 +543,16 @@ Câmpuri: `name`, `description`, `address`, `telephone`, `url`, `image`, `priceR
 | `spectacol` | 🎭 | Spectacol | `/spectacole` |
 | `eveniment` | 🎪 | Eveniment | `/evenimente` |
 
-`CATEGORY_META` e definit în `ListingCard.tsx` (sursă primară), copiat în `page.tsx` și `listing/[id]/page.tsx`. Dacă adaugi categorie nouă → actualizează toate 3 + `tailwind.config.ts` safelist.
+`CATEGORY_META` e definit în `ListingCard.tsx` (sursă primară), copiat în `listing/[id]/page.tsx`. Dacă adaugi categorie nouă → actualizează toate locurile + `tailwind.config.ts` safelist.
 
 ---
 
 ## Convenții design
 
 - **Brand coral:** `#ff5a2e` (hover `#f03d12`), **text dark:** `#1a1a2e`
-- Font: **Nunito** — titluri `font-black`, subtitluri `font-bold`/`font-semibold`
-- Carduri: `rounded-2xl` / `rounded-3xl`, shadow subtile
-- Header sticky: `sticky top-0 z-50 bg-white/95 backdrop-blur`
+- **Fonturi:** Playfair Display pentru `font-display` (headings premium), DM Sans pentru body
+- Carduri: `rounded-2xl` / `rounded-3xl`, shadow subtile, `hover:-translate-y-0.5`
+- Header sticky: `sticky top-0 z-50 bg-white border-b border-[#f0f0f0]`
 - Grid listings: `flex-col gap-4 sm:grid sm:grid-cols-2`
 - Homepage: pattern coral dots în hero, categorii 2 col mobile / 3 col desktop, ScrollReveal pe secțiuni
 
@@ -471,6 +581,21 @@ function toInputDate(dateStr: string): string {
 
 ---
 
+## Search — arhitectură
+
+| Fișier | Rol |
+|--------|-----|
+| `app/components/SearchBar.tsx` | Autocomplete client: listings + events (API) + categorii (client-side) |
+| `app/api/search/route.ts` | GET — rate limited (60 req/min/IP), expandQuery + buildOrFilter |
+| `utils/searchUtils.ts` | `normalizeText`, `sanitize`, `expandQuery`, `buildOrFilter`, `KEYWORD_MAP` |
+| `utils/rateLimiter.ts` | In-memory rate limiter pentru /api/search |
+| `app/cauta/page.tsx` | Pagina rezultate: highlight, filtre, sort, popular searches |
+| `app/cauta/SearchFilters.tsx` | Pills categorii + sort (Relevanță / Top cotat / Cele mai noi) |
+
+**KEYWORD_MAP** în `searchUtils.ts` acoperă: teatru, spectacol, joaca, piscina, inot, fotbal, dans, balet, robotica, programare, stem, gradinita, cresa, afterschool, karate, engleza, germana, franceza, pictura, muzica, tenis, gimnastica, yoga, sah, papusi și variantele lor cu/fără diacritice.
+
+---
+
 ## Probleme cunoscute și soluții permanente
 
 ### Admin panel nestyled după restart
@@ -494,9 +619,9 @@ Clasele din `CATEGORY_META` (gradiente, tagColor) trebuie adăugate manual în `
 
 ## Auth — note generale
 
-- Email confirmation: **dezactivat** în dev — reactivează înainte de producție (Supabase → Auth → Settings)
+- Email confirmation: **activată** în producție cu SMTP Brevo
 - Google OAuth: Client ID `129695324744-hegk6rklfmt3452uet9q7j1udotd3gmr.apps.googleusercontent.com`
-- Google OAuth callback URL: `http://localhost:3000/auth/callback` (dev) + domeniu producție
+- Google OAuth callback URL: `http://localhost:3000/auth/callback` (dev) + `https://www.moosey.ro/auth/callback` (prod)
 - `createClient` din `server.ts` necesită `cookieStore`: `createClient(await cookies())`
 - `is_featured` → secțiunea "Recomandate" pe homepage (max 6)
 - Tabel `profiles` cu trigger automat la înregistrare user nou

@@ -8,7 +8,7 @@ export default function Navbar() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
 
         {/* Logo — overflow:visible permite scale să iasă din container */}
-        <Link href="/" className="flex items-center shrink-0 overflow-visible">
+        <Link href="/" className="flex items-center shrink-0 overflow-visible mr-4 md:mr-8">
           <img
             src="/images/logo-moosey.png"
             alt="Moosey"
@@ -25,7 +25,7 @@ export default function Navbar() {
 
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-0.5 text-sm font-medium text-[#374151]">
-          <a href="/locuri-de-joaca"  className="px-3 py-2 rounded-lg hover:text-[#ff5a2e] transition-colors duration-200">🛝 Joacă</a>
+          <a href="/locuri-de-joaca"  className="px-3 py-2 rounded-lg hover:text-[#ff5a2e] transition-colors duration-200">🛝 Locuri de joacă</a>
           <a href="/educatie"         className="px-3 py-2 rounded-lg hover:text-[#ff5a2e] transition-colors duration-200">🎓 Educație</a>
           <a href="/cursuri-ateliere" className="px-3 py-2 rounded-lg hover:text-[#ff5a2e] transition-colors duration-200">🎨 Cursuri</a>
           <a href="/sport"            className="px-3 py-2 rounded-lg hover:text-[#ff5a2e] transition-colors duration-200">⚽ Sport</a>
