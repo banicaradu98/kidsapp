@@ -114,7 +114,7 @@ export default async function DashboardPage({
     ? reviewList.reduce((s: number, r: { rating: number }) => s + r.rating, 0) / reviewList.length
     : null;
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://kidsapp.ro";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.moosey.ro";
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const allListings = (claims as any[]).map((c) => ({ id: c.listing_id, name: c.listings?.name ?? c.listing_id }));

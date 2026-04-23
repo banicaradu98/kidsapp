@@ -9,6 +9,7 @@ import ListingGallery from "./ListingGallery";
 import ReviewSection from "./ReviewSection";
 import FavoriteButton from "@/app/components/FavoriteButton";
 import Navbar from "@/app/components/Navbar";
+import ListingCard, { type Listing } from "@/app/components/ListingCard";
 import ClaimButton from "./ClaimButton";
 import ViewTracker from "./ViewTracker";
 import LiveViewers from "./LiveViewers";
@@ -16,15 +17,15 @@ import QRCodeButton from "./QRCodeButton";
 import { getDynamicBadges } from "@/utils/getDynamicBadges";
 import { formatEventDate } from "@/utils/dateUtils";
 
-const CATEGORY_META: Record<string, { emoji: string; label: string; tagColor: string; gradientFrom: string; gradientTo: string }> = {
-  "loc-de-joaca": { emoji: "🛝", label: "Loc de joacă",   tagColor: "bg-orange-100 text-orange-700", gradientFrom: "from-orange-100", gradientTo: "to-orange-200" },
-  "educatie":     { emoji: "🎓", label: "Educație",        tagColor: "bg-green-100 text-green-700",   gradientFrom: "from-green-100",  gradientTo: "to-green-200"  },
-  "curs-atelier": { emoji: "🎨", label: "Curs & Atelier", tagColor: "bg-purple-100 text-purple-700", gradientFrom: "from-purple-100", gradientTo: "to-purple-200" },
-  "sport":        { emoji: "⚽", label: "Sport",          tagColor: "bg-sky-100 text-sky-700",       gradientFrom: "from-sky-100",    gradientTo: "to-sky-200"    },
-  "spectacol":    { emoji: "🎭", label: "Spectacol",       tagColor: "bg-rose-100 text-rose-700",     gradientFrom: "from-rose-100",   gradientTo: "to-rose-200"   },
-  "eveniment":    { emoji: "🎪", label: "Eveniment",       tagColor: "bg-pink-100 text-pink-700",     gradientFrom: "from-pink-100",   gradientTo: "to-pink-200"   },
+const CATEGORY_META: Record<string, { emoji: string; label: string; href: string; tagColor: string; gradientFrom: string; gradientTo: string }> = {
+  "loc-de-joaca": { emoji: "🛝", label: "Loc de joacă",   href: "/locuri-de-joaca",   tagColor: "bg-orange-100 text-orange-700", gradientFrom: "from-orange-100", gradientTo: "to-orange-200" },
+  "educatie":     { emoji: "🎓", label: "Educație",        href: "/educatie",           tagColor: "bg-green-100 text-green-700",   gradientFrom: "from-green-100",  gradientTo: "to-green-200"  },
+  "curs-atelier": { emoji: "🎨", label: "Curs & Atelier", href: "/cursuri-ateliere",   tagColor: "bg-purple-100 text-purple-700", gradientFrom: "from-purple-100", gradientTo: "to-purple-200" },
+  "sport":        { emoji: "⚽", label: "Sport",          href: "/sport",              tagColor: "bg-sky-100 text-sky-700",       gradientFrom: "from-sky-100",    gradientTo: "to-sky-200"    },
+  "spectacol":    { emoji: "🎭", label: "Spectacol",       href: "/spectacole",         tagColor: "bg-rose-100 text-rose-700",     gradientFrom: "from-rose-100",   gradientTo: "to-rose-200"   },
+  "eveniment":    { emoji: "🎪", label: "Eveniment",       href: "/evenimente",         tagColor: "bg-pink-100 text-pink-700",     gradientFrom: "from-pink-100",   gradientTo: "to-pink-200"   },
 };
-const DEFAULT_META = { emoji: "📍", label: "Activitate", tagColor: "bg-gray-100 text-gray-700", gradientFrom: "from-gray-100", gradientTo: "to-gray-200" };
+const DEFAULT_META = { emoji: "📍", label: "Activitate", href: "/", tagColor: "bg-gray-100 text-gray-700", gradientFrom: "from-gray-100", gradientTo: "to-gray-200" };
 
 const UPDATE_TYPE_META: Record<string, { emoji: string; bg: string; text: string; border: string }> = {
   noutate:            { emoji: "ℹ️",  bg: "bg-blue-50",    text: "text-blue-700",    border: "border-blue-100"    },
@@ -184,8 +185,18 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
 
   const listingUpdates = listingUpdatesRaw ?? [];
 
+  // Similar listings — same category, verified, excluding current
+  const { data: similarRaw } = await adminClient
+    .from("listings")
+    .select("id, name, category, subcategory, images, is_verified, is_featured, address, price, age_min, age_max, schedule, phone, website, description, city, package")
+    .eq("category", listing.category)
+    .eq("is_verified", true)
+    .neq("id", listing.id)
+    .limit(4);
+  const similarListings = (similarRaw ?? []) as Listing[];
+
   // JSON-LD structured data
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://kidsapp.ro";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.moosey.ro";
   const schemaType =
     listing.category === "educatie" ? "ChildCare" :
     listing.category === "spectacol" ? "PerformingArtsTheater" :
@@ -224,6 +235,12 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
         emoji={meta.emoji}
         gradientFrom={meta.gradientFrom}
         gradientTo={meta.gradientTo}
+        title={listing.name}
+        listingId={listing.id}
+        isVerified={listing.is_verified ?? false}
+        categoryLabel={meta.label}
+        categoryEmoji={meta.emoji}
+        categoryTagColor={meta.tagColor}
       />
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6">
@@ -238,32 +255,23 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
             <div className="flex items-center gap-1.5 text-xs text-gray-400 font-medium mb-4 flex-wrap">
               <a href="/" className="hover:text-[#ff5a2e] transition-colors">Acasă</a>
               <span>›</span>
-              <a href="/" className="hover:text-[#ff5a2e] transition-colors">{meta.label}</a>
+              <a href={meta.href} className="hover:text-[#ff5a2e] transition-colors">{meta.label}</a>
               <span>›</span>
               <span className="text-gray-600 truncate max-w-[160px]">{listing.name}</span>
             </div>
 
-            {/* Badges */}
-            <div className="flex flex-wrap gap-2 mb-3">
-              <span className={`${meta.tagColor} text-xs font-bold px-3 py-1.5 rounded-full`}>
-                {meta.emoji} {meta.label}
-              </span>
-              {listing.is_verified && (
-                <span className="bg-green-100 text-green-700 text-xs font-bold px-3 py-1.5 rounded-full">
-                  ✓ Verificat
-                </span>
-              )}
-              {dynBadges.map((b) => (
-                <span key={b.type} className={`${b.bg} ${b.text} text-xs font-bold px-3 py-1.5 rounded-full`}>
-                  {b.emoji} {b.label}
-                </span>
-              ))}
-            </div>
+            {/* Dynamic badges */}
+            {dynBadges.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-3">
+                {dynBadges.map((b) => (
+                  <span key={b.type} className={`${b.bg} ${b.text} text-xs font-bold px-3 py-1.5 rounded-full`}>
+                    {b.emoji} {b.label}
+                  </span>
+                ))}
+              </div>
+            )}
 
-            {/* Title + rating */}
-            <h2 className="text-2xl sm:text-3xl font-black text-[#1a1a2e] leading-tight mb-2">
-              {listing.name}
-            </h2>
+            {/* Rating */}
             <div className="flex items-center gap-2 text-sm font-semibold text-gray-500 mb-2 flex-wrap">
               {avgRating !== null ? (
                 <>
@@ -466,6 +474,28 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
             {/* Reviews */}
             <ReviewSection listingId={listing.id} initialReviews={reviewList} />
 
+            {/* Similar listings */}
+            {similarListings.length > 0 && (
+              <section className="mt-10 mb-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-black text-[#1a1a2e]">
+                    Alte locuri din {meta.label}
+                  </h3>
+                  <a
+                    href={meta.href}
+                    className="text-sm font-bold text-[#ff5a2e] hover:underline"
+                  >
+                    Vezi toate →
+                  </a>
+                </div>
+                <div className="flex flex-col gap-4 sm:grid sm:grid-cols-2">
+                  {similarListings.map((l) => (
+                    <ListingCard key={l.id} listing={l} />
+                  ))}
+                </div>
+              </section>
+            )}
+
           </div>
 
           {/* ── DESKTOP SIDEBAR ── */}
@@ -515,7 +545,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
                   )}
                   <FavoriteButton listingId={listing.id} variant="detail" />
                   <QRCodeButton
-                    url={`${process.env.NEXT_PUBLIC_SITE_URL ?? "https://kidsapp.ro"}/listing/${listing.id}`}
+                    url={`${process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.moosey.ro"}/listing/${listing.id}`}
                     name={listing.name}
                   />
                 </div>

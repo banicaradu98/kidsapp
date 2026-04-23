@@ -24,7 +24,7 @@ export default function LoginPage() {
       <div className="w-full max-w-sm bg-white rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.08)] p-8">
         <div className="text-center mb-8">
           <span className="text-4xl">🧡</span>
-          <h1 className="text-2xl font-black text-[#1a1a2e] mt-2">KidsApp Admin</h1>
+          <h1 className="text-2xl font-black text-[#1a1a2e] mt-2">Moosey Admin</h1>
           <p className="text-gray-500 text-sm font-medium mt-1">Sibiu</p>
         </div>
 

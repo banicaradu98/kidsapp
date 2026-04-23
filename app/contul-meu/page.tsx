@@ -3,10 +3,10 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type { Listing } from "@/app/components/ListingCard";
 import SignOutButton from "./SignOutButton";
-import AvatarUpload from "./AvatarUpload";
 import Navbar from "@/app/components/Navbar";
 import { getReviewLevel } from "@/utils/reviewLevel";
 import ContulMeuTabs from "./ContulMeuTabs";
+import ProfileCard from "./ProfileCard";
 
 export default async function ContulMeuPage() {
   const cookieStore = await cookies();
@@ -23,6 +23,10 @@ export default async function ContulMeuPage() {
     .slice(0, 2)
     .join("")
     .toUpperCase();
+  const memberSince = new Date(user.created_at).toLocaleDateString("ro-RO", {
+    month: "long",
+    year: "numeric",
+  });
 
   // First 3 favorites
   const { data: favData } = await supabase
@@ -69,34 +73,17 @@ export default async function ContulMeuPage() {
       <main className="max-w-4xl mx-auto px-4 py-8 flex flex-col gap-8">
 
         {/* ── PROFIL ── */}
-        <section className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 flex items-center gap-5">
-          <AvatarUpload
-            userId={user.id}
-            initialAvatarUrl={user.user_metadata?.avatar_url ?? user.user_metadata?.picture ?? null}
-            initials={initials}
-          />
-          <div className="min-w-0">
-            <h1 className="text-xl font-black text-[#1a1a2e] leading-tight truncate">{displayName}</h1>
-            <p className="text-sm text-gray-400 font-medium mt-0.5 truncate">{user.email}</p>
-            <div className="flex flex-wrap items-center gap-2 mt-2">
-              <span className="text-xs font-bold text-gray-500 flex items-center gap-1">
-                <span className="text-red-400">❤️</span> {totalFavorites} favorite
-              </span>
-              <span className="text-gray-200 text-xs">·</span>
-              <span className="text-xs font-bold text-gray-500 flex items-center gap-1">
-                <span className="text-yellow-400">⭐</span> {reviews.length} recenzii
-              </span>
-              {reviewLevel && (
-                <>
-                  <span className="text-gray-200 text-xs">·</span>
-                  <span className={`text-xs font-black px-2.5 py-1 rounded-full ${reviewLevel.bg} ${reviewLevel.text}`}>
-                    {reviewLevel.emoji} {reviewLevel.label}
-                  </span>
-                </>
-              )}
-            </div>
-          </div>
-        </section>
+        <ProfileCard
+          userId={user.id}
+          displayName={displayName}
+          email={user.email ?? ""}
+          avatarUrl={user.user_metadata?.avatar_url ?? user.user_metadata?.picture ?? null}
+          initials={initials}
+          totalFavorites={totalFavorites}
+          reviewCount={reviews.length}
+          reviewLevel={reviewLevel}
+          memberSince={memberSince}
+        />
 
         {/* ── TABS: Favorite / Recenzii / Marketplace ── */}
         <ContulMeuTabs

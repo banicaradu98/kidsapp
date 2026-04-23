@@ -39,7 +39,7 @@ function extractBgUrl(styleStr) {
 async function uploadImageToSupabase(imageUrl) {
   try {
     const res = await fetch(imageUrl, {
-      headers: { "User-Agent": "Mozilla/5.0 (compatible; KidsApp-scraper/1.0)" },
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; Moosey-scraper/1.0)" },
     });
     if (!res.ok) return null;
 
@@ -74,7 +74,7 @@ function extractPrice(text) {
 async function fetchEventDetail(path) {
   try {
     const res = await fetch(`${BASE_URL}${path}`, {
-      headers: { "User-Agent": "Mozilla/5.0 (compatible; KidsApp-scraper/1.0)" },
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; Moosey-scraper/1.0)" },
     });
     if (!res.ok) return {};
     const html = await res.text();
@@ -107,7 +107,7 @@ async function fetchEventDetail(path) {
 async function scrape() {
   console.log("📡 Fetch calendar spectacole Teatrul Gong...");
   const res = await fetch(LIST_URL, {
-    headers: { "User-Agent": "Mozilla/5.0 (compatible; KidsApp-scraper/1.0)" },
+    headers: { "User-Agent": "Mozilla/5.0 (compatible; Moosey-scraper/1.0)" },
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
 

@@ -1,20 +1,29 @@
 "use client";
 
 import { useState } from "react";
+import FavoriteButton from "@/app/components/FavoriteButton";
 
 interface Props {
   images: string[];
   emoji: string;
   gradientFrom: string;
   gradientTo: string;
+  title: string;
+  listingId: string;
+  isVerified: boolean;
+  categoryLabel: string;
+  categoryEmoji: string;
+  categoryTagColor: string;
 }
 
-export default function ListingGallery({ images, emoji, gradientFrom, gradientTo }: Props) {
+export default function ListingGallery({
+  images, emoji, gradientFrom, gradientTo,
+  title, listingId, isVerified, categoryLabel, categoryEmoji, categoryTagColor,
+}: Props) {
   const [lightbox, setLightbox] = useState<number | null>(null);
 
   const hasPhotos = images.length > 0;
   const cover = images[0];
-  const rest = images.slice(1);
 
   function prev() {
     setLightbox((i) => (i! > 0 ? i! - 1 : images.length - 1));
@@ -25,38 +34,70 @@ export default function ListingGallery({ images, emoji, gradientFrom, gradientTo
 
   return (
     <>
-      {/* ── HERO ── */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-4 sm:pt-6">
+      {/* ── FULL-BLEED HERO ── */}
+      <div
+        className="relative w-full overflow-hidden"
+        style={{ height: "clamp(260px, 52vw, 520px)" }}
+      >
         {hasPhotos ? (
-          <div
-            className="relative w-full bg-gray-50 rounded-2xl shadow-[0_2px_16px_rgba(0,0,0,0.08)] overflow-hidden cursor-pointer flex items-center justify-center"
-            style={{ maxHeight: 400, height: "min(400px, 56vw)", minHeight: 200 }}
-            onClick={() => setLightbox(0)}
-          >
+          <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={cover}
               alt=""
-              className="w-full h-full object-contain"
+              className="w-full h-full object-cover cursor-pointer"
+              onClick={() => setLightbox(0)}
             />
-            {images.length > 1 && (
-              <div className="absolute bottom-3 right-3 bg-black/40 backdrop-blur-sm text-white text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5">
-                <span>📷</span> {images.length} fotografii
-              </div>
-            )}
-          </div>
+            {/* gradient overlay */}
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{ background: "linear-gradient(to top, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.18) 45%, transparent 100%)" }}
+            />
+          </>
         ) : (
-          <div
-            className={`w-full bg-gradient-to-br ${gradientFrom} ${gradientTo} rounded-2xl shadow-[0_2px_16px_rgba(0,0,0,0.06)] flex items-center justify-center`}
-            style={{ height: 260 }}
-          >
-            <span className="text-8xl">{emoji}</span>
+          <div className={`w-full h-full bg-gradient-to-br ${gradientFrom} ${gradientTo} flex items-center justify-center`}>
+            <span className="text-[100px] opacity-30">{emoji}</span>
           </div>
+        )}
+
+        {/* Category + verified badges — top left */}
+        <div className="absolute top-4 left-4 flex flex-wrap gap-2">
+          <span className={`${categoryTagColor} text-xs font-bold px-3 py-1.5 rounded-full shadow-sm`}>
+            {categoryEmoji} {categoryLabel}
+          </span>
+          {isVerified && (
+            <span className="bg-green-100 text-green-700 text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">
+              ✓ Verificat
+            </span>
+          )}
+        </div>
+
+        {/* Favorite button — top right */}
+        <div className="absolute top-4 right-4">
+          <FavoriteButton listingId={listingId} variant="hero" />
+        </div>
+
+        {/* Title — bottom left */}
+        <div className="absolute bottom-0 left-0 right-0 px-5 pb-5 sm:px-8 sm:pb-7 pointer-events-none">
+          <h1 className="text-2xl sm:text-4xl font-black text-white leading-tight"
+            style={{ textShadow: "0 2px 12px rgba(0,0,0,0.4)" }}>
+            {title}
+          </h1>
+        </div>
+
+        {/* Photo count — bottom right */}
+        {images.length > 1 && (
+          <button
+            onClick={() => setLightbox(0)}
+            className="absolute bottom-4 right-4 bg-black/40 backdrop-blur-sm text-white text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-black/60 transition-colors"
+          >
+            <span>📷</span> {images.length} fotografii
+          </button>
         )}
       </div>
 
       {/* ── THUMBNAIL STRIP ── */}
-      {rest.length > 0 && (
+      {images.length > 1 && (
         <div className="flex gap-2 overflow-x-auto scrollbar-hide max-w-6xl mx-auto px-4 sm:px-6 pt-3 pb-1">
           {images.map((url, i) => (
             <button
@@ -79,7 +120,6 @@ export default function ListingGallery({ images, emoji, gradientFrom, gradientTo
           className="fixed inset-0 z-[200] bg-black/95 flex flex-col items-center justify-center"
           onClick={() => setLightbox(null)}
         >
-          {/* Close */}
           <button
             className="absolute top-4 right-4 w-10 h-10 bg-white/15 hover:bg-white/25 text-white rounded-full flex items-center justify-center text-xl font-black transition-colors"
             onClick={() => setLightbox(null)}
@@ -87,13 +127,9 @@ export default function ListingGallery({ images, emoji, gradientFrom, gradientTo
           >
             ×
           </button>
-
-          {/* Counter */}
           <div className="absolute top-4 left-1/2 -translate-x-1/2 text-white/60 text-sm font-bold">
             {lightbox + 1} / {images.length}
           </div>
-
-          {/* Image */}
           <div
             className="relative max-w-4xl w-full px-12"
             onClick={(e) => e.stopPropagation()}
@@ -105,28 +141,20 @@ export default function ListingGallery({ images, emoji, gradientFrom, gradientTo
               className="w-full max-h-[80vh] object-contain rounded-xl"
             />
           </div>
-
-          {/* Prev / Next (only if 2+ images) */}
           {images.length > 1 && (
             <>
               <button
                 onClick={(e) => { e.stopPropagation(); prev(); }}
                 className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/15 hover:bg-white/25 text-white rounded-full flex items-center justify-center text-xl transition-colors"
                 aria-label="Înapoi"
-              >
-                ‹
-              </button>
+              >‹</button>
               <button
                 onClick={(e) => { e.stopPropagation(); next(); }}
                 className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/15 hover:bg-white/25 text-white rounded-full flex items-center justify-center text-xl transition-colors"
                 aria-label="Înainte"
-              >
-                ›
-              </button>
+              >›</button>
             </>
           )}
-
-          {/* Dots */}
           {images.length > 1 && (
             <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex gap-2">
               {images.map((_, i) => (

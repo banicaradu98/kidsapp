@@ -17,7 +17,7 @@ const dmSans = DM_Sans({
   variable: "--font-dm-sans",
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://kidsapp.ro";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.moosey.ro";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),

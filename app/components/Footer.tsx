@@ -47,7 +47,7 @@ export default function Footer() {
                 { label: "❤️ Favorite", href: "/favorite" },
                 { label: "Dashboard organizator", href: "/dashboard" },
                 { label: "Despre Moosey", href: "/despre" },
-                { label: "Contact", href: "#" },
+                { label: "Contact", href: "/contact" },
               ].map((link) => (
                 <a key={link.label} href={link.href} className="text-gray-400 hover:text-[#ff5a2e] text-sm font-semibold transition-colors">
                   {link.label}

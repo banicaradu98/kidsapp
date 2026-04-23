@@ -7,7 +7,7 @@ const nunito = Nunito({
   variable: "--font-nunito",
 });
 
-export const metadata = { title: "Admin — KidsApp Sibiu" };
+export const metadata = { title: "Admin — Moosey" };
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (

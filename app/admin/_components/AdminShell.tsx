@@ -19,7 +19,7 @@ export default async function AdminShell({ children }: { children: React.ReactNo
           <a href="/" className="flex items-center gap-2">
             <span className="text-2xl">🧡</span>
             <div>
-              <p className="font-black text-[#ff5a2e] leading-none text-lg">KidsApp</p>
+              <p className="font-black text-[#ff5a2e] leading-none text-lg">Moosey</p>
               <p className="text-xs font-semibold text-gray-400 leading-none mt-0.5">Admin Panel</p>
             </div>
           </a>

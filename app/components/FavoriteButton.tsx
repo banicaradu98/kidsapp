@@ -6,7 +6,7 @@ import AuthModal from "./AuthModal";
 
 interface Props {
   listingId: string;
-  variant?: "card" | "detail";
+  variant?: "card" | "detail" | "hero";
 }
 
 export default function FavoriteButton({ listingId, variant = "card" }: Props) {
@@ -55,6 +55,26 @@ export default function FavoriteButton({ listingId, variant = "card" }: Props) {
       setIsFav(true);
     }
     setLoading(false);
+  }
+
+  if (variant === "hero") {
+    return (
+      <>
+        <button
+          onClick={toggle}
+          disabled={loading}
+          aria-label={isFav ? "Elimină din favorite" : "Salvează la favorite"}
+          className={`w-10 h-10 rounded-full flex items-center justify-center text-lg transition-all shadow-md backdrop-blur-sm ${
+            isFav
+              ? "bg-red-500 text-white scale-110"
+              : "bg-white/80 text-gray-400 hover:text-red-400 hover:bg-white hover:scale-110"
+          }`}
+        >
+          {isFav ? "❤️" : "🤍"}
+        </button>
+        {showModal && <AuthModal onClose={() => setShowModal(false)} />}
+      </>
+    );
   }
 
   if (variant === "detail") {

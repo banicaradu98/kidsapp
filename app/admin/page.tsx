@@ -40,7 +40,7 @@ export default async function AdminDashboard() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-black text-[#1a1a2e]">Dashboard Admin</h1>
-          <p className="text-gray-500 font-medium mt-0.5">KidsApp Sibiu</p>
+          <p className="text-gray-500 font-medium mt-0.5">Moosey</p>
         </div>
         <a
           href="/admin/nou"

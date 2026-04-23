@@ -1,7 +1,7 @@
 import { MetadataRoute } from "next";
 import { adminClient } from "@/utils/supabase/admin";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://kidsapp.ro";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.moosey.ro";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Fetch all public verified listings
