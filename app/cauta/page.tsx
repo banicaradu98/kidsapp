@@ -2,6 +2,7 @@ import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
 import { adminClient } from "@/utils/supabase/admin";
 import { Suspense } from "react";
+import type { ReactNode } from "react";
 import Navbar from "@/app/components/Navbar";
 import SearchBar from "@/app/components/SearchBar";
 import ListingCard, { CATEGORY_META } from "@/app/components/ListingCard";
@@ -9,6 +10,22 @@ import { getListingBadges } from "@/utils/getListingBadges";
 import { expandQuery, buildOrFilter } from "@/utils/searchUtils";
 import SearchFilters from "./SearchFilters";
 import type { Metadata } from "next";
+
+function hlText(text: string, q: string): ReactNode {
+  if (!q.trim()) return text;
+  const escaped = q.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const parts = text.split(new RegExp(`(${escaped})`, "gi"));
+  if (parts.length === 1) return text;
+  return (
+    <>
+      {parts.map((p, i) =>
+        i % 2 === 1
+          ? <mark key={i} className="bg-transparent text-[#ff5a2e] font-black not-italic">{p}</mark>
+          : p
+      )}
+    </>
+  );
+}
 
 export const dynamic = "force-dynamic";
 
@@ -45,6 +62,8 @@ export default async function CautaPage({
   const { q: rawQ = "", cat = "", sort = "relevanta" } = await searchParams;
   const q = rawQ.trim();
 
+  const POPULAR_SEARCHES = ["Robotică", "Loc de joacă", "Dans", "Înot", "Spectacole", "Balet", "Fotbal", "Șah"];
+
   const supabase = createClient(await cookies());
 
   let listings: ReturnType<typeof Array<object>> = [];
@@ -64,8 +83,8 @@ export default async function CautaPage({
 
     if (cat) listingQuery = listingQuery.eq("category", cat);
 
-    if (sort === "alfabetic") {
-      listingQuery = listingQuery.order("name", { ascending: true });
+    if (sort === "topcotat") {
+      listingQuery = listingQuery.order("is_featured", { ascending: false }).order("is_verified", { ascending: false }).order("name");
     } else if (sort === "nou") {
       listingQuery = listingQuery.order("created_at", { ascending: false });
     } else {
@@ -122,9 +141,22 @@ export default async function CautaPage({
           <div className="text-center py-12">
             <p className="text-5xl mb-4">🔍</p>
             <h1 className="text-2xl font-black text-[#1a1a2e] mb-2">Caută pe Moosey</h1>
-            <p className="text-gray-500 font-medium mb-8">
+            <p className="text-gray-500 font-medium mb-6">
               Scrie cel puțin 2 caractere pentru a căuta activități, locuri sau cursuri pentru copii.
             </p>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Căutări populare</p>
+            <div className="flex flex-wrap justify-center gap-2 mb-8">
+              {POPULAR_SEARCHES.map((s) => (
+                <a
+                  key={s}
+                  href={`/cauta?q=${encodeURIComponent(s)}`}
+                  className="bg-orange-50 hover:bg-[#ff5a2e] hover:text-white text-[#ff5a2e] border border-orange-200 font-bold text-sm px-4 py-2 rounded-full transition-all"
+                >
+                  {s}
+                </a>
+              ))}
+            </div>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Categorii</p>
             <div className="flex flex-wrap justify-center gap-3">
               {CATEGORY_SUGGESTIONS.map((c) => (
                 <a
@@ -143,18 +175,27 @@ export default async function CautaPage({
             <h1 className="text-xl font-black text-[#1a1a2e] mb-1">
               Nu am găsit nimic pentru &bdquo;{q}&rdquo;
             </h1>
-            <p className="text-gray-400 font-medium mb-8">
-              Încearcă: robotică, balet, înot, teatru, fotbal…
+            <p className="text-gray-400 font-medium mb-6">
+              Verifică ortografia sau încearcă una din căutările populare.
             </p>
             <div className="mb-6">
               <Suspense><SearchFilters /></Suspense>
             </div>
             <div className="bg-white rounded-2xl border border-gray-100 p-6 text-center">
-              <p className="text-3xl mb-3">🤷</p>
-              <p className="font-bold text-[#1a1a2e] mb-2">Niciun rezultat</p>
-              <p className="text-sm text-gray-500 font-medium mb-5">
-                Verifică ortografia sau explorează categoriile de mai jos.
-              </p>
+              <p className="text-3xl mb-3">🔍</p>
+              <p className="font-bold text-[#1a1a2e] mb-2">Încearcă și:</p>
+              <div className="flex flex-wrap justify-center gap-2 mb-6">
+                {POPULAR_SEARCHES.map((s) => (
+                  <a
+                    key={s}
+                    href={`/cauta?q=${encodeURIComponent(s)}`}
+                    className="bg-orange-50 hover:bg-[#ff5a2e] hover:text-white text-[#ff5a2e] border border-orange-200 font-bold text-sm px-4 py-2 rounded-full transition-all"
+                  >
+                    {s}
+                  </a>
+                ))}
+              </div>
+              <p className="text-sm text-gray-400 font-medium mb-4">Sau explorează categoriile:</p>
               <div className="flex flex-wrap justify-center gap-3">
                 {CATEGORY_SUGGESTIONS.map((c) => (
                   <a
@@ -185,7 +226,7 @@ export default async function CautaPage({
             <div className="flex flex-col gap-4">
               {/* Listing results */}
               {typedListings.map((l) => (
-                <ListingCard key={l.id} listing={l} />
+                <ListingCard key={l.id} listing={l} highlight={q} />
               ))}
 
               {/* Event results */}
@@ -243,7 +284,7 @@ export default async function CautaPage({
                             )}
                           </div>
                           <p className="font-black text-[#1a1a2e] text-base leading-snug group-hover:text-[#ff5a2e] transition-colors">
-                            {ev.title}
+                            {hlText(ev.title, q)}
                           </p>
                           <p className="text-xs font-bold text-[#ff5a2e] mt-0.5">
                             {dateLabel}{timeStr ? ` · ${timeStr}` : ""}

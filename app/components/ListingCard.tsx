@@ -1,4 +1,21 @@
 import FavoriteButton from "./FavoriteButton";
+import type { ReactNode } from "react";
+
+function hl(text: string, q: string | undefined): ReactNode {
+  if (!q?.trim()) return text;
+  const escaped = q.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const parts = text.split(new RegExp(`(${escaped})`, "gi"));
+  if (parts.length === 1) return text;
+  return (
+    <>
+      {parts.map((p, i) =>
+        i % 2 === 1
+          ? <mark key={i} className="bg-transparent text-[#ff5a2e] font-black not-italic">{p}</mark>
+          : p
+      )}
+    </>
+  );
+}
 
 export interface Listing {
   id: string;
@@ -37,7 +54,7 @@ export const CATEGORY_META: Record<string, { emoji: string; label: string; tagCo
 };
 export const DEFAULT_META = { emoji: "📍", label: "Activitate", tagColor: "bg-gray-100 text-gray-700", gradientFrom: "from-gray-50", gradientTo: "to-gray-100" };
 
-export default function ListingCard({ listing, variant = "default" }: { listing: Listing; variant?: "default" | "event" }) {
+export default function ListingCard({ listing, variant = "default", highlight }: { listing: Listing; variant?: "default" | "event"; highlight?: string }) {
   const meta = CATEGORY_META[listing.category ?? ""] ?? DEFAULT_META;
   const age = formatAge(listing.age_min, listing.age_max);
   const isFree = listing.price?.toLowerCase() === "gratuit";
@@ -82,9 +99,9 @@ export default function ListingCard({ listing, variant = "default" }: { listing:
               <span className="bg-blue-50 text-blue-600 text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full">👶 {age}</span>
             )}
           </div>
-          <h3 className="text-base font-bold text-[#1a1a2e] leading-snug">{listing.name}</h3>
+          <h3 className="text-base font-bold text-[#1a1a2e] leading-snug">{hl(listing.name, highlight)}</h3>
           {listing.description && (
-            <p className="text-sm text-gray-500 leading-relaxed mt-1 line-clamp-2">{listing.description}</p>
+            <p className="text-sm text-gray-500 leading-relaxed mt-1 line-clamp-2">{hl(listing.description, highlight)}</p>
           )}
         </div>
 

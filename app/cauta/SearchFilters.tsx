@@ -14,8 +14,8 @@ const CATEGORIES = [
 
 const SORTS = [
   { key: "relevanta", label: "Relevanță" },
-  { key: "alfabetic", label: "Alfabetic" },
-  { key: "nou", label: "Cele mai noi" },
+  { key: "topcotat",  label: "⭐ Top cotat" },
+  { key: "nou",       label: "Cele mai noi" },
 ];
 
 export default function SearchFilters() {
