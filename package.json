@@ -28,6 +28,7 @@
     "@tiptap/starter-kit": "^3.22.2",
     "browser-image-compression": "^2.0.2",
     "cheerio": "^1.2.0",
+    "mammoth": "^1.12.0",
     "next": "14.2.35",
     "qrcode.react": "^4.2.0",
     "react": "^18",
