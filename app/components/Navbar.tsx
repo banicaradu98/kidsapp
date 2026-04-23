@@ -25,7 +25,7 @@ export default function Navbar() {
 
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-0.5 text-sm font-medium text-[#374151]">
-          <a href="/locuri-de-joaca"  className="px-3 py-2 rounded-lg hover:text-[#ff5a2e] transition-colors duration-200">🛝 Locuri de joacă</a>
+          <a href="/locuri-de-joaca"  className="px-3 py-2 rounded-lg hover:text-[#ff5a2e] transition-colors duration-200">🛝 Playground</a>
           <a href="/educatie"         className="px-3 py-2 rounded-lg hover:text-[#ff5a2e] transition-colors duration-200">🎓 Educație</a>
           <a href="/cursuri-ateliere" className="px-3 py-2 rounded-lg hover:text-[#ff5a2e] transition-colors duration-200">🎨 Cursuri</a>
           <a href="/sport"            className="px-3 py-2 rounded-lg hover:text-[#ff5a2e] transition-colors duration-200">⚽ Sport</a>

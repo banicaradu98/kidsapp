@@ -9,7 +9,7 @@ import AuthModal from "./components/AuthModal";
 
 const LINKS = [
   { icon: "🏠", label: "Acasă",              href: "/"                 },
-  { icon: "🛝", label: "Locuri de joacă",    href: "/locuri-de-joaca"  },
+  { icon: "🛝", label: "Playground",          href: "/locuri-de-joaca"  },
   { icon: "🎓", label: "Educație",           href: "/educatie"         },
   { icon: "🎨", label: "Cursuri & Ateliere", href: "/cursuri-ateliere" },
   { icon: "⚽", label: "Sport",             href: "/sport"            },
