@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
   const code = req.nextUrl.searchParams.get("code");
-  const next = req.nextUrl.searchParams.get("next") ?? "/";
+  const next = req.nextUrl.searchParams.get("next") ?? "/contul-meu";
 
   if (code) {
     const cookieStore = await cookies();

@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter, useSearchParams } from "next/navigation";
 import Navbar from "@/app/components/Navbar";
+import PasswordInput from "@/app/components/PasswordInput";
 
 const inputCls =
   "w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700 outline-none focus:border-[#ff5a2e] focus:ring-2 focus:ring-[#ff5a2e]/20 transition-all bg-white placeholder-gray-400";
@@ -95,16 +96,14 @@ function ResetPasswordForm() {
         </div>
       ) : sessionReady ? (
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <input
-            type="password"
+          <PasswordInput
             placeholder="Parolă nouă"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
             className={inputCls}
           />
-          <input
-            type="password"
+          <PasswordInput
             placeholder="Confirmă parola nouă"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}

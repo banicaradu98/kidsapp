@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { signInWithGoogle, signInWithEmail, signUp } from "@/utils/supabase/auth";
 import { createClient } from "@/utils/supabase/client";
+import PasswordInput from "./PasswordInput";
 
 interface Props {
   onClose: () => void;
@@ -198,16 +199,12 @@ export default function AuthModal({ onClose }: Props) {
             ) : (
               <div className="bg-green-50 border border-green-200 rounded-xl p-6 text-center">
                 <div className="text-4xl mb-3">📧</div>
-                <h3 className="font-semibold text-green-800 text-lg mb-2">
-                  Verifică emailul!
-                </h3>
+                <h3 className="font-semibold text-green-800 text-lg mb-2">Verifică emailul!</h3>
                 <p className="text-green-700 text-sm">
                   Am trimis un email de confirmare la <strong>{success}</strong>.
                   Dă click pe linkul din email pentru a-ți activa contul.
                 </p>
-                <p className="text-green-600 text-xs mt-2">
-                  Nu ai primit emailul? Verifică folderul Spam.
-                </p>
+                <p className="text-green-600 text-xs mt-2">Nu ai primit emailul? Verifică folderul Spam.</p>
               </div>
             )
           ) : (
@@ -231,8 +228,7 @@ export default function AuthModal({ onClose }: Props) {
                 className={inputCls}
               />
               <div>
-                <input
-                  type="password"
+                <PasswordInput
                   placeholder="Parola"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -251,8 +247,7 @@ export default function AuthModal({ onClose }: Props) {
                 )}
               </div>
               {tab === "register" && (
-                <input
-                  type="password"
+                <PasswordInput
                   placeholder="Confirmă parola"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}

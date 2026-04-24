@@ -94,13 +94,13 @@ export default async function ContulMeuPage() {
           userId={user.id}
         />
 
-        {/* ── GESTIONARE CONT ── */}
-        <AccountManagement email={user.email ?? ""} userId={user.id} />
-
         {/* ── DECONECTARE ── */}
-        <section className="pb-8">
+        <section className="pb-2">
           <SignOutButton />
         </section>
+
+        {/* ── GESTIONARE CONT ── */}
+        <AccountManagement email={user.email ?? ""} userId={user.id} />
 
       </main>
     </div>

@@ -23,10 +23,16 @@ export async function signInWithEmail(email: string, password: string) {
 
 export async function signUp(email: string, password: string, fullName: string) {
   const supabase = createClient();
+  const origin = typeof window !== "undefined"
+    ? window.location.origin
+    : process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.moosey.ro";
   return supabase.auth.signUp({
     email,
     password,
-    options: { data: { full_name: fullName } },
+    options: {
+      data: { full_name: fullName },
+      emailRedirectTo: `${origin}/auth/callback`,
+    },
   });
 }
 

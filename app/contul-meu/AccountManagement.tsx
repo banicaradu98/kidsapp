@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
+import PasswordInput from "@/app/components/PasswordInput";
 
 interface Props {
   email: string;
@@ -47,20 +48,21 @@ export default function AccountManagement({ email, userId }: Props) {
     }
     setLoading(true);
     setError(null);
-    const supabase = createClient();
 
-    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password: confirmPassword });
-    if (signInError) {
-      setError("Parolă incorectă.");
+    const res = await fetch("/api/pause-account", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password: confirmPassword }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      setError(data.error ?? "Eroare la dezactivarea contului.");
       setLoading(false);
       return;
     }
 
-    await supabase.from("profiles").update({
-      account_status: "paused",
-      paused_at: new Date().toISOString(),
-    }).eq("id", userId);
-
+    const supabase = createClient();
     await supabase.auth.signOut();
     router.push("/");
   }
@@ -100,26 +102,28 @@ export default function AccountManagement({ email, userId }: Props) {
 
   return (
     <>
-      {/* Section — discretă, la finalul paginii */}
+      {/* Section — discretă, aliniată dreapta */}
       <section className="mt-12 pt-6 border-t border-gray-100">
-        <p className="text-sm font-medium text-gray-400 mb-3">Gestionare cont</p>
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() => { setError(null); setPauseModal(true); }}
-            className="border border-yellow-400 text-yellow-600 bg-transparent hover:bg-yellow-50 font-medium text-xs px-3 py-1.5 rounded-lg transition-all"
-          >
-            ⏸ Ia o pauză
-          </button>
-          <button
-            onClick={() => { setError(null); setDeleteModal(true); }}
-            className="border border-red-300 text-red-400 bg-transparent hover:bg-red-50 font-medium text-xs px-3 py-1.5 rounded-lg transition-all"
-          >
-            🗑 Șterge contul
-          </button>
+        <div className="flex flex-col items-end">
+          <p className="text-xs text-gray-300 mb-2">Gestionare cont</p>
+          <div className="flex gap-3">
+            <button
+              onClick={() => { setError(null); setPauseModal(true); }}
+              className="border border-yellow-400 text-yellow-600 bg-transparent hover:bg-yellow-50 font-medium text-xs px-3 py-1.5 rounded-lg transition-all"
+            >
+              ⏸ Ia o pauză
+            </button>
+            <button
+              onClick={() => { setError(null); setDeleteModal(true); }}
+              className="border border-red-300 text-red-400 bg-transparent hover:bg-red-50 font-medium text-xs px-3 py-1.5 rounded-lg transition-all"
+            >
+              🗑 Șterge contul
+            </button>
+          </div>
+          <p className="text-xs text-gray-400 mt-2 text-right">
+            Autentificat cu Google? Contactează-ne la hello@moosey.ro.
+          </p>
         </div>
-        <p className="text-xs text-gray-400 mt-2">
-          Autentificat cu Google? Contactează-ne la hello@moosey.ro.
-        </p>
       </section>
 
       {/* Pause Modal */}
@@ -139,8 +143,7 @@ export default function AccountManagement({ email, userId }: Props) {
               <p>• Listingurile revendicate rămân în baza de date.</p>
               <p>• Recenziile tale vor fi ascunse temporar.</p>
             </div>
-            <input
-              type="password"
+            <PasswordInput
               placeholder="Parola ta pentru confirmare"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
@@ -195,33 +198,22 @@ export default function AccountManagement({ email, userId }: Props) {
             {marketplaceCount > 0 && (
               <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 mb-4 text-sm">
                 <p className="font-bold text-orange-800 mb-2">
-                  Ai {marketplaceCount} {marketplaceCount === 1 ? "anunț activ" : "anunțuri active"} în marketplace. Ce facem cu ele?
+                  Ai {marketplaceCount} {marketplaceCount === 1 ? "anunț activ" : "anunțuri active"} în marketplace.
                 </p>
                 <div className="flex flex-col gap-2">
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="deleteOption"
-                      onChange={() => setDeleteMarketplace(true)}
-                      className="accent-red-500"
-                    />
+                    <input type="radio" name="deleteOption" onChange={() => setDeleteMarketplace(true)} className="accent-red-500" />
                     <span className="text-orange-700">Da, șterge tot</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="deleteOption"
-                      onChange={() => setDeleteMarketplace(false)}
-                      className="accent-orange-500"
-                    />
+                    <input type="radio" name="deleteOption" onChange={() => setDeleteMarketplace(false)} className="accent-orange-500" />
                     <span className="text-orange-700">Păstrează-le anonime</span>
                   </label>
                 </div>
               </div>
             )}
 
-            <input
-              type="password"
+            <PasswordInput
               placeholder="Parola ta pentru confirmare"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
