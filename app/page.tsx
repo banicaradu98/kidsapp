@@ -192,11 +192,13 @@ export default async function Home() {
           </div>
 
           {/* Mascot — colțul dreapta-jos, nu blochează conținutul */}
-          <img
-            src="/images/moosey_transparent.png"
-            alt="Moosey"
-            className="absolute bottom-0 right-0 h-16 md:h-24 w-auto object-contain pointer-events-none translate-y-2/3 mascot-enter"
-          />
+          <div className="absolute -bottom-8 right-2 md:-bottom-10 md:right-4 pointer-events-none z-10">
+            <img
+              src="/images/moosey_transparent.png"
+              alt="Moosey"
+              className="h-20 md:h-28 w-auto object-contain mascot-enter"
+            />
+          </div>
         </div>
       </section>
 

@@ -1,12 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
 
 export default function MascotFloat() {
   const [visible, setVisible] = useState(false);
-  const pathname = usePathname();
-  const isHomepage = pathname === "/";
 
   useEffect(() => {
     function onScroll() {
@@ -19,8 +16,6 @@ export default function MascotFloat() {
   function scrollToTop() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
-
-  if (isHomepage) return null;
 
   return (
     <button
@@ -36,7 +31,7 @@ export default function MascotFloat() {
       <img
         src="/images/moosey_transparent.png"
         alt="Moosey"
-        className="h-14 md:h-20 w-auto object-contain mascot-float opacity-60 md:opacity-100"
+        className="h-14 md:h-20 w-auto object-contain mascot-float opacity-70 md:opacity-100"
       />
     </button>
   );
