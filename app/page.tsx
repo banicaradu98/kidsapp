@@ -195,7 +195,7 @@ export default async function Home() {
           <img
             src="/images/moosey_transparent.png"
             alt="Moosey"
-            className="absolute bottom-0 right-0 h-16 md:h-24 w-auto object-contain pointer-events-none translate-y-1/2 mascot-enter"
+            className="absolute bottom-0 right-0 h-16 md:h-24 w-auto object-contain pointer-events-none translate-y-2/3 mascot-enter"
           />
         </div>
       </section>
