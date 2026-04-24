@@ -4,7 +4,7 @@ import "./globals.css";
 import MascotFloat from "./components/MascotFloat";
 import MascotCelebration from "./components/MascotCelebration";
 import FooterWrapper from "./components/FooterWrapper";
-import { GoogleAnalytics } from "@next/third-parties/google";
+import Script from "next/script";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
 
@@ -96,6 +96,20 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ro">
+      <head>
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-6D3GH3PNSV"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-6D3GH3PNSV');
+          `}
+        </Script>
+      </head>
       <body className={`${playfair.variable} ${dmSans.variable} font-[family-name:var(--font-dm-sans)] antialiased`}>
         {children}
         <FooterWrapper />
@@ -104,7 +118,6 @@ export default function RootLayout({
         <SpeedInsights />
         <Analytics />
       </body>
-      <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID!} />
     </html>
   );
 }
