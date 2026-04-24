@@ -71,7 +71,7 @@ export default function AuthModal({ onClose }: Props) {
       setLoading(false);
       return;
     }
-    const { data, error } = await signUp(email, password, name);
+    const { error } = await signUp(email, password, name);
     if (error) {
       setError(
         error.message.includes("already registered")
@@ -79,13 +79,8 @@ export default function AuthModal({ onClose }: Props) {
           : "A apărut o eroare. Încearcă din nou."
       );
       setLoading(false);
-    } else if (data.session) {
-      // Email confirmation disabled — user is logged in immediately
-      triggerCelebration();
-      onClose();
-      window.location.reload();
     } else {
-      setSuccess("Cont creat! Verifică emailul pentru a confirma contul.");
+      setSuccess(email);
       setLoading(false);
     }
   }
@@ -171,10 +166,18 @@ export default function AuthModal({ onClose }: Props) {
           </div>
 
           {success ? (
-            <div className="text-center py-6">
-              <div className="text-4xl mb-3">📬</div>
-              <p className="font-bold text-gray-800 mb-1">Verifică emailul</p>
-              <p className="text-sm text-gray-500 font-medium">{success}</p>
+            <div className="bg-green-50 border border-green-200 rounded-xl p-6 text-center">
+              <div className="text-4xl mb-3">📧</div>
+              <h3 className="font-semibold text-green-800 text-lg mb-2">
+                Verifică emailul!
+              </h3>
+              <p className="text-green-700 text-sm">
+                Am trimis un email de confirmare la <strong>{success}</strong>.
+                Dă click pe linkul din email pentru a-ți activa contul.
+              </p>
+              <p className="text-green-600 text-xs mt-2">
+                Nu ai primit emailul? Verifică folderul Spam.
+              </p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="flex flex-col gap-3">
