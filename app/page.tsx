@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { Suspense } from "react";
 import Navbar from "./components/Navbar";
 import AutoOpenAuth from "./components/AutoOpenAuth";
+import PageToast from "./components/PageToast";
 import ScrollReveal from "./components/ScrollReveal";
 import SearchBar from "./components/SearchBar";
 import { adminClient } from "@/utils/supabase/admin";
@@ -151,6 +152,7 @@ export default async function Home() {
   return (
     <div className="min-h-screen bg-white">
       <Suspense><AutoOpenAuth /></Suspense>
+      <Suspense><PageToast /></Suspense>
       <Navbar />
 
       {/* ── HERO ── */}

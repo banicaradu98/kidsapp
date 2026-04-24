@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
       await adminClient.from("marketplace_listings").delete().eq("user_id", userId);
     }
 
-    // Reviews and favorites
+    // Reviews and user favorites
     await adminClient.from("reviews").delete().eq("user_id", userId);
     await adminClient.from("user_favorites").delete().eq("user_id", userId);
 
@@ -45,11 +45,11 @@ export async function POST(req: NextRequest) {
       package: "free",
     }).eq("claimed_by", userId);
 
-    // Mark profile as deleted
-    await adminClient.from("profiles").update({
-      newsletter_consent: false,
-      account_status: "deleted",
-    }).eq("id", userId);
+    // Delete profile row
+    await adminClient.from("profiles").delete().eq("id", userId);
+
+    // Delete user from auth — requires service role
+    await adminClient.auth.admin.deleteUser(userId);
 
     return NextResponse.json({ success: true });
   } catch (err) {

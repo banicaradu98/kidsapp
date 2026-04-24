@@ -62,7 +62,7 @@ export default function AccountManagement({ email, userId }: Props) {
     }).eq("id", userId);
 
     await supabase.auth.signOut();
-    router.push("/?mesaj=cont-dezactivat");
+    router.push("/");
   }
 
   async function handleDelete() {
@@ -95,32 +95,30 @@ export default function AccountManagement({ email, userId }: Props) {
 
     const supabase = createClient();
     await supabase.auth.signOut();
-    router.push("/?mesaj=cont-sters");
+    router.push("/?deleted=true");
   }
 
   return (
     <>
-      <section className="border-t border-gray-200 pt-8 pb-4">
-        <h2 className="text-lg font-black text-[#1a1a2e] mb-1">Gestionare cont</h2>
-        <p className="text-sm text-gray-400 mb-6">
-          Opțiuni pentru dezactivarea sau ștergerea contului tău.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-3">
+      {/* Section — discretă, la finalul paginii */}
+      <section className="mt-12 pt-6 border-t border-gray-100">
+        <p className="text-sm font-medium text-gray-400 mb-3">Gestionare cont</p>
+        <div className="flex flex-wrap gap-2">
           <button
             onClick={() => { setError(null); setPauseModal(true); }}
-            className="flex-1 border-2 border-amber-400 text-amber-600 hover:bg-amber-50 font-bold py-3 px-4 rounded-xl text-sm transition-all"
+            className="border border-yellow-400 text-yellow-600 bg-transparent hover:bg-yellow-50 font-medium text-xs px-3 py-1.5 rounded-lg transition-all"
           >
             ⏸ Ia o pauză
           </button>
           <button
             onClick={() => { setError(null); setDeleteModal(true); }}
-            className="flex-1 border-2 border-red-400 text-red-600 hover:bg-red-50 font-bold py-3 px-4 rounded-xl text-sm transition-all"
+            className="border border-red-300 text-red-400 bg-transparent hover:bg-red-50 font-medium text-xs px-3 py-1.5 rounded-lg transition-all"
           >
-            🗑 Șterge contul definitiv
+            🗑 Șterge contul
           </button>
         </div>
-        <p className="text-xs text-gray-400 mt-3">
-          Autentificat cu Google? Contactează-ne la hello@moosey.ro pentru ștergerea contului.
+        <p className="text-xs text-gray-400 mt-2">
+          Autentificat cu Google? Contactează-ne la hello@moosey.ro.
         </p>
       </section>
 
@@ -186,7 +184,7 @@ export default function AccountManagement({ email, userId }: Props) {
             <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4">
               <p className="font-black text-red-700 text-sm mb-2">⚠️ Această acțiune este ireversibilă!</p>
               <ul className="text-sm text-red-600 space-y-1">
-                <li>✗ Contul tău va fi șters definitiv</li>
+                <li>✗ Contul tău va fi șters definitiv din sistem</li>
                 <li>✗ Recenziile tale vor fi șterse</li>
                 <li>✗ Anunțurile din marketplace vor fi șterse</li>
                 <li>✗ Listingurile revendicate devin disponibile</li>
