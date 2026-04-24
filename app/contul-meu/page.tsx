@@ -7,6 +7,7 @@ import Navbar from "@/app/components/Navbar";
 import { getReviewLevel } from "@/utils/reviewLevel";
 import ContulMeuTabs from "./ContulMeuTabs";
 import ProfileCard from "./ProfileCard";
+import AccountManagement from "./AccountManagement";
 
 export default async function ContulMeuPage() {
   const cookieStore = await cookies();
@@ -92,6 +93,9 @@ export default async function ContulMeuPage() {
           reviews={reviews}
           userId={user.id}
         />
+
+        {/* ── GESTIONARE CONT ── */}
+        <AccountManagement email={user.email ?? ""} userId={user.id} />
 
         {/* ── DECONECTARE ── */}
         <section className="pb-8">

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { signInWithGoogle, signInWithEmail, signUp } from "@/utils/supabase/auth";
+import { createClient } from "@/utils/supabase/client";
 
 interface Props {
   onClose: () => void;
@@ -20,6 +21,7 @@ export default function AuthModal({ onClose }: Props) {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [newsletterConsent, setNewsletterConsent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -39,7 +41,25 @@ export default function AuthModal({ onClose }: Props) {
       setError("Nu s-a putut conecta cu Google. Încearcă din nou.");
       setLoading(false);
     }
-    // On success the browser redirects to Google — no need to reset loading
+  }
+
+  async function handleForgotPassword() {
+    if (!email) {
+      setError("Introduceți emailul mai întâi.");
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    const supabase = createClient();
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    if (error) {
+      setError("Eroare la trimiterea emailului.");
+    } else {
+      setSuccess("Email de resetare trimis! Verificați inbox-ul.");
+    }
+    setLoading(false);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -70,7 +90,7 @@ export default function AuthModal({ onClose }: Props) {
       setLoading(false);
       return;
     }
-    const { error } = await signUp(email, password, name);
+    const { data: signUpData, error } = await signUp(email, password, name);
     if (error) {
       setError(
         error.message.includes("already registered")
@@ -79,6 +99,13 @@ export default function AuthModal({ onClose }: Props) {
       );
       setLoading(false);
     } else {
+      if (newsletterConsent && signUpData?.user) {
+        await fetch("/api/newsletter-consent", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: signUpData.user.id, consent: true }),
+        });
+      }
       setSuccess(email);
       setLoading(false);
     }
@@ -87,13 +114,11 @@ export default function AuthModal({ onClose }: Props) {
   if (!mounted) return null;
 
   const modal = (
-    /* Overlay — fixed, acoperă tot viewport-ul, blur pe background */
     <div
       style={{ position: "fixed", inset: 0, zIndex: 9999 }}
       className="flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
       onClick={onClose}
     >
-      {/* Card modal — stopPropagation ca click-ul din interior să nu închidă */}
       <div
         className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-y-auto max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
@@ -101,7 +126,7 @@ export default function AuthModal({ onClose }: Props) {
         {/* Header */}
         <div className="flex items-start justify-between px-6 pt-6 pb-0">
           <div>
-            <span className="text-3xl">🧡</span>
+            <img src="/images/moosey_transparent.png" alt="Moosey" className="h-8 w-8 object-contain" />
             <h2 className="text-xl font-black text-[#1a1a2e] mt-2">Bun venit pe Moosey!</h2>
             <p className="text-sm text-gray-500 font-medium mt-0.5">
               Salvează locuri preferate și lasă recenzii
@@ -117,8 +142,7 @@ export default function AuthModal({ onClose }: Props) {
         </div>
 
         <div className="px-6 pt-5 pb-6 flex flex-col gap-0">
-          {/* TODO: adaugă buton Facebook când e gata business verification */}
-          {/* Buton Google — mereu vizibil, deasupra tab-urilor */}
+          {/* Buton Google */}
           <button
             onClick={handleGoogle}
             disabled={loading}
@@ -165,19 +189,27 @@ export default function AuthModal({ onClose }: Props) {
           </div>
 
           {success ? (
-            <div className="bg-green-50 border border-green-200 rounded-xl p-6 text-center">
-              <div className="text-4xl mb-3">📧</div>
-              <h3 className="font-semibold text-green-800 text-lg mb-2">
-                Verifică emailul!
-              </h3>
-              <p className="text-green-700 text-sm">
-                Am trimis un email de confirmare la <strong>{success}</strong>.
-                Dă click pe linkul din email pentru a-ți activa contul.
-              </p>
-              <p className="text-green-600 text-xs mt-2">
-                Nu ai primit emailul? Verifică folderul Spam.
-              </p>
-            </div>
+            tab === "login" ? (
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 text-center">
+                <div className="text-4xl mb-3">📬</div>
+                <p className="font-bold text-blue-800 mb-1">Email trimis!</p>
+                <p className="text-sm text-blue-600">{success}</p>
+              </div>
+            ) : (
+              <div className="bg-green-50 border border-green-200 rounded-xl p-6 text-center">
+                <div className="text-4xl mb-3">📧</div>
+                <h3 className="font-semibold text-green-800 text-lg mb-2">
+                  Verifică emailul!
+                </h3>
+                <p className="text-green-700 text-sm">
+                  Am trimis un email de confirmare la <strong>{success}</strong>.
+                  Dă click pe linkul din email pentru a-ți activa contul.
+                </p>
+                <p className="text-green-600 text-xs mt-2">
+                  Nu ai primit emailul? Verifică folderul Spam.
+                </p>
+              </div>
+            )
           ) : (
             <form onSubmit={handleSubmit} className="flex flex-col gap-3">
               {tab === "register" && (
@@ -198,14 +230,26 @@ export default function AuthModal({ onClose }: Props) {
                 required
                 className={inputCls}
               />
-              <input
-                type="password"
-                placeholder="Parola"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className={inputCls}
-              />
+              <div>
+                <input
+                  type="password"
+                  placeholder="Parola"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className={inputCls}
+                />
+                {tab === "login" && (
+                  <button
+                    type="button"
+                    onClick={handleForgotPassword}
+                    disabled={loading}
+                    className="text-sm text-[#ff5a2e] hover:underline mt-1 text-right w-full disabled:opacity-60"
+                  >
+                    Ai uitat parola?
+                  </button>
+                )}
+              </div>
               {tab === "register" && (
                 <input
                   type="password"
@@ -215,6 +259,20 @@ export default function AuthModal({ onClose }: Props) {
                   required
                   className={inputCls}
                 />
+              )}
+
+              {tab === "register" && (
+                <label className="flex items-start gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={newsletterConsent}
+                    onChange={(e) => setNewsletterConsent(e.target.checked)}
+                    className="mt-1 accent-[#ff5a2e]"
+                  />
+                  <span className="text-sm text-gray-600">
+                    Vreau să primesc noutăți și activități recomandate pentru copii din Sibiu pe email.
+                  </span>
+                </label>
               )}
 
               {error && (
