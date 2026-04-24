@@ -4,6 +4,9 @@ import "./globals.css";
 import MascotFloat from "./components/MascotFloat";
 import MascotCelebration from "./components/MascotCelebration";
 import FooterWrapper from "./components/FooterWrapper";
+import { GoogleAnalytics } from "@next/third-parties/google";
+import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/react";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -98,7 +101,10 @@ export default function RootLayout({
         <FooterWrapper />
         <MascotFloat />
         <MascotCelebration />
+        <SpeedInsights />
+        <Analytics />
       </body>
+      <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID!} />
     </html>
   );
 }

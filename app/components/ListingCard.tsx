@@ -1,6 +1,18 @@
 import FavoriteButton from "./FavoriteButton";
 import type { ReactNode } from "react";
 
+function stripHtml(html: string): string {
+  return html
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function hl(text: string, q: string | undefined): ReactNode {
   if (!q?.trim()) return text;
   const escaped = q.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -101,7 +113,9 @@ export default function ListingCard({ listing, variant = "default", highlight }:
           </div>
           <h3 className="text-base font-bold text-[#1a1a2e] leading-snug">{hl(listing.name, highlight)}</h3>
           {listing.description && (
-            <p className="text-sm text-gray-500 leading-relaxed mt-1 line-clamp-2">{hl(listing.description, highlight)}</p>
+            <p className="text-sm text-gray-500 leading-relaxed mt-1 line-clamp-2">
+              {hl(stripHtml(listing.description).slice(0, 160), highlight)}
+            </p>
           )}
         </div>
 
