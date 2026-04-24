@@ -13,8 +13,9 @@ const INACTIVE = "bg-white text-gray-600 border-gray-200 hover:border-[#ff5a2e] 
 
 const SUBCATS = [
   { value: "toate",        label: "📋 Toate" },
-  { value: "gradinita",    label: "🌱 Grădinițe" },
-  { value: "after-school", label: "📚 After-school" },
+  { value: "gradinita",    label: "🌱 Grădiniță" },
+  { value: "scoala",       label: "🏫 Școală" },
+  { value: "after-school", label: "📚 After School" },
 ];
 
 export default function FilteredEducatie({ listings }: { listings: ListingWithSub[] }) {
@@ -22,7 +23,9 @@ export default function FilteredEducatie({ listings }: { listings: ListingWithSu
 
   const filtered = listings.filter((l) => {
     if (subcat === "toate") return true;
-    return l.subcategory?.trim().toLowerCase() === subcat;
+    const sub = l.subcategory?.trim().toLowerCase() ?? "";
+    // ilike equivalent — partial, case-insensitive match
+    return sub.includes(subcat.toLowerCase());
   });
 
   return (

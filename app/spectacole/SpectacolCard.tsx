@@ -18,10 +18,15 @@ export default function SpectacolCard({ listing }: { listing: Listing }) {
   return (
     <a
       href={`/listing/${listing.id}`}
-      className="flex bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.07)] hover:shadow-[0_6px_24px_rgba(0,0,0,0.12)] border border-gray-100 overflow-hidden transition-all duration-200 active:scale-[.99] group"
+      className="relative flex bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.07)] hover:shadow-[0_6px_24px_rgba(0,0,0,0.12)] border border-gray-100 overflow-hidden transition-all duration-200 active:scale-[.99] group"
     >
+      {/* Buton favorite — în afara imaginii, colț dreapta-sus al cardului */}
+      <div className="absolute top-2 right-2 z-10">
+        <FavoriteButton listingId={listing.id} />
+      </div>
+
       {/* Thumbnail */}
-      <div className="relative w-28 sm:w-36 shrink-0 overflow-hidden aspect-[3/4] sm:aspect-auto sm:h-auto">
+      <div className="w-28 sm:w-36 shrink-0 overflow-hidden aspect-[3/4] sm:aspect-auto sm:h-auto">
         {cover ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -34,9 +39,6 @@ export default function SpectacolCard({ listing }: { listing: Listing }) {
             <span className="text-4xl group-hover:scale-110 transition-transform duration-200">{meta.emoji}</span>
           </div>
         )}
-        <div className="absolute top-1.5 right-1.5">
-          <FavoriteButton listingId={listing.id} />
-        </div>
       </div>
 
       {/* Content */}
