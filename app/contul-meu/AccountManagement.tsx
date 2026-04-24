@@ -6,14 +6,13 @@ import { useRouter } from "next/navigation";
 import PasswordInput from "@/app/components/PasswordInput";
 
 interface Props {
-  email: string;
   userId: string;
 }
 
 const inputCls =
   "w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700 outline-none focus:border-[#ff5a2e] focus:ring-2 focus:ring-[#ff5a2e]/20 transition-all bg-white placeholder-gray-400";
 
-export default function AccountManagement({ email, userId }: Props) {
+export default function AccountManagement({ userId }: Props) {
   const [pauseModal, setPauseModal] = useState(false);
   const [deleteModal, setDeleteModal] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState("");

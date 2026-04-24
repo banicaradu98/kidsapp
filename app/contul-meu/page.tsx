@@ -100,7 +100,7 @@ export default async function ContulMeuPage() {
         </section>
 
         {/* ── GESTIONARE CONT ── */}
-        <AccountManagement email={user.email ?? ""} userId={user.id} />
+        <AccountManagement userId={user.id} />
 
       </main>
     </div>
