@@ -1,9 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 
 export default function MascotFloat() {
   const [visible, setVisible] = useState(false);
+  const pathname = usePathname();
+  const isHomepage = pathname === "/";
 
   useEffect(() => {
     function onScroll() {
@@ -16,6 +19,8 @@ export default function MascotFloat() {
   function scrollToTop() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
+
+  if (isHomepage) return null;
 
   return (
     <button

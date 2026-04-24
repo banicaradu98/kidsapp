@@ -159,7 +159,7 @@ export default async function Home() {
         <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-[#ff5a2e] rounded-full opacity-[0.04] pointer-events-none translate-x-1/3 -translate-y-1/4" />
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#ff5a2e] rounded-full opacity-[0.03] pointer-events-none -translate-x-1/3 translate-y-1/4" />
 
-        <div className="relative max-w-4xl mx-auto text-center">
+        <div className="relative max-w-4xl mx-auto text-center overflow-visible">
           <div className="inline-flex items-center gap-2 bg-white border border-orange-100 text-[#ff5a2e] text-xs font-semibold uppercase tracking-widest px-4 py-2 rounded-full mb-8 shadow-sm">
             <span>📍</span> Sibiu, România
           </div>
@@ -190,13 +190,12 @@ export default async function Home() {
               </a>
             ))}
           </div>
-        </div>
 
-        <div className="absolute bottom-0 right-0 pointer-events-none hidden md:block">
+          {/* Mascot — colțul dreapta-jos, nu blochează conținutul */}
           <img
             src="/images/moosey_transparent.png"
             alt="Moosey"
-            className="h-48 md:h-64 w-auto object-contain mascot-enter"
+            className="absolute bottom-0 right-0 h-16 md:h-24 w-auto object-contain pointer-events-none translate-y-1/2 mascot-enter"
           />
         </div>
       </section>
