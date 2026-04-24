@@ -31,7 +31,7 @@ export default function MascotFloat() {
       <img
         src="/images/moosey_transparent.png"
         alt="Moosey"
-        className="h-10 md:h-20 w-auto object-contain mascot-float opacity-40 md:opacity-100"
+        className="h-14 md:h-20 w-auto object-contain mascot-float opacity-60 md:opacity-100"
       />
     </button>
   );

@@ -192,7 +192,7 @@ export default async function Home() {
           </div>
         </div>
 
-        <div className="absolute bottom-0 right-0 pointer-events-none">
+        <div className="absolute bottom-0 right-0 pointer-events-none hidden md:block">
           <img
             src="/images/moosey_transparent.png"
             alt="Moosey"
@@ -466,11 +466,6 @@ export default async function Home() {
               </>
             )}
 
-            <div className="mt-6 text-center md:hidden px-4">
-              <a href="#" className="inline-block w-full bg-orange-50 text-[#ff5a2e] font-black text-base py-4 rounded-2xl">
-                Vezi toate activitățile →
-              </a>
-            </div>
           </div>
         </section>
       </ScrollReveal>
