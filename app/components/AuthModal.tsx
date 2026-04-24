@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { signInWithGoogle, signInWithEmail, signUp } from "@/utils/supabase/auth";
-import { triggerCelebration } from "./MascotCelebration";
 
 interface Props {
   onClose: () => void;
