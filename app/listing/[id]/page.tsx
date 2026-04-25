@@ -59,6 +59,18 @@ function updateDaysUntil(dateStr: string): number {
   return Math.ceil((new Date(dateStr).getTime() - Date.now()) / 86400000);
 }
 
+function stripHtml(html: string): string {
+  return html
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function formatAge(min: number | null, max: number | null) {
   if (min == null && max == null) return null;
   if (min == null) return `până la ${max} ani`;
@@ -86,7 +98,7 @@ export async function generateMetadata(
 
   const title = listing.name;
   const description = listing.description
-    ? listing.description.slice(0, 160)
+    ? stripHtml(listing.description).slice(0, 160)
     : `${listing.name} — activitate pentru copii în Sibiu.`;
   const coverImg = listing.images?.[0] ?? null;
 
