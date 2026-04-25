@@ -21,9 +21,10 @@ export default function ListingGallery({
   title, listingId, isVerified, categoryLabel, categoryEmoji, categoryTagColor,
 }: Props) {
   const [lightbox, setLightbox] = useState<number | null>(null);
+  const [heroIndex, setHeroIndex] = useState(0);
 
   const hasPhotos = images.length > 0;
-  const cover = images[0];
+  const cover = images[heroIndex] ?? images[0];
 
   function prev() {
     setLightbox((i) => (i! > 0 ? i! - 1 : images.length - 1));
@@ -46,7 +47,7 @@ export default function ListingGallery({
               src={cover}
               alt=""
               className="w-full h-full object-cover cursor-pointer"
-              onClick={() => setLightbox(0)}
+              onClick={() => setLightbox(heroIndex)}
             />
             {/* gradient overlay */}
             <div
@@ -88,7 +89,7 @@ export default function ListingGallery({
         {/* Photo count — bottom right */}
         {images.length > 1 && (
           <button
-            onClick={() => setLightbox(0)}
+            onClick={() => setLightbox(heroIndex)}
             className="absolute bottom-4 right-4 bg-black/40 backdrop-blur-sm text-white text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-black/60 transition-colors"
           >
             <span>📷</span> {images.length} fotografii
@@ -102,9 +103,9 @@ export default function ListingGallery({
           {images.map((url, i) => (
             <button
               key={url}
-              onClick={() => setLightbox(i)}
+              onClick={() => setHeroIndex(i)}
               className={`flex-none w-14 h-14 rounded-lg overflow-hidden border-2 transition-all ${
-                i === 0 ? "border-[#ff5a2e]" : "border-transparent hover:border-gray-300"
+                i === heroIndex ? "border-[#ff5a2e]" : "border-transparent hover:border-gray-300"
               }`}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}

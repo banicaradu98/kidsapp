@@ -44,6 +44,19 @@ export default function FilteredEvenimente({ listings }: { listings: Listing[] }
   const today = useMemo(() => startOfDay(new Date()), []);
   const todayKey = useMemo(() => toDateKey(today), [today]);
 
+  // Past events — sorted descending
+  const pastListings = useMemo(() => {
+    return listings
+      .filter((l) => {
+        if (!l.event_date) return false;
+        const endKey = l.event_end_date
+          ? toUTCDateKey(new Date(l.event_end_date))
+          : toUTCDateKey(new Date(l.event_date));
+        return endKey < todayKey;
+      })
+      .sort((a, b) => (b.event_date ?? "").localeCompare(a.event_date ?? ""));
+  }, [listings, todayKey]);
+
   // Click calendar day → selectedDay set, filter forced to "all"
   // Click filter pill  → selectedDay cleared
   const [filter, setFilter] = useState<TemporalFilter>("this-week");
@@ -252,16 +265,36 @@ export default function FilteredEvenimente({ listings }: { listings: Listing[] }
 
       {/* Cards */}
       {filtered.length === 0 ? (
-        <EmptyState
-          title="Niciun eveniment în această perioadă"
-          subtitle="Încearcă alt filtru sau navighează luna viitoare în calendar."
-        />
+        activeListings.length === 0 && !selectedDay ? (
+          <div className="flex flex-col items-center py-16 gap-3">
+            <img src="/images/moosey_transparent.png" alt="" className="h-28 opacity-60" />
+            <p className="text-center text-gray-500 font-semibold">Momentan nu sunt evenimente planificate.</p>
+            <p className="text-center text-gray-400 text-sm">Revin în curând!</p>
+          </div>
+        ) : (
+          <EmptyState
+            title="Niciun eveniment în această perioadă"
+            subtitle="Încearcă alt filtru sau navighează luna viitoare în calendar."
+          />
+        )
       ) : (
         <div className="flex flex-col gap-4">
           {filtered.map((l) => (
             <SpectacolCard key={l.id} listing={l} />
           ))}
         </div>
+      )}
+
+      {/* ── EVENIMENTE TRECUTE ── */}
+      {pastListings.length > 0 && !selectedDay && (
+        <section className="mt-16 pt-8 border-t border-gray-100">
+          <h2 className="text-xl font-semibold text-gray-400 mb-6">Evenimente trecute</h2>
+          <div className="flex flex-col gap-4 opacity-70">
+            {pastListings.map((l) => (
+              <SpectacolCard key={l.id} listing={l} />
+            ))}
+          </div>
+        </section>
       )}
     </>
   );
