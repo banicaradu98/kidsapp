@@ -25,20 +25,24 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.moosey.ro";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Moosey — Activități și locuri pentru copii",
-    template: "%s — Moosey",
+    default: "Moosey — Activități pentru copii în Sibiu",
+    template: "%s | Moosey Sibiu",
   },
   description:
-    "Descoperă cele mai frumoase locuri de joacă, cursuri, ateliere, sport și spectacole pentru copii din Sibiu. Gratuit pentru părinți.",
+    "Descoperă locuri de joacă, cursuri, spectacole și evenimente pentru copii din Sibiu. Moosey — platforma familiilor din Sibiu.",
   keywords: [
-    "activitati copii sibiu",
-    "locuri joaca sibiu",
-    "cursuri copii sibiu",
-    "gradinite sibiu",
-    "spectacole copii sibiu",
-    "ateliere copii sibiu",
-    "sport copii sibiu",
-    "ce facem cu copilul sibiu",
+    "activitati copii Sibiu",
+    "locuri de joaca Sibiu",
+    "cursuri copii Sibiu",
+    "spectacole copii Sibiu",
+    "after school Sibiu",
+    "gradinita Sibiu",
+    "robotica Sibiu",
+    "dans copii Sibiu",
+    "sport copii Sibiu",
+    "ateliere creative Sibiu",
+    "ce facem cu copilul Sibiu",
+    "evenimente copii Sibiu",
   ],
   authors: [{ name: "Moosey", url: siteUrl }],
   creator: "Moosey",
@@ -48,9 +52,9 @@ export const metadata: Metadata = {
     locale: "ro_RO",
     url: siteUrl,
     siteName: "Moosey",
-    title: "Moosey — Activități și locuri pentru copii",
+    title: "Moosey — Activități pentru copii în Sibiu",
     description:
-      "Descoperă cele mai frumoase locuri de joacă, cursuri, ateliere, sport și spectacole pentru copii din Sibiu.",
+      "Descoperă locuri de joacă, cursuri, spectacole și evenimente pentru copii din Sibiu.",
     images: [
       {
         url: "/og-image.png",
@@ -62,9 +66,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Moosey — Activități și locuri pentru copii",
+    title: "Moosey — Activități pentru copii în Sibiu",
     description:
-      "Descoperă sute de activități, locuri de joacă și evenimente pentru copii din Sibiu.",
+      "Descoperă locuri de joacă, cursuri, spectacole și evenimente pentru copii din Sibiu.",
     images: ["/og-image.png"],
   },
   robots: {

@@ -32,8 +32,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${siteUrl}/evenimente`,      lastModified: now, changeFrequency: "daily",  priority: 0.9 },
 
     // Other static pages
-    { url: `${siteUrl}/calendar`,            lastModified: now, changeFrequency: "daily",  priority: 0.8 },
-    { url: `${siteUrl}/adauga-locatia-ta`,   lastModified: now, changeFrequency: "monthly",priority: 0.6 },
+    { url: `${siteUrl}/calendar`,                          lastModified: now, changeFrequency: "daily",   priority: 0.8 },
+    { url: `${siteUrl}/marketplace`,                       lastModified: now, changeFrequency: "daily",   priority: 0.9 },
+    { url: `${siteUrl}/despre`,                            lastModified: now, changeFrequency: "monthly", priority: 0.8 },
+    { url: `${siteUrl}/contact`,                           lastModified: now, changeFrequency: "monthly", priority: 0.7 },
+    { url: `${siteUrl}/cum-functioneaza`,                  lastModified: now, changeFrequency: "monthly", priority: 0.6 },
+    { url: `${siteUrl}/adauga-locatia-ta`,                 lastModified: now, changeFrequency: "monthly", priority: 0.6 },
+    { url: `${siteUrl}/politica-de-confidentialitate`,     lastModified: now, changeFrequency: "yearly",  priority: 0.3 },
+    { url: `${siteUrl}/termeni-si-conditii`,               lastModified: now, changeFrequency: "yearly",  priority: 0.3 },
+    { url: `${siteUrl}/gdpr`,                              lastModified: now, changeFrequency: "yearly",  priority: 0.3 },
 
     // Individual listing pages
     ...listingUrls,
