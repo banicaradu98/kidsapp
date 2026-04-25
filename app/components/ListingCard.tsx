@@ -79,13 +79,13 @@ export default function ListingCard({ listing, variant = "default", highlight }:
         className="flex flex-col sm:flex-row bg-white rounded-2xl shadow-sm hover:shadow-md hover:-translate-y-0.5 overflow-hidden transition-all duration-300 active:scale-[.99] group"
       >
       {/* Thumb — 4:3 pe mobil, w-32 full-height pe desktop */}
-      <div className="relative w-full aspect-[4/3] overflow-hidden sm:w-32 sm:shrink-0 sm:aspect-auto sm:h-auto">
+      <div className="relative w-full aspect-[4/3] overflow-hidden bg-gray-50 sm:w-32 sm:shrink-0 sm:aspect-auto sm:h-auto">
         {listing.images?.[0] ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={listing.images[0]}
             alt=""
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-500"
           />
         ) : (
           <div className={`w-full h-full bg-gradient-to-br ${meta.gradientFrom} ${meta.gradientTo} flex items-center justify-center`}>

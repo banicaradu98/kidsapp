@@ -37,8 +37,8 @@ export default function ListingGallery({
     <>
       {/* ── FULL-BLEED HERO ── */}
       <div
-        className="relative w-full overflow-hidden"
-        style={{ height: "clamp(260px, 52vw, 520px)" }}
+        className="relative w-full bg-gray-50 overflow-hidden"
+        style={{ maxHeight: "500px" }}
       >
         {hasPhotos ? (
           <>
@@ -46,7 +46,8 @@ export default function ListingGallery({
             <img
               src={cover}
               alt=""
-              className="w-full h-full object-cover cursor-pointer"
+              className="w-full object-contain cursor-pointer mx-auto block"
+              style={{ maxHeight: "500px" }}
               onClick={() => setLightbox(heroIndex)}
             />
             {/* gradient overlay */}
