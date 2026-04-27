@@ -1,21 +1,8 @@
 import { cookies } from "next/headers";
 import { createClient } from "@/utils/supabase/server";
-import { deleteListing } from "./actions";
-import DeleteButton from "./_components/DeleteButton";
 import AdminShell from "./_components/AdminShell";
+import AdminListingsTable from "./_components/AdminListingsTable";
 
-const CATEGORY_LABELS: Record<string, string> = {
-  "loc-de-joaca":  "🛝 Loc de joacă",
-  "curs":          "🎨 Curs",
-  "atelier":       "🖌️ Atelier",
-  "gradinita":     "🌱 Grădiniță",
-  "cresa":         "🍼 Creșă",
-  "after-school":  "📚 After School",
-  "sport":         "⚽ Sport",
-  "spectacol":     "🎭 Spectacol",
-  "eveniment":     "🎉 Eveniment",
-  "limbi-straine": "🌍 Limbi străine",
-};
 
 export default async function AdminDashboard() {
   const supabase = createClient(await cookies());
@@ -94,75 +81,14 @@ export default async function AdminDashboard() {
         <div className="flex flex-wrap gap-2 mb-8">
           {Object.entries(counts).sort((a, b) => b[1] - a[1]).map(([cat, n]) => (
             <span key={cat} className="bg-gray-100 text-gray-700 text-xs font-bold px-3 py-1.5 rounded-full">
-              {CATEGORY_LABELS[cat] ?? cat} · {n}
+              {cat} · {n}
             </span>
           ))}
         </div>
       )}
 
-      {/* Table */}
-      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-        <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-          <h2 className="font-black text-gray-800">Toate listingurile</h2>
-          <span className="text-sm text-gray-400 font-medium">{items.length} total</span>
-        </div>
-
-        {items.length === 0 ? (
-          <div className="text-center py-16">
-            <p className="text-4xl mb-3">📋</p>
-            <p className="font-bold text-gray-500">Niciun listing adăugat încă.</p>
-            <a href="/admin/nou" className="inline-block mt-4 text-sm font-bold text-[#ff5a2e] hover:underline">
-              Adaugă primul listing →
-            </a>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-100 bg-gray-50">
-                  <th className="text-left px-5 py-3 font-bold text-gray-500">Nume</th>
-                  <th className="text-left px-4 py-3 font-bold text-gray-500">Categorie</th>
-                  <th className="text-left px-4 py-3 font-bold text-gray-500">Oraș</th>
-                  <th className="text-center px-4 py-3 font-bold text-gray-500">Verificat</th>
-                  <th className="text-center px-4 py-3 font-bold text-gray-500">Featured</th>
-                  <th className="text-right px-5 py-3 font-bold text-gray-500">Acțiuni</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((l) => {
-                  const deleteWithId = deleteListing.bind(null, l.id);
-                  return (
-                    <tr key={l.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                      <td className="px-5 py-3.5 font-semibold text-gray-800 max-w-[200px] truncate">
-                        {l.name}
-                      </td>
-                      <td className="px-4 py-3.5 text-gray-500">
-                        {CATEGORY_LABELS[l.category ?? ""] ?? l.category ?? "—"}
-                      </td>
-                      <td className="px-4 py-3.5 text-gray-500">{l.city ?? "—"}</td>
-                      <td className="px-4 py-3.5 text-center">
-                        {l.is_verified ? <span className="text-green-500 font-bold">✓</span> : <span className="text-gray-300">—</span>}
-                      </td>
-                      <td className="px-4 py-3.5 text-center">
-                        {l.is_featured ? <span className="text-purple-500 font-bold">⭐</span> : <span className="text-gray-300">—</span>}
-                      </td>
-                      <td className="px-5 py-3.5 text-right whitespace-nowrap">
-                        <a
-                          href={`/admin/edit/${l.id}`}
-                          className="text-sm font-bold text-[#ff5a2e] hover:underline mr-2"
-                        >
-                          Edit
-                        </a>
-                        <DeleteButton action={deleteWithId} />
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      {/* Table with search + category filter */}
+      <AdminListingsTable items={items} />
     </div>
     </AdminShell>
   );
