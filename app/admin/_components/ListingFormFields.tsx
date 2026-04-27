@@ -77,8 +77,8 @@ function toInputTime(t: string | null | undefined): string {
 export default function ListingFormFields({ d = {} }: { d?: DefaultValues }) {
   const [category, setCategory] = useState(d.category ?? "");
   const isEvent = EVENT_CATEGORIES.includes(category);
-  // Track event_date value to enforce min on event_end_date
   const [startDateVal, setStartDateVal] = useState(toInputDate(d.event_date));
+  const [dateError, setDateError] = useState(false);
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -125,11 +125,25 @@ export default function ListingFormFields({ d = {} }: { d?: DefaultValues }) {
           <Field label="Data început" required>
             <input
               name="event_date"
+              id="event_date"
               type="date"
+              required
+              min={new Date().toISOString().split("T")[0]}
               value={startDateVal}
-              onChange={(e) => setStartDateVal(e.target.value)}
-              className={inputCls}
+              onChange={(e) => {
+                setStartDateVal(e.target.value);
+                if (e.target.value) setDateError(false);
+              }}
+              onInvalid={(e) => {
+                e.preventDefault();
+                setDateError(true);
+                (e.target as HTMLInputElement).scrollIntoView({ behavior: "smooth", block: "center" });
+              }}
+              className={`${inputCls} ${dateError ? "border-red-500 focus:border-red-500 focus:ring-red-500/20" : ""}`}
             />
+            {dateError && (
+              <p className="text-xs text-red-500 mt-1 font-semibold">⚠️ Data este obligatorie</p>
+            )}
           </Field>
 
           <Field label="Data sfârșit (opțional, pentru evenimente multi-zi)">
