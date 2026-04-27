@@ -10,11 +10,9 @@ function startOfDay(d: Date): Date {
 function addDays(d: Date, n: number): Date {
   const r = new Date(d); r.setDate(r.getDate() + n); return r;
 }
-// Cheie locală zero-padded pt selectedDay și celulele din calendar
 function toLocalKey(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
-// Cheie locală NON-padded pt daysWithEvents (evitare mismatch UTC vs local)
 function localDayKey(d: Date): string {
   return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
 }
@@ -33,20 +31,20 @@ export type HomepageEvent = {
 };
 
 const BADGE: Record<string, string> = {
-  spectacol:    "🎭 Spectacol",
-  eveniment:    "🎉 Eveniment",
+  spectacol:      "🎭 Spectacol",
+  eveniment:      "🎉 Eveniment",
   "loc-de-joaca": "🛝 Loc de joacă",
-  educatie:     "📚 Educație",
+  educatie:       "📚 Educație",
   "curs-atelier": "🎨 Atelier",
-  sport:        "⚽ Sport",
+  sport:          "⚽ Sport",
 };
 const BADGE_COLOR: Record<string, string> = {
-  spectacol:    "text-rose-600",
-  eveniment:    "text-pink-600",
+  spectacol:      "text-rose-600",
+  eveniment:      "text-pink-600",
   "loc-de-joaca": "text-orange-600",
-  educatie:     "text-green-600",
+  educatie:       "text-green-600",
   "curs-atelier": "text-purple-600",
-  sport:        "text-sky-600",
+  sport:          "text-sky-600",
 };
 const FALLBACK_EMOJI: Record<string, string> = {
   spectacol: "🎭", eveniment: "🎉", "loc-de-joaca": "🛝",
@@ -56,22 +54,24 @@ const FALLBACK_EMOJI: Record<string, string> = {
 export default function HomepageCalendar({ allEvents }: { allEvents: HomepageEvent[] }) {
   const today = useMemo(() => startOfDay(new Date()), []);
   const todayKey = useMemo(() => toLocalKey(today), [today]);
-  const [selectedDay, setSelectedDay] = useState(todayKey);
+
+  // null = afișează toate evenimentele din săptămâna curentă
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [weekOffset, setWeekOffset] = useState(0);
   const [showAll, setShowAll] = useState(false);
-
-  function selectDay(key: string) {
-    setSelectedDay(key);
-    setShowAll(false);
-  }
 
   const weekDays = useMemo(
     () => Array.from({ length: 7 }, (_, i) => addDays(today, weekOffset * 7 + i)),
     [today, weekOffset],
   );
 
-  // Zile care au cel puțin un eveniment — cheie locală non-padded pentru
-  // a evita mismatch-ul UTC vs local la parsarea datelor din Supabase
+  // Toggle selecție: click pe ziua selectată → deselectează
+  function handleDayClick(key: string) {
+    setSelectedDay((prev) => (prev === key ? null : key));
+    setShowAll(false);
+  }
+
+  // Zile care au cel puțin un eveniment
   const daysWithEvents = useMemo(() => {
     const keys = new Set<string>();
     for (const ev of allEvents) {
@@ -90,21 +90,39 @@ export default function HomepageCalendar({ allEvents }: { allEvents: HomepageEve
     return daysWithEvents.has(localDayKey(day));
   }
 
-  // Filtrare evenimente pentru ziua selectată — comparație pe Date locale
-  const eventsForDay = useMemo(() => {
+  // Evenimentele afișate sub calendar:
+  // - dacă e selectată o zi → filtrează după acea zi (suport multi-zi)
+  // - dacă nu → toate evenimentele care se suprapun cu săptămâna curentă
+  const eventsToShow = useMemo(() => {
+    if (selectedDay) {
+      return allEvents.filter((ev) => {
+        const start = startOfDay(new Date(ev.date));
+        const end = ev.endDate ? startOfDay(new Date(ev.endDate)) : start;
+        end.setHours(23, 59, 59, 999);
+        const sel = new Date(selectedDay);
+        sel.setHours(12, 0, 0, 0);
+        return sel >= start && sel <= end;
+      });
+    }
+    // Toate din săptămâna curentă (inclusiv multi-zi care se suprapun)
+    const weekStart = weekDays[0];
+    const weekEnd = weekDays[6];
     return allEvents.filter((ev) => {
       const start = startOfDay(new Date(ev.date));
       const end = ev.endDate ? startOfDay(new Date(ev.endDate)) : start;
-      end.setHours(23, 59, 59, 999);
-      // selectedDay e "YYYY-MM-DD" → new Date("YYYY-MM-DD") = UTC midnight;
-      // setHours(12) aduce la prânz local pentru comparație sigură
-      const sel = new Date(selectedDay);
-      sel.setHours(12, 0, 0, 0);
-      return sel >= start && sel <= end;
+      return end >= weekStart && start <= weekEnd;
     });
-  }, [allEvents, selectedDay]);
+  }, [allEvents, selectedDay, weekDays]);
 
-  const visibleEvents = showAll ? eventsForDay : eventsForDay.slice(0, 5);
+  const visibleEvents = showAll ? eventsToShow : eventsToShow.slice(0, 5);
+
+  // Label pentru titlul secțiunii de evenimente
+  const eventsLabel = useMemo(() => {
+    if (!selectedDay) return "Evenimente săptămâna aceasta";
+    const d = new Date(selectedDay);
+    d.setHours(12, 0, 0, 0);
+    return `Evenimente pe ${d.toLocaleDateString("ro-RO", { weekday: "long", day: "numeric", month: "long" })}`;
+  }, [selectedDay]);
 
   return (
     <section className="py-14 sm:py-20 bg-[#fff5f3]">
@@ -131,9 +149,8 @@ export default function HomepageCalendar({ allEvents }: { allEvents: HomepageEve
           <div className="flex items-center justify-between mb-3">
             <button
               onClick={() => {
-                const newOffset = weekOffset - 1;
-                setWeekOffset(newOffset);
-                setSelectedDay(toLocalKey(addDays(today, newOffset * 7)));
+                setWeekOffset((o) => o - 1);
+                setSelectedDay(null);
                 setShowAll(false);
               }}
               disabled={weekOffset === 0}
@@ -147,9 +164,8 @@ export default function HomepageCalendar({ allEvents }: { allEvents: HomepageEve
             </span>
             <button
               onClick={() => {
-                const newOffset = weekOffset + 1;
-                setWeekOffset(newOffset);
-                setSelectedDay(toLocalKey(addDays(today, newOffset * 7)));
+                setWeekOffset((o) => o + 1);
+                setSelectedDay(null);
                 setShowAll(false);
               }}
               disabled={weekOffset >= 12}
@@ -170,16 +186,16 @@ export default function HomepageCalendar({ allEvents }: { allEvents: HomepageEve
               return (
                 <button
                   key={key}
-                  onClick={() => selectDay(key)}
+                  onClick={() => handleDayClick(key)}
                   className={`flex flex-col items-center py-2 rounded-xl transition-all leading-none gap-0.5 ${
                     isSelected
                       ? "bg-[#ff5a2e] text-white"
                       : isToday
-                      ? "bg-orange-50 text-[#ff5a2e] ring-1 ring-[#ff5a2e]/30"
+                      ? "ring-2 ring-[#ff5a2e] text-[#ff5a2e] hover:bg-orange-50"
                       : "hover:bg-orange-50 text-gray-600"
                   }`}
                 >
-                  <span className={`text-[10px] font-semibold ${isSelected ? "text-white/75" : "text-gray-400"}`}>
+                  <span className={`text-[10px] font-semibold ${isSelected ? "text-white/75" : isToday ? "text-[#ff5a2e]" : "text-gray-400"}`}>
                     {dayShort}
                   </span>
                   <span className="text-sm font-black">{day.getDate()}</span>
@@ -196,13 +212,22 @@ export default function HomepageCalendar({ allEvents }: { allEvents: HomepageEve
           </div>
         </div>
 
+        {/* Titlu dinamic */}
+        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 capitalize">
+          {eventsLabel}
+        </p>
+
         {/* Events */}
-        {eventsForDay.length === 0 ? (
+        {eventsToShow.length === 0 ? (
           <div className="text-center py-10">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/images/moosey_transparent.png" alt="" className="h-16 mx-auto mb-3 opacity-40" />
-            <p className="font-semibold text-gray-500">Niciun eveniment în această zi</p>
-            <p className="text-sm text-gray-400 mt-1">Încearcă o altă zi din calendar</p>
+            <p className="font-semibold text-gray-500">
+              {selectedDay ? "Niciun eveniment în această zi" : "Niciun eveniment săptămâna aceasta"}
+            </p>
+            <p className="text-sm text-gray-400 mt-1">
+              {selectedDay ? "Încearcă o altă zi din calendar" : "Încearcă săptămâna următoare →"}
+            </p>
           </div>
         ) : (
           <>
@@ -253,12 +278,12 @@ export default function HomepageCalendar({ allEvents }: { allEvents: HomepageEve
               })}
             </div>
 
-            {eventsForDay.length > 5 && !showAll && (
+            {eventsToShow.length > 5 && !showAll && (
               <button
                 onClick={() => setShowAll(true)}
                 className="w-full py-3 rounded-xl border border-gray-200 text-sm font-bold text-gray-500 hover:border-[#ff5a2e] hover:text-[#ff5a2e] transition-colors mb-4"
               >
-                + {eventsForDay.length - 5} evenimente în plus
+                + {eventsToShow.length - 5} evenimente în plus
               </button>
             )}
           </>
