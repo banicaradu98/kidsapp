@@ -99,30 +99,38 @@ export default async function Home() {
     };
   });
 
-  // Events for homepage calendar (next 4 weeks)
-  const calStart = new Date();
-  calStart.setHours(0, 0, 0, 0);
-  const calEnd = new Date(calStart);
-  calEnd.setDate(calEnd.getDate() + 28);
+  const calNow = new Date();
+  calNow.setHours(0, 0, 0, 0);
 
-  const { data: calListings } = await supabase
+  // Spectacole — fără limită temporală superioară
+  const { data: calSpectacole } = await supabase
     .from("listings")
-    .select("id, name, category, address, price, images, event_date, event_end_date, start_time")
-    .in("category", ["spectacol", "eveniment"])
-    .gte("event_date", calStart.toISOString())
+    .select("id, name, category, price, images, event_date, event_end_date, start_time")
+    .eq("category", "spectacol")
+    .gte("event_date", calNow.toISOString())
     .order("event_date", { ascending: true })
-    .limit(60);
+    .limit(100);
 
+  // Evenimente one-time — fără limită temporală superioară
+  const { data: calEvenimente } = await supabase
+    .from("listings")
+    .select("id, name, category, price, images, event_date, event_end_date, start_time")
+    .eq("category", "eveniment")
+    .gte("event_date", calNow.toISOString())
+    .order("event_date", { ascending: true })
+    .limit(100);
+
+  // Evenimente din tabela events (adăugate de organizatori)
   const { data: calOrgEvents } = await adminClient
     .from("events")
     .select("id, title, event_date, start_time, price, thumbnail_url, listing_id, listings(id, name, address, category)")
-    .gte("event_date", calStart.toISOString())
+    .gte("event_date", calNow.toISOString())
     .order("event_date", { ascending: true })
-    .limit(60);
+    .limit(100);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const allCalendarEvents: HomepageEvent[] = [
-    ...(calListings ?? []).map((l) => ({
+    ...(calSpectacole ?? []).map((l) => ({
       id: `l-${l.id}`,
       title: l.name,
       date: l.event_date!,
@@ -130,7 +138,19 @@ export default async function Home() {
       time: l.start_time ?? null,
       image: l.images?.[0] ?? null,
       href: `/listing/${l.id}`,
-      category: l.category ?? null,
+      category: "spectacol",
+      locationName: null,
+      price: l.price ?? null,
+    })),
+    ...(calEvenimente ?? []).map((l) => ({
+      id: `l-${l.id}`,
+      title: l.name,
+      date: l.event_date!,
+      endDate: l.event_end_date ?? null,
+      time: l.start_time ?? null,
+      image: l.images?.[0] ?? null,
+      href: `/listing/${l.id}`,
+      category: "eveniment",
       locationName: null,
       price: l.price ?? null,
     })),
