@@ -1,14 +1,19 @@
+const EMOJI_FONT_STACK =
+  "'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Apple Color Emoji', 'Noto Color Emoji', system-ui, sans-serif";
+
 interface Props {
   html: string;
   className?: string;
 }
 
 export default function RichTextDisplay({ html, className = "" }: Props) {
-  // Plain text (no HTML tags) — preserve newlines
   const isHtml = html.trim().startsWith("<");
   if (!isHtml) {
     return (
-      <div className={`rich-text ${className}`} style={{ whiteSpace: "pre-wrap" }}>
+      <div
+        className={`rich-text ${className}`}
+        style={{ whiteSpace: "pre-wrap", fontFamily: EMOJI_FONT_STACK }}
+      >
         {html}
       </div>
     );
@@ -16,6 +21,7 @@ export default function RichTextDisplay({ html, className = "" }: Props) {
   return (
     <div
       className={`rich-text ${className}`}
+      style={{ fontFamily: EMOJI_FONT_STACK }}
       dangerouslySetInnerHTML={{ __html: html }}
     />
   );
