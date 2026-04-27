@@ -18,6 +18,13 @@
 
 # misc
 .DS_Store
+
+# Google OAuth credentials (never commit)
+client_secret_*.json
+
+# Local asset folders (upload to Supabase Storage instead)
+"Poze pt listings/"
+Poze pt listings/
 *.pem
 
 # debug

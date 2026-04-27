@@ -11,7 +11,14 @@
       "Bash(git commit *)",
       "Bash(curl -L \"https://export-download.canva.com/pOlww/DAHHjypOlww/-1/0/0001-578087550099171387.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAQYCGKMUH5AO7UJ26%2F20260422%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260422T053458Z&X-Amz-Expires=15837&X-Amz-Signature=075dbaf88377807242bbd535f206f669234b1d490b3e04dea5f94b582dbc27e1&X-Amz-SignedHeaders=host%3Bx-amz-expected-bucket-owner&response-expires=Wed%2C%2022%20Apr%2026%2009%3A58%3A55%20GMT\" -o public/images/logo-moosey.png --silent --show-error)",
       "Bash(git checkout *)",
-      "Bash(node scripts/extract-legal.js)"
+      "Bash(node scripts/extract-legal.js)",
+      "Bash(sed -i 's|alternates: { canonical: \"/spectacole\" }|alternates: { canonical: \"https://www.moosey.ro/spectacole\" }|' app/spectacole/page.tsx)",
+      "Bash(sed -i 's|alternates: { canonical: \"/evenimente\" }|alternates: { canonical: \"https://www.moosey.ro/evenimente\" }|' app/evenimente/page.tsx)",
+      "Bash(sed -i 's|alternates: { canonical: \"/locuri-de-joaca\" }|alternates: { canonical: \"https://www.moosey.ro/locuri-de-joaca\" }|' app/locuri-de-joaca/page.tsx)",
+      "Bash(sed -i 's|alternates: { canonical: \"/educatie\" }|alternates: { canonical: \"https://www.moosey.ro/educatie\" }|' app/educatie/page.tsx)",
+      "Bash(sed -i 's|alternates: { canonical: \"/cursuri-ateliere\" }|alternates: { canonical: \"https://www.moosey.ro/cursuri-ateliere\" }|' app/cursuri-ateliere/page.tsx)",
+      "Bash(python3 *)",
+      "Bash(git *)"
     ]
   }
 }
