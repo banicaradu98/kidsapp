@@ -10,11 +10,13 @@ function startOfDay(d: Date): Date {
 function addDays(d: Date, n: number): Date {
   const r = new Date(d); r.setDate(r.getDate() + n); return r;
 }
+// Cheie locală zero-padded pt selectedDay și celulele din calendar
 function toLocalKey(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
-function toUTCKey(d: Date): string {
-  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
+// Cheie locală NON-padded pt daysWithEvents (evitare mismatch UTC vs local)
+function localDayKey(d: Date): string {
+  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
 }
 
 export type HomepageEvent = {
@@ -68,27 +70,37 @@ export default function HomepageCalendar({ allEvents }: { allEvents: HomepageEve
     [today, weekOffset],
   );
 
-  // Days that have at least one event (UTC keys, matching event_date storage)
-  const eventDayKeys = useMemo(() => {
+  // Zile care au cel puțin un eveniment — cheie locală non-padded pentru
+  // a evita mismatch-ul UTC vs local la parsarea datelor din Supabase
+  const daysWithEvents = useMemo(() => {
     const keys = new Set<string>();
     for (const ev of allEvents) {
-      const start = new Date(ev.date);
-      const end = ev.endDate ? new Date(ev.endDate) : start;
-      let cur = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate()));
-      const endUTC = new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate()));
-      while (cur <= endUTC) {
-        keys.add(toUTCKey(cur));
-        cur = new Date(cur.getTime() + 86_400_000);
+      const start = startOfDay(new Date(ev.date));
+      const end = ev.endDate ? startOfDay(new Date(ev.endDate)) : start;
+      let cur = new Date(start);
+      while (cur <= end) {
+        keys.add(localDayKey(cur));
+        cur = addDays(cur, 1);
       }
     }
     return keys;
   }, [allEvents]);
 
+  function hasEventOnDay(day: Date): boolean {
+    return daysWithEvents.has(localDayKey(day));
+  }
+
+  // Filtrare evenimente pentru ziua selectată — comparație pe Date locale
   const eventsForDay = useMemo(() => {
     return allEvents.filter((ev) => {
-      const startKey = toUTCKey(new Date(ev.date));
-      const endKey = ev.endDate ? toUTCKey(new Date(ev.endDate)) : startKey;
-      return startKey <= selectedDay && selectedDay <= endKey;
+      const start = startOfDay(new Date(ev.date));
+      const end = ev.endDate ? startOfDay(new Date(ev.endDate)) : start;
+      end.setHours(23, 59, 59, 999);
+      // selectedDay e "YYYY-MM-DD" → new Date("YYYY-MM-DD") = UTC midnight;
+      // setHours(12) aduce la prânz local pentru comparație sigură
+      const sel = new Date(selectedDay);
+      sel.setHours(12, 0, 0, 0);
+      return sel >= start && sel <= end;
     });
   }, [allEvents, selectedDay]);
 
@@ -140,7 +152,7 @@ export default function HomepageCalendar({ allEvents }: { allEvents: HomepageEve
                 setSelectedDay(toLocalKey(addDays(today, newOffset * 7)));
                 setShowAll(false);
               }}
-              disabled={weekOffset >= 3}
+              disabled={weekOffset >= 12}
               className="w-8 h-8 rounded-full hover:bg-gray-100 disabled:opacity-25 flex items-center justify-center text-gray-500 text-lg font-bold transition-colors"
               aria-label="Săptămâna următoare"
             >›</button>
@@ -152,7 +164,7 @@ export default function HomepageCalendar({ allEvents }: { allEvents: HomepageEve
               const key = toLocalKey(day);
               const isSelected = key === selectedDay;
               const isToday = key === todayKey;
-              const hasEvents = eventDayKeys.has(key);
+              const hasEvents = hasEventOnDay(day);
               const dayShort = DAYS_SHORT[(day.getDay() + 6) % 7];
 
               return (
@@ -209,7 +221,7 @@ export default function HomepageCalendar({ allEvents }: { allEvents: HomepageEve
                     href={ev.href}
                     className="flex gap-3 sm:gap-4 p-4 rounded-2xl bg-white shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 border border-gray-100 group"
                   >
-                    <div className="w-18 h-18 sm:w-20 sm:h-20 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100 w-[72px] h-[72px] sm:w-20 sm:h-20">
+                    <div className="w-[72px] h-[72px] sm:w-20 sm:h-20 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100">
                       {ev.image ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={ev.image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />

@@ -101,32 +101,37 @@ export default async function Home() {
 
   const calNow = new Date();
   calNow.setHours(0, 0, 0, 0);
+  const calIn90Days = new Date(calNow);
+  calIn90Days.setDate(calNow.getDate() + 90);
 
-  // Spectacole — fără limită temporală superioară
+  // Spectacole — 90 zile înainte
   const { data: calSpectacole } = await supabase
     .from("listings")
     .select("id, name, category, price, images, event_date, event_end_date, start_time")
     .eq("category", "spectacol")
     .gte("event_date", calNow.toISOString())
+    .lte("event_date", calIn90Days.toISOString())
     .order("event_date", { ascending: true })
-    .limit(100);
+    .limit(200);
 
-  // Evenimente one-time — fără limită temporală superioară
+  // Evenimente one-time — 90 zile înainte
   const { data: calEvenimente } = await supabase
     .from("listings")
     .select("id, name, category, price, images, event_date, event_end_date, start_time")
     .eq("category", "eveniment")
     .gte("event_date", calNow.toISOString())
+    .lte("event_date", calIn90Days.toISOString())
     .order("event_date", { ascending: true })
-    .limit(100);
+    .limit(200);
 
   // Evenimente din tabela events (adăugate de organizatori)
   const { data: calOrgEvents } = await adminClient
     .from("events")
     .select("id, title, event_date, start_time, price, thumbnail_url, listing_id, listings(id, name, address, category)")
     .gte("event_date", calNow.toISOString())
+    .lte("event_date", calIn90Days.toISOString())
     .order("event_date", { ascending: true })
-    .limit(100);
+    .limit(200);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const allCalendarEvents: HomepageEvent[] = [
