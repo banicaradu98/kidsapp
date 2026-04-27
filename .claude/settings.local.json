@@ -18,7 +18,8 @@
       "Bash(sed -i 's|alternates: { canonical: \"/educatie\" }|alternates: { canonical: \"https://www.moosey.ro/educatie\" }|' app/educatie/page.tsx)",
       "Bash(sed -i 's|alternates: { canonical: \"/cursuri-ateliere\" }|alternates: { canonical: \"https://www.moosey.ro/cursuri-ateliere\" }|' app/cursuri-ateliere/page.tsx)",
       "Bash(python3 *)",
-      "Bash(git *)"
+      "Bash(git *)",
+      "Bash(grep -rn \"x00-\\\\\\\\\\\\\\\\x7F\\\\|u0000-\\\\\\\\\\\\\\\\u007F\\\\|non-ASCII\\\\|sanitize\\\\|stripEmoji\\\\|cleanText\\\\|replace.*emoji\" \"C:/Users/banic/proiecte/kidsapp/app\" \"C:/Users/banic/proiecte/kidsapp/utils\" --include=\"*.ts\" --include=\"*.tsx\")"
     ]
   }
 }

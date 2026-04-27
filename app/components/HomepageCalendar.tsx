@@ -10,9 +10,6 @@ function startOfDay(d: Date): Date {
 function addDays(d: Date, n: number): Date {
   const r = new Date(d); r.setDate(r.getDate() + n); return r;
 }
-function toLocalKey(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
 function localDayKey(d: Date): string {
   return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
 }
@@ -53,10 +50,8 @@ const FALLBACK_EMOJI: Record<string, string> = {
 
 export default function HomepageCalendar({ allEvents }: { allEvents: HomepageEvent[] }) {
   const today = useMemo(() => startOfDay(new Date()), []);
-  const todayKey = useMemo(() => toLocalKey(today), [today]);
 
-  // null = afișează toate evenimentele din săptămâna curentă
-  const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const [weekOffset, setWeekOffset] = useState(0);
   const [showAll, setShowAll] = useState(false);
 
@@ -65,9 +60,24 @@ export default function HomepageCalendar({ allEvents }: { allEvents: HomepageEve
     [today, weekOffset],
   );
 
-  // Toggle selecție: click pe ziua selectată → deselectează
-  function handleDayClick(key: string) {
-    setSelectedDay((prev) => (prev === key ? null : key));
+  function handleDayClick(day: Date) {
+    if (selectedDay?.toDateString() === day.toDateString()) {
+      setSelectedDay(null);
+    } else {
+      setSelectedDay(day);
+    }
+    setShowAll(false);
+  }
+
+  function handlePrevWeek() {
+    setWeekOffset((o) => o - 1);
+    setSelectedDay(null);
+    setShowAll(false);
+  }
+
+  function handleNextWeek() {
+    setWeekOffset((o) => o + 1);
+    setSelectedDay(null);
     setShowAll(false);
   }
 
@@ -90,39 +100,34 @@ export default function HomepageCalendar({ allEvents }: { allEvents: HomepageEve
     return daysWithEvents.has(localDayKey(day));
   }
 
-  // Evenimentele afișate sub calendar:
-  // - dacă e selectată o zi → filtrează după acea zi (suport multi-zi)
-  // - dacă nu → toate evenimentele care se suprapun cu săptămâna curentă
   const eventsToShow = useMemo(() => {
     if (selectedDay) {
-      return allEvents.filter((ev) => {
-        const start = startOfDay(new Date(ev.date));
-        const end = ev.endDate ? startOfDay(new Date(ev.endDate)) : start;
+      return allEvents.filter((e) => {
+        const start = new Date(e.date);
+        start.setHours(0, 0, 0, 0);
+        const end = e.endDate ? new Date(e.endDate) : new Date(e.date);
         end.setHours(23, 59, 59, 999);
         const sel = new Date(selectedDay);
         sel.setHours(12, 0, 0, 0);
         return sel >= start && sel <= end;
       });
     }
-    // Toate din săptămâna curentă (inclusiv multi-zi care se suprapun)
-    const weekStart = weekDays[0];
-    const weekEnd = weekDays[6];
-    return allEvents.filter((ev) => {
-      const start = startOfDay(new Date(ev.date));
-      const end = ev.endDate ? startOfDay(new Date(ev.endDate)) : start;
-      return end >= weekStart && start <= weekEnd;
+    return allEvents.filter((e) => {
+      const d = new Date(e.date);
+      d.setHours(0, 0, 0, 0);
+      const weekStart = new Date(weekDays[0]);
+      weekStart.setHours(0, 0, 0, 0);
+      const weekEnd = new Date(weekDays[6]);
+      weekEnd.setHours(23, 59, 59, 999);
+      return d >= weekStart && d <= weekEnd;
     });
   }, [allEvents, selectedDay, weekDays]);
 
   const visibleEvents = showAll ? eventsToShow : eventsToShow.slice(0, 5);
 
-  // Label pentru titlul secțiunii de evenimente
-  const eventsLabel = useMemo(() => {
-    if (!selectedDay) return "Evenimente săptămâna aceasta";
-    const d = new Date(selectedDay);
-    d.setHours(12, 0, 0, 0);
-    return `Evenimente pe ${d.toLocaleDateString("ro-RO", { weekday: "long", day: "numeric", month: "long" })}`;
-  }, [selectedDay]);
+  const eventsLabel = selectedDay
+    ? `Evenimente pe ${selectedDay.toLocaleDateString("ro-RO", { weekday: "long", day: "numeric", month: "long" })}`
+    : `Evenimente ${weekDays[0].toLocaleDateString("ro-RO", { day: "numeric", month: "short" })} – ${weekDays[6].toLocaleDateString("ro-RO", { day: "numeric", month: "short" })}`;
 
   return (
     <section className="py-14 sm:py-20 bg-[#fff5f3]">
@@ -148,11 +153,7 @@ export default function HomepageCalendar({ allEvents }: { allEvents: HomepageEve
           {/* Week navigation */}
           <div className="flex items-center justify-between mb-3">
             <button
-              onClick={() => {
-                setWeekOffset((o) => o - 1);
-                setSelectedDay(null);
-                setShowAll(false);
-              }}
+              onClick={handlePrevWeek}
               disabled={weekOffset === 0}
               className="w-8 h-8 rounded-full hover:bg-gray-100 disabled:opacity-25 flex items-center justify-center text-gray-500 text-lg font-bold transition-colors"
               aria-label="Săptămâna anterioară"
@@ -163,11 +164,7 @@ export default function HomepageCalendar({ allEvents }: { allEvents: HomepageEve
               {weekDays[6].toLocaleDateString("ro-RO", { day: "numeric", month: "short", year: "numeric" })}
             </span>
             <button
-              onClick={() => {
-                setWeekOffset((o) => o + 1);
-                setSelectedDay(null);
-                setShowAll(false);
-              }}
+              onClick={handleNextWeek}
               disabled={weekOffset >= 12}
               className="w-8 h-8 rounded-full hover:bg-gray-100 disabled:opacity-25 flex items-center justify-center text-gray-500 text-lg font-bold transition-colors"
               aria-label="Săptămâna următoare"
@@ -177,16 +174,15 @@ export default function HomepageCalendar({ allEvents }: { allEvents: HomepageEve
           {/* Day cells */}
           <div className="grid grid-cols-7 gap-1">
             {weekDays.map((day) => {
-              const key = toLocalKey(day);
-              const isSelected = key === selectedDay;
-              const isToday = key === todayKey;
+              const isSelected = selectedDay?.toDateString() === day.toDateString();
+              const isToday = day.toDateString() === today.toDateString();
               const hasEvents = hasEventOnDay(day);
               const dayShort = DAYS_SHORT[(day.getDay() + 6) % 7];
 
               return (
                 <button
-                  key={key}
-                  onClick={() => handleDayClick(key)}
+                  key={day.toISOString()}
+                  onClick={() => handleDayClick(day)}
                   className={`flex flex-col items-center py-2 rounded-xl transition-all leading-none gap-0.5 ${
                     isSelected
                       ? "bg-[#ff5a2e] text-white"
