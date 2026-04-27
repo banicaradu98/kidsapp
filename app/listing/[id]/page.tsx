@@ -105,7 +105,7 @@ export async function generateMetadata(
   return {
     title,
     description,
-    alternates: { canonical: `/listing/${params.id}` },
+    alternates: { canonical: `https://www.moosey.ro/listing/${params.id}` },
     openGraph: {
       title: `${title} — Moosey`,
       description,

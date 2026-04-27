@@ -5,7 +5,7 @@ import ScrollReveal from "@/app/components/ScrollReveal";
 export const metadata: Metadata = {
   title: "Despre Moosey",
   description: "Povestea și misiunea Moosey — platforma care aduce familiile din Sibiu mai aproape de tot ce contează pentru copiii lor.",
-  alternates: { canonical: "/despre" },
+  alternates: { canonical: "https://www.moosey.ro/despre" },
   openGraph: {
     title: "Despre Moosey",
     description: "Platforma care aduce familiile din Sibiu mai aproape de tot ce contează pentru copiii lor.",

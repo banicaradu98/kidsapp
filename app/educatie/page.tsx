@@ -8,7 +8,7 @@ import { getDynamicBadges } from "@/utils/getDynamicBadges";
 export const metadata = {
   title: "Grădinițe și Educație în Sibiu",
   description: "Grădinițe, after-school, creșe și centre educaționale pentru copii din Sibiu. Găsește locul potrivit pentru copilul tău.",
-  alternates: { canonical: "/educatie" },
+  alternates: { canonical: "https://www.moosey.ro/educatie" },
   openGraph: { title: "Grădinițe și Educație în Sibiu — Moosey", description: "Grădinițe, after-school, creșe și centre educaționale în Sibiu.", url: "/educatie" },
 };
 

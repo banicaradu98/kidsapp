@@ -8,7 +8,7 @@ import { getDynamicBadges } from "@/utils/getDynamicBadges";
 export const metadata = {
   title: "Sport pentru Copii în Sibiu",
   description: "Fotbal, înot, tenis, gimnastică, arte marțiale și alte activități sportive pentru copii din Sibiu. Înscrie-ți copilul la sport.",
-  alternates: { canonical: "/sport" },
+  alternates: { canonical: "https://www.moosey.ro/sport" },
   openGraph: { title: "Sport pentru Copii în Sibiu — Moosey", description: "Fotbal, înot, tenis, gimnastică și sport pentru copii în Sibiu.", url: "/sport" },
 };
 

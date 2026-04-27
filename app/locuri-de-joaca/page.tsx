@@ -8,7 +8,7 @@ import { getDynamicBadges } from "@/utils/getDynamicBadges";
 export const metadata = {
   title: "Locuri de Joacă în Sibiu",
   description: "Descoperă cele mai bune locuri de joacă pentru copii din Sibiu: parcuri, săli de joacă indoor, locuri de joacă în aer liber și centre de distracție.",
-  alternates: { canonical: "/locuri-de-joaca" },
+  alternates: { canonical: "https://www.moosey.ro/locuri-de-joaca" },
   openGraph: { title: "Locuri de Joacă în Sibiu — Moosey", description: "Parcuri, săli indoor și locuri de joacă pentru copii în Sibiu.", url: "/locuri-de-joaca" },
 };
 
