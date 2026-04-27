@@ -10,8 +10,17 @@ function startOfDay(d: Date): Date {
 function addDays(d: Date, n: number): Date {
   const r = new Date(d); r.setDate(r.getDate() + n); return r;
 }
-function localDayKey(d: Date): string {
-  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+
+function isEventInWeek(event: HomepageEvent, weekStart: Date, weekEnd: Date): boolean {
+  const eventStart = new Date(event.date);
+  eventStart.setHours(0, 0, 0, 0);
+  const eventEnd = event.endDate ? new Date(event.endDate) : new Date(event.date);
+  eventEnd.setHours(23, 59, 59, 999);
+  const wStart = new Date(weekStart);
+  wStart.setHours(0, 0, 0, 0);
+  const wEnd = new Date(weekEnd);
+  wEnd.setHours(23, 59, 59, 999);
+  return eventStart <= wEnd && eventEnd >= wStart;
 }
 
 export type HomepageEvent = {
@@ -81,23 +90,16 @@ export default function HomepageCalendar({ allEvents }: { allEvents: HomepageEve
     setShowAll(false);
   }
 
-  // Zile care au cel puțin un eveniment
-  const daysWithEvents = useMemo(() => {
-    const keys = new Set<string>();
-    for (const ev of allEvents) {
-      const start = startOfDay(new Date(ev.date));
-      const end = ev.endDate ? startOfDay(new Date(ev.endDate)) : start;
-      let cur = new Date(start);
-      while (cur <= end) {
-        keys.add(localDayKey(cur));
-        cur = addDays(cur, 1);
-      }
-    }
-    return keys;
-  }, [allEvents]);
-
   function hasEventOnDay(day: Date): boolean {
-    return daysWithEvents.has(localDayKey(day));
+    return allEvents.some((event) => {
+      const eventStart = new Date(event.date);
+      eventStart.setHours(0, 0, 0, 0);
+      const eventEnd = event.endDate ? new Date(event.endDate) : new Date(event.date);
+      eventEnd.setHours(23, 59, 59, 999);
+      const d = new Date(day);
+      d.setHours(12, 0, 0, 0);
+      return d >= eventStart && d <= eventEnd;
+    });
   }
 
   const eventsToShow = useMemo(() => {
@@ -112,15 +114,7 @@ export default function HomepageCalendar({ allEvents }: { allEvents: HomepageEve
         return sel >= start && sel <= end;
       });
     }
-    return allEvents.filter((e) => {
-      const d = new Date(e.date);
-      d.setHours(0, 0, 0, 0);
-      const weekStart = new Date(weekDays[0]);
-      weekStart.setHours(0, 0, 0, 0);
-      const weekEnd = new Date(weekDays[6]);
-      weekEnd.setHours(23, 59, 59, 999);
-      return d >= weekStart && d <= weekEnd;
-    });
+    return allEvents.filter((e) => isEventInWeek(e, weekDays[0], weekDays[6]));
   }, [allEvents, selectedDay, weekDays]);
 
   const visibleEvents = showAll ? eventsToShow : eventsToShow.slice(0, 5);

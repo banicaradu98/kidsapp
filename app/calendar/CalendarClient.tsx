@@ -51,9 +51,6 @@ const FALLBACK_EMOJI: Record<string, string> = {
   educatie: "🎓", "curs-atelier": "🎨", sport: "⚽",
 };
 
-function toUTCKey(d: Date): string {
-  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
-}
 function toLocalKey(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
@@ -75,20 +72,14 @@ export default function CalendarClient({ allEvents }: { allEvents: CalEvent[] })
     return allEvents.filter((ev) => ev.category === activeTab);
   }, [allEvents, activeTab]);
 
-  const eventDayKeys = useMemo(() => {
-    const keys = new Set<string>();
-    for (const ev of filteredEvents) {
-      const start = new Date(ev.date + "T00:00:00Z");
-      const end = ev.endDate ? new Date(ev.endDate + "T00:00:00Z") : start;
-      let cur = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate()));
-      const endUTC = new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate()));
-      while (cur <= endUTC) {
-        keys.add(toUTCKey(cur));
-        cur = new Date(cur.getTime() + 86_400_000);
-      }
-    }
-    return keys;
-  }, [filteredEvents]);
+  function hasEventOnDay(day: Date): boolean {
+    const dayKey = toLocalKey(day);
+    return filteredEvents.some((event) => {
+      const start = event.date.slice(0, 10);
+      const end = (event.endDate ?? event.date).slice(0, 10);
+      return start <= dayKey && dayKey <= end;
+    });
+  }
 
   const daysInMonth = useMemo(() => new Date(year, month + 1, 0).getDate(), [year, month]);
 
@@ -188,7 +179,8 @@ export default function CalendarClient({ allEvents }: { allEvents: CalEvent[] })
             const key = `${year}-${String(month + 1).padStart(2, "0")}-${String(dayNum).padStart(2, "0")}`;
             const isSelected = key === selectedDay;
             const isToday = key === todayKey;
-            const hasEvents = eventDayKeys.has(key);
+            const dayDate = new Date(year, month, dayNum);
+            const hasEvents = hasEventOnDay(dayDate);
 
             return (
               <button
