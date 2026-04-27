@@ -80,7 +80,16 @@ export default function RichTextEditor({
     editorProps: {
       attributes: {
         class: "outline-none",
+        // Emoji font stack direct pe contenteditable — fără să depindem de moștenire CSS
+        style: [
+          "font-family: var(--font-dm-sans), 'DM Sans', -apple-system, BlinkMacSystemFont,",
+          "'Segoe UI', 'Segoe UI Emoji', 'Segoe UI Symbol',",
+          "'Apple Color Emoji', 'Noto Color Emoji', system-ui, sans-serif",
+        ].join(" "),
       },
+      // Pass-through la paste: ProseMirror să nu normalizeze/strip-uiască nimic
+      transformPastedText: (text: string) => text,
+      transformPastedHTML: (html: string) => html,
     },
     onUpdate({ editor }) {
       const html = editor.getHTML();
