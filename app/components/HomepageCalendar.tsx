@@ -118,7 +118,12 @@ export default function HomepageCalendar({ allEvents }: { allEvents: HomepageEve
           {/* Week navigation */}
           <div className="flex items-center justify-between mb-3">
             <button
-              onClick={() => setWeekOffset((o) => o - 1)}
+              onClick={() => {
+                const newOffset = weekOffset - 1;
+                setWeekOffset(newOffset);
+                setSelectedDay(toLocalKey(addDays(today, newOffset * 7)));
+                setShowAll(false);
+              }}
               disabled={weekOffset === 0}
               className="w-8 h-8 rounded-full hover:bg-gray-100 disabled:opacity-25 flex items-center justify-center text-gray-500 text-lg font-bold transition-colors"
               aria-label="Săptămâna anterioară"
@@ -129,7 +134,12 @@ export default function HomepageCalendar({ allEvents }: { allEvents: HomepageEve
               {weekDays[6].toLocaleDateString("ro-RO", { day: "numeric", month: "short", year: "numeric" })}
             </span>
             <button
-              onClick={() => setWeekOffset((o) => o + 1)}
+              onClick={() => {
+                const newOffset = weekOffset + 1;
+                setWeekOffset(newOffset);
+                setSelectedDay(toLocalKey(addDays(today, newOffset * 7)));
+                setShowAll(false);
+              }}
               disabled={weekOffset >= 3}
               className="w-8 h-8 rounded-full hover:bg-gray-100 disabled:opacity-25 flex items-center justify-center text-gray-500 text-lg font-bold transition-colors"
               aria-label="Săptămâna următoare"
