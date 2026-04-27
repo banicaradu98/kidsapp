@@ -6,6 +6,7 @@ import AutoOpenAuth from "./components/AutoOpenAuth";
 import PageToast from "./components/PageToast";
 import ScrollReveal from "./components/ScrollReveal";
 import SearchBar from "./components/SearchBar";
+import HomepageCalendar, { type HomepageEvent } from "./components/HomepageCalendar";
 import { adminClient } from "@/utils/supabase/admin";
 import type { Metadata } from "next";
 
@@ -98,56 +99,55 @@ export default async function Home() {
     };
   });
 
-  // Events this week
-  const weekStart = new Date();
-  weekStart.setHours(0, 0, 0, 0);
-  const weekEnd = new Date(weekStart);
-  weekEnd.setDate(weekEnd.getDate() + 7);
+  // Events for homepage calendar (next 4 weeks)
+  const calStart = new Date();
+  calStart.setHours(0, 0, 0, 0);
+  const calEnd = new Date(calStart);
+  calEnd.setDate(calEnd.getDate() + 28);
 
-  const { data: weekListings } = await supabase
+  const { data: calListings } = await supabase
     .from("listings")
-    .select("id, name, category, address, price, images, event_date")
+    .select("id, name, category, address, price, images, event_date, event_end_date, start_time")
     .in("category", ["spectacol", "eveniment"])
-    .gte("event_date", weekStart.toISOString())
-    .lte("event_date", weekEnd.toISOString())
+    .gte("event_date", calStart.toISOString())
     .order("event_date", { ascending: true })
-    .limit(8);
+    .limit(60);
 
-  const { data: weekOrgEvents } = await adminClient
+  const { data: calOrgEvents } = await adminClient
     .from("events")
-    .select("id, title, event_date, start_time, price, thumbnail_url, listing_id, listings(id, name, address)")
-    .gte("event_date", weekStart.toISOString())
-    .lte("event_date", weekEnd.toISOString())
+    .select("id, title, event_date, start_time, price, thumbnail_url, listing_id, listings(id, name, address, category)")
+    .gte("event_date", calStart.toISOString())
     .order("event_date", { ascending: true })
-    .limit(8);
+    .limit(60);
 
-  type WeekEvent = {
-    id: string; title: string; event_date: string; start_time: string | null;
-    price: string | null; image_url: string | null;
-    href: string; address: string | null;
-    listing_name: string | null; type: "listing" | "org";
-  };
-
-  const allWeekEvents: WeekEvent[] = [
-    ...(weekListings ?? []).map((l) => ({
-      id: `l-${l.id}`, title: l.name, event_date: l.event_date!,
-      start_time: null,
-      price: l.price, image_url: l.images?.[0] ?? null,
-      href: `/listing/${l.id}`, address: l.address,
-      listing_name: null, type: "listing" as const,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const allCalendarEvents: HomepageEvent[] = [
+    ...(calListings ?? []).map((l) => ({
+      id: `l-${l.id}`,
+      title: l.name,
+      date: l.event_date!,
+      endDate: l.event_end_date ?? null,
+      time: l.start_time ?? null,
+      image: l.images?.[0] ?? null,
+      href: `/listing/${l.id}`,
+      category: l.category ?? null,
+      locationName: null,
+      price: l.price ?? null,
     })),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ...(weekOrgEvents ?? []).map((e: any) => ({
-      id: `o-${e.id}`, title: e.title, event_date: e.event_date,
-      start_time: e.start_time ?? null,
-      price: e.price != null ? `${e.price} lei` : null,
-      image_url: e.thumbnail_url ?? null,
+    ...(calOrgEvents ?? []).map((e: any) => ({
+      id: `o-${e.id}`,
+      title: e.title,
+      date: e.event_date,
+      endDate: null,
+      time: e.start_time ?? null,
+      image: e.thumbnail_url ?? null,
       href: `/listing/${e.listing_id}`,
-      address: e.listings?.address ?? null,
-      listing_name: e.listings?.name ?? null,
-      type: "org" as const,
+      category: e.listings?.category ?? null,
+      locationName: e.listings?.name ?? null,
+      price: e.price != null ? `${e.price} lei` : null,
     })),
-  ].sort((a, b) => a.event_date.localeCompare(b.event_date)).slice(0, 8);
+  ].sort((a, b) => a.date.localeCompare(b.date));
 
   return (
     <div className="min-h-screen bg-white">
@@ -473,113 +473,9 @@ export default async function Home() {
         </section>
       </ScrollReveal>
 
-      {/* ── EVENTS THIS WEEK ── */}
+      {/* ── HOMEPAGE CALENDAR ── */}
       <ScrollReveal>
-        <section className="py-14 sm:py-20">
-          <div className="max-w-6xl mx-auto">
-            <div className="flex items-center justify-between mb-8 px-4 sm:px-6">
-              <div>
-                <h2 className="font-display text-2xl sm:text-3xl font-bold text-[#1a1a2e]">Ce se întâmplă în Sibiu</h2>
-                <p className="text-sm text-gray-400 mt-1">Săptămâna aceasta</p>
-              </div>
-              <a href="/calendar" className="text-base font-bold text-[#ff5a2e] hover:underline hidden sm:block shrink-0 ml-4">
-                Tot calendarul →
-              </a>
-            </div>
-
-            {allWeekEvents.length === 0 ? (
-              <div className="mx-4 sm:mx-6 bg-orange-50 rounded-2xl p-8 text-center">
-                <p className="text-3xl mb-3">🌙</p>
-                <p className="font-bold text-gray-600">Nu sunt evenimente programate săptămâna aceasta.</p>
-                <a href="/spectacole" className="inline-block mt-3 text-sm font-black text-[#ff5a2e] hover:underline">
-                  Verifică spectacolele →
-                </a>
-              </div>
-            ) : (
-              <>
-                {/* Mobile: vertical stack */}
-                <div className="flex flex-col gap-3 px-4 md:hidden">
-                  {allWeekEvents.slice(0, 5).map((ev) => {
-                    const d = new Date(ev.event_date);
-                    const dayNum = d.getUTCDate();
-                    const monthStr = d.toLocaleDateString("ro-RO", { month: "short", timeZone: "UTC" });
-                    const timeLabel = ev.start_time ? ev.start_time.slice(0, 5) : null;
-                    return (
-                      <a
-                        key={ev.id}
-                        href={ev.href}
-                        className="flex items-center gap-3 bg-white rounded-2xl shadow-sm hover:shadow-md transition-all active:scale-[.99]"
-                        style={{ borderLeft: "4px solid #ff5a2e" }}
-                      >
-                        <div className="flex flex-col items-center justify-center min-w-[56px] py-4 pl-3">
-                          <span className="text-xl font-black text-[#ff5a2e] leading-none">{dayNum}</span>
-                          <span className="text-[10px] font-bold text-gray-400 uppercase">{monthStr}</span>
-                        </div>
-                        <div className="flex-1 min-w-0 py-3 pr-3">
-                          <p className="font-black text-[#1a1a2e] text-sm leading-snug line-clamp-1">{ev.title}</p>
-                          <p className="text-xs text-gray-400 font-semibold mt-0.5 truncate">
-                            {ev.listing_name ? `📍 ${ev.listing_name}` : ev.address ? `📍 ${ev.address}` : ""}
-                            {timeLabel ? (ev.listing_name || ev.address ? ` · ${timeLabel}` : timeLabel) : ""}
-                          </p>
-                          {ev.price && <p className="text-xs font-black text-[#ff5a2e] mt-0.5">{ev.price}</p>}
-                        </div>
-                        {ev.image_url && (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={ev.image_url} alt="" className="w-14 h-14 object-cover rounded-xl shrink-0 mr-3" />
-                        )}
-                      </a>
-                    );
-                  })}
-                </div>
-
-                {/* Desktop: 2-column grid */}
-                <div className="hidden md:grid grid-cols-2 gap-3 px-6">
-                  {allWeekEvents.map((ev) => {
-                    const d = new Date(ev.event_date);
-                    const dayNum = d.getUTCDate();
-                    const monthStr = d.toLocaleDateString("ro-RO", { month: "short", timeZone: "UTC" });
-                    const timeLabel = ev.start_time ? ev.start_time.slice(0, 5) : null;
-                    return (
-                      <a
-                        key={ev.id}
-                        href={ev.href}
-                        className="flex items-center gap-4 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-[0_6px_20px_rgba(0,0,0,0.1)] hover:-translate-y-0.5 transition-all duration-200 group overflow-hidden"
-                        style={{ borderLeft: "4px solid #ff5a2e" }}
-                      >
-                        <div className="flex flex-col items-center justify-center min-w-[64px] py-5 pl-4 shrink-0">
-                          <span className="text-2xl font-black text-[#ff5a2e] leading-none">{dayNum}</span>
-                          <span className="text-[11px] font-bold text-gray-400 uppercase">{monthStr}</span>
-                        </div>
-                        <div className="flex-1 min-w-0 py-4">
-                          <p className="font-black text-[#1a1a2e] text-sm leading-snug line-clamp-2">{ev.title}</p>
-                          {(ev.listing_name || ev.address) && (
-                            <p className="text-xs text-gray-400 font-semibold mt-0.5 truncate">
-                              📍 {ev.listing_name ?? ev.address}
-                            </p>
-                          )}
-                          <div className="flex items-center gap-2 mt-1">
-                            {timeLabel && <span className="text-xs font-bold text-[#ff5a2e]">{timeLabel}</span>}
-                            {ev.price && <span className="text-xs font-black text-[#ff5a2e]">{timeLabel ? `· ${ev.price}` : ev.price}</span>}
-                          </div>
-                        </div>
-                        {ev.image_url && (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={ev.image_url} alt="" className="w-20 h-full min-h-[80px] object-cover shrink-0 group-hover:scale-105 transition-transform duration-300" />
-                        )}
-                      </a>
-                    );
-                  })}
-                </div>
-
-                <div className="mt-5 text-center md:hidden px-4">
-                  <a href="/calendar" className="inline-block w-full bg-rose-50 text-rose-600 font-black text-base py-4 rounded-2xl">
-                    Tot calendarul de evenimente →
-                  </a>
-                </div>
-              </>
-            )}
-          </div>
-        </section>
+        <HomepageCalendar allEvents={allCalendarEvents} />
       </ScrollReveal>
 
       {/* ── CTA ORGANIZATORI ── */}
