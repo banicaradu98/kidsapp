@@ -250,7 +250,6 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
         gradientTo={meta.gradientTo}
         title={listing.name}
         listingId={listing.id}
-        isVerified={listing.is_verified ?? false}
         categoryLabel={meta.label}
         categoryEmoji={meta.emoji}
         categoryTagColor={meta.tagColor}

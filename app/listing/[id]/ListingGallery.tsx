@@ -10,7 +10,6 @@ interface Props {
   gradientTo: string;
   title: string;
   listingId: string;
-  isVerified: boolean;
   categoryLabel: string;
   categoryEmoji: string;
   categoryTagColor: string;
@@ -18,7 +17,7 @@ interface Props {
 
 export default function ListingGallery({
   images, emoji, gradientFrom, gradientTo,
-  title, listingId, isVerified, categoryLabel, categoryEmoji, categoryTagColor,
+  title, listingId, categoryLabel, categoryEmoji, categoryTagColor,
 }: Props) {
   const [lightbox, setLightbox] = useState<number | null>(null);
   const [heroIndex, setHeroIndex] = useState(0);
@@ -62,16 +61,11 @@ export default function ListingGallery({
           </div>
         )}
 
-        {/* Category + verified badges — top left */}
+        {/* Category badge — top left */}
         <div className="absolute top-4 left-4 flex flex-wrap gap-2">
           <span className={`${categoryTagColor} text-xs font-bold px-3 py-1.5 rounded-full shadow-sm`}>
             {categoryEmoji} {categoryLabel}
           </span>
-          {isVerified && (
-            <span className="bg-green-100 text-green-700 text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">
-              ✓ Verificat
-            </span>
-          )}
         </div>
 
         {/* Favorite button — top right */}

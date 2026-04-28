@@ -100,7 +100,6 @@ export default function ListingPage() {
             <div className="mb-6">
               <div className="flex flex-wrap items-start gap-3 mb-2">
                 <span className="bg-orange-100 text-orange-700 text-xs font-bold px-3 py-1.5 rounded-full">🛝 Loc de joacă</span>
-                <span className="bg-green-100 text-green-700 text-xs font-bold px-3 py-1.5 rounded-full">✓ Verificat</span>
               </div>
               <h1 className="text-3xl sm:text-4xl font-black text-[#1a1a2e] leading-tight mb-3">
                 Sala de Joacă Dumbrava

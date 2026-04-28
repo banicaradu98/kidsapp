@@ -68,9 +68,6 @@ export default function SpectacolCard({ listing }: { listing: Listing }) {
                 🎭 {venueName}
               </span>
             )}
-            {listing.is_verified && (
-              <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-1 rounded-full">✓</span>
-            )}
           </div>
 
           {/* Preț */}

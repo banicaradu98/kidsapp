@@ -59,9 +59,6 @@ export default function FilteredGradinite({ listings }: { listings: Listing[] })
                       👶 {formatAge(l.age_min, l.age_max)}
                     </span>
                   )}
-                  {l.is_verified && (
-                    <span className="bg-green-100 text-green-700 text-xs font-bold px-2.5 py-1 rounded-full">✓ Autorizat</span>
-                  )}
                 </div>
                 <h3 className="text-base font-black text-[#1a1a2e] leading-snug mb-1">{l.name}</h3>
                 {l.description && (

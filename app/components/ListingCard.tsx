@@ -99,9 +99,6 @@ export default function ListingCard({ listing, variant = "default", highlight }:
         <div>
           <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
             <span className={`${meta.tagColor} text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full`}>{meta.label}</span>
-            {listing.is_verified && (
-              <span className="bg-green-50 text-green-600 text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full">✓ Verificat</span>
-            )}
             {listing.hot_badge && (
               <span className={`${listing.hot_badge.bg} ${listing.hot_badge.text} text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full`}>
                 {listing.hot_badge.emoji} {listing.hot_badge.label}
