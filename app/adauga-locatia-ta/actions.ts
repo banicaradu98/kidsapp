@@ -3,7 +3,7 @@
 import { headers } from "next/headers";
 import { adminClient } from "@/utils/supabase/admin";
 import { rateLimit, getIp } from "@/utils/rateLimiter";
-import { sanitizeText, isValidEmail, isAllowedValue } from "@/utils/sanitize";
+import { sanitizeText, sanitizeRichText, isValidEmail, isAllowedValue } from "@/utils/sanitize";
 
 const ALLOWED_CATEGORIES = [
   "loc-de-joaca",
@@ -43,7 +43,7 @@ export async function submitListingRequest(
   // ── Sanitize & validate all fields ───────────────────────────────
   const name        = sanitizeText(formData.get("name") as string, 100);
   const category    = (formData.get("category") as string)?.trim() ?? "";
-  const description = sanitizeText(formData.get("description") as string, 5000);
+  const description = sanitizeRichText(formData.get("description") as string, 5000);
   const address     = sanitizeText(formData.get("address") as string, 200);
   const phone       = sanitizeText(formData.get("phone") as string, 20);
   const contactName = sanitizeText(formData.get("contact_name") as string, 100);
@@ -64,9 +64,9 @@ export async function submitListingRequest(
   // ── Optional fields ───────────────────────────────────────────────
   const subcategory  = sanitizeText(formData.get("subcategory") as string, 100) || null;
   const price        = sanitizeText(formData.get("price") as string, 100) || null;
-  const priceDetails = sanitizeText(formData.get("price_details") as string, 1000) || null;
+  const priceDetails = sanitizeRichText(formData.get("price_details") as string, 1000) || null;
   const schedule     = sanitizeText(formData.get("schedule") as string, 200) || null;
-  const notes        = sanitizeText(formData.get("notes") as string, 1000) || null;
+  const notes        = sanitizeRichText(formData.get("notes") as string, 1000) || null;
 
   const ageMinRaw = formData.get("age_min");
   const ageMaxRaw = formData.get("age_max");
@@ -99,11 +99,16 @@ export async function submitListingRequest(
     }
   } catch { images = []; }
 
+  // notes: coloana nu există în schema listings — adăugată în description
+  const descriptionWithNotes = notes
+    ? `${description}\n\n<hr/><p><strong>Mesaj intern:</strong> ${notes}</p>`
+    : description;
+
   const { error } = await adminClient.from("listings").insert({
     name,
     category,
     subcategory,
-    description,
+    description: descriptionWithNotes,
     address,
     city:          "Sibiu",
     price,
@@ -115,15 +120,14 @@ export async function submitListingRequest(
     website,
     contact_name:  contactName,
     contact_email: contactEmail,
-    notes,
     images,
     is_verified:   false,
     is_featured:   false,
   });
 
   if (error) {
-    console.error("[submitListingRequest] DB error:", error.message);
-    return { success: false, error: "A apărut o eroare. Te rugăm încearcă din nou." };
+    console.error("[submitListingRequest] DB error:", error.code, error.message, error.details);
+    return { success: false, error: `Eroare la salvare: ${error.message}` };
   }
 
   return { success: true, error: null };

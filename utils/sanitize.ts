@@ -7,6 +7,22 @@ export function stripHtml(input: string): string {
 }
 
 /**
+ * Sanitize rich text (HTML from TipTap/RichTextEditor):
+ * removes dangerous tags/attributes but keeps safe formatting HTML.
+ */
+export function sanitizeRichText(input: string | null | undefined, maxLen: number): string {
+  if (!input) return "";
+  return input
+    .trim()
+    .replace(/<script[\s\S]*?<\/script>/gi, "")
+    .replace(/<iframe[\s\S]*?<\/iframe>/gi, "")
+    .replace(/<style[\s\S]*?<\/style>/gi, "")
+    .replace(/\son\w+\s*=\s*["'][^"']*["']/gi, "")  // strip inline event handlers
+    .replace(/javascript:/gi, "")
+    .slice(0, maxLen);
+}
+
+/**
  * Sanitize a text field: trim, strip HTML, enforce max length.
  * Returns empty string for null/undefined.
  */
