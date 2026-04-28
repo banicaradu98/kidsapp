@@ -47,10 +47,11 @@ function SuccessState() {
       <div className="text-6xl mb-6">🎉</div>
       <h2 className="text-2xl font-black text-[#1a1a2e] mb-3">Mulțumim!</h2>
       <p className="text-gray-500 font-medium text-lg mb-2 max-w-md mx-auto">
-        Am primit cererea ta. Vom verifica și publica locația în maxim <strong className="text-[#ff5a2e]">48 de ore</strong>.
+        Locația ta a fost trimisă spre verificare.
       </p>
-      <p className="text-gray-400 text-sm mb-8">
-        Vei fi contactat pe email imediat ce locația este aprobată.
+      <p className="text-gray-400 text-sm mb-8 max-w-sm mx-auto">
+        Vei primi un email când va fi aprobată și publicată pe Moosey.
+        De obicei durează maxim <strong>48 de ore</strong>.
       </p>
       <a
         href="/"

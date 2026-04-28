@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { createClient } from "@/utils/supabase/server";
-import { approveListing, rejectListing } from "../actions";
+import { rejectListing } from "../actions";
+import ApproveListingButton from "../_components/ApproveListingButton";
 import DeleteButton from "../_components/DeleteButton";
 import AdminShell from "../_components/AdminShell";
 
@@ -43,8 +44,7 @@ export default async function AprobarePage() {
         ) : (
           <div className="flex flex-col gap-4">
             {pending.map((l) => {
-              const approveWithId = approveListing.bind(null, l.id);
-              const rejectWithId  = rejectListing.bind(null, l.id);
+              const rejectWithId = rejectListing.bind(null, l.id);
               return (
                 <div key={l.id} className="bg-white rounded-2xl border border-gray-200 p-6">
                   <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
@@ -107,14 +107,7 @@ export default async function AprobarePage() {
 
                     {/* Actions */}
                     <div className="flex sm:flex-col gap-2 shrink-0">
-                      <form action={approveWithId}>
-                        <button
-                          type="submit"
-                          className="w-full sm:w-32 bg-green-500 hover:bg-green-600 text-white font-black text-sm px-4 py-2.5 rounded-xl transition-colors"
-                        >
-                          ✓ Aprobă
-                        </button>
-                      </form>
+                      <ApproveListingButton listingId={l.id} />
                       <a
                         href={`/admin/edit/${l.id}`}
                         className="block w-full sm:w-32 bg-white border border-gray-200 hover:border-[#ff5a2e] text-gray-600 hover:text-[#ff5a2e] font-bold text-sm px-4 py-2.5 rounded-xl transition-colors text-center"

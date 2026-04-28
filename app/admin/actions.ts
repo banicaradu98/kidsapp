@@ -95,100 +95,14 @@ export async function deleteListing(id: string) {
 }
 
 export async function approveListing(id: string) {
-  // Fetch listing details before updating (needed for email)
-  const { data: listing } = await adminClient
-    .from("listings")
-    .select("name, contact_email")
-    .eq("id", id)
-    .single();
-
   const { error } = await adminClient
     .from("listings")
     .update({ is_verified: true })
     .eq("id", id);
   if (error) throw new Error(error.message);
-
-  // Send approval emails via Brevo (non-blocking — don't fail if email fails)
-  if (listing?.contact_email && process.env.BREVO_API_KEY) {
-    sendApprovalEmails(id, listing.name ?? "Locația ta", listing.contact_email).catch(
-      (err) => console.error("[approveListing] email error:", err)
-    );
-  }
-
   redirect("/admin/aprobare");
 }
 
-async function sendApprovalEmails(listingId: string, listingName: string, contactEmail: string) {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.moosey.ro";
-  const listingUrl = `${siteUrl}/listing/${listingId}`;
-
-  const sendBrevo = (to: string, subject: string, htmlContent: string) =>
-    fetch("https://api.brevo.com/v3/smtp/email", {
-      method: "POST",
-      headers: {
-        "api-key": process.env.BREVO_API_KEY!,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        sender: { name: "Moosey", email: "hello@moosey.ro" },
-        to: [{ email: to }],
-        subject,
-        htmlContent,
-      }),
-    });
-
-  const ownerHtml = `
-    <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
-      <div style="background:#ff5a2e;padding:32px;text-align:center;border-radius:12px 12px 0 0;">
-        <img src="https://www.moosey.ro/images/logo-moosey.png" alt="Moosey" style="height:50px;" />
-      </div>
-      <div style="padding:32px;background:#fff;">
-        <h2 style="color:#1a1a2e;margin-top:0;">Locația ta este acum live! 🎉</h2>
-        <p style="color:#5F5E5A;line-height:1.6;">
-          <strong>${listingName}</strong> a fost verificată și este acum vizibilă
-          pentru familiile din Sibiu pe Moosey.
-        </p>
-        <p style="color:#5F5E5A;line-height:1.6;">
-          Vrei să o gestionezi direct? Creează un cont cu această adresă de email,
-          apoi apasă butonul <em>"Revendică această locație"</em> de pe pagina locației.
-        </p>
-        <div style="text-align:center;margin:32px 0;">
-          <a href="${listingUrl}"
-             style="background:#ff5a2e;color:#fff;padding:14px 28px;border-radius:50px;
-                    text-decoration:none;font-weight:bold;">
-            Vezi locația pe Moosey →
-          </a>
-        </div>
-      </div>
-      <div style="background:#fff5f3;padding:20px;text-align:center;
-                  border-radius:0 0 12px 12px;border-top:1px solid #ffe4dc;">
-        <p style="color:#9ca3af;font-size:12px;margin:0;">
-          Moosey ·
-          <a href="https://www.moosey.ro" style="color:#ff5a2e;">www.moosey.ro</a>
-          · hello@moosey.ro
-        </p>
-      </div>
-    </div>`;
-
-  const adminHtml = `
-    <p>Locația <strong>${listingName}</strong> a fost aprobată.</p>
-    <p>Email contact: <a href="mailto:${contactEmail}">${contactEmail}</a></p>
-    <p>Link: <a href="${listingUrl}">${listingUrl}</a></p>
-    <p>Verifică dacă utilizatorul a creat cont și a revendicat locația.</p>`;
-
-  await Promise.allSettled([
-    sendBrevo(
-      contactEmail,
-      `Locația ta "${listingName}" este acum live pe Moosey! 🎉`,
-      ownerHtml
-    ),
-    sendBrevo(
-      "hello@moosey.ro",
-      `[Moosey Admin] Listing aprobat: ${listingName}`,
-      adminHtml
-    ),
-  ]);
-}
 
 export async function rejectListing(id: string) {
   await adminClient.from("listings").delete().eq("id", id);
