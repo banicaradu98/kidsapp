@@ -132,6 +132,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
     .from("listings")
     .select("*")
     .eq("id", params.id)
+    .eq("is_verified", true)
     .single();
 
   if (!listing) notFound();

@@ -62,10 +62,11 @@ export default async function Home() {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
 
-  // Category counts — toate listingurile, indiferent de status verificare
+  // Category counts — doar listingurile verificate
   const { data: allListingsForCount } = await supabase
     .from("listings")
-    .select("category");
+    .select("category")
+    .eq("is_verified", true);
 
   const catCounts: Record<string, number> = {};
   for (const l of allListingsForCount ?? []) {
@@ -86,6 +87,7 @@ export default async function Home() {
     .from("listings")
     .select("id, name, category, description, address, price, age_min, age_max, images, reviews(rating)")
     .eq("is_featured", true)
+    .eq("is_verified", true)
     .order("created_at", { ascending: false })
     .limit(6);
 
@@ -109,6 +111,7 @@ export default async function Home() {
     .from("listings")
     .select("id, name, category, price, images, event_date, event_end_date, start_time")
     .eq("category", "spectacol")
+    .eq("is_verified", true)
     .gte("event_date", calNow.toISOString())
     .lte("event_date", calIn90Days.toISOString())
     .order("event_date", { ascending: true })
@@ -119,6 +122,7 @@ export default async function Home() {
     .from("listings")
     .select("id, name, category, price, images, event_date, event_end_date, start_time")
     .eq("category", "eveniment")
+    .eq("is_verified", true)
     .gte("event_date", calNow.toISOString())
     .lte("event_date", calIn90Days.toISOString())
     .order("event_date", { ascending: true })

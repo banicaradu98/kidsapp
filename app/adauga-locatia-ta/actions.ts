@@ -130,5 +130,15 @@ export async function submitListingRequest(
     return { success: false, error: `Eroare la salvare: ${error.message}` };
   }
 
+  // Email de confirmare — non-blocking
+  if (process.env.BREVO_API_KEY) {
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.moosey.ro";
+    fetch(`${siteUrl}/api/send-confirmation`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: contactEmail, name }),
+    }).catch((err) => console.error("[submitListingRequest] confirmation email error:", err));
+  }
+
   return { success: true, error: null };
 }

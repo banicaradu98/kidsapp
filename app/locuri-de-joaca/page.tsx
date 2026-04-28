@@ -18,6 +18,7 @@ export default async function LocuriDeJoacaPage() {
     .from("listings")
     .select("id, name, category, description, address, price, age_min, age_max, schedule, is_verified, images, created_at, claimed_by")
     .eq("category", "loc-de-joaca")
+    .eq("is_verified", true)
     .order("is_featured", { ascending: false })
     .order("name");
 

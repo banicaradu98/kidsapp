@@ -28,6 +28,7 @@ export default async function CalendarPage() {
     .from("listings")
     .select("id, name, images, category, event_date, event_end_date, start_time, price")
     .eq("category", "spectacol")
+    .eq("is_verified", true)
     .gte("event_date", now.toISOString())
     .order("event_date", { ascending: true })
     .limit(200);
@@ -37,6 +38,7 @@ export default async function CalendarPage() {
     .from("listings")
     .select("id, name, images, category, event_date, event_end_date, start_time, price")
     .eq("category", "eveniment")
+    .eq("is_verified", true)
     .gte("event_date", now.toISOString())
     .order("event_date", { ascending: true })
     .limit(200);

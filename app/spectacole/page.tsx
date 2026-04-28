@@ -16,6 +16,7 @@ export default async function SpectacolePage() {
     .from("listings")
     .select("id, name, category, description, address, price, age_min, age_max, schedule, is_verified, images, event_date, event_end_date, start_time")
     .eq("category", "spectacol")
+    .eq("is_verified", true)
     .order("event_date", { ascending: true, nullsFirst: false });
 
   const items = listings ?? [];
