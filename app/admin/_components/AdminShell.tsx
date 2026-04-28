@@ -3,11 +3,12 @@ import AdminNav from "./AdminNav";
 import { adminClient } from "@/utils/supabase/admin";
 
 export default async function AdminShell({ children }: { children: React.ReactNode }) {
-  const { count } = await adminClient
-    .from("claims")
-    .select("id", { count: "exact", head: true })
-    .eq("status", "pending");
-  const claimsBadge = count ?? 0;
+  const [{ count: claimsCount }, { count: pendingCount }] = await Promise.all([
+    adminClient.from("claims").select("id", { count: "exact", head: true }).eq("status", "pending"),
+    adminClient.from("listings").select("id", { count: "exact", head: true }).eq("is_verified", false),
+  ]);
+  const claimsBadge = claimsCount ?? 0;
+  const pendingBadge = pendingCount ?? 0;
   return (
     <div className="min-h-screen bg-gray-50 flex" style={{ fontFamily: "Nunito, system-ui, sans-serif" }}>
 
@@ -28,7 +29,7 @@ export default async function AdminShell({ children }: { children: React.ReactNo
         {/* Nav */}
         <div className="flex-1 py-4 overflow-y-auto">
           <p className="px-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Meniu</p>
-          <AdminNav claimsBadge={claimsBadge} />
+          <AdminNav claimsBadge={claimsBadge} pendingBadge={pendingBadge} />
         </div>
 
         {/* Bottom: site link + logout */}

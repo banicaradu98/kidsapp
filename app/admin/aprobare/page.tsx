@@ -71,9 +71,10 @@ export default async function AprobarePage() {
                         <p className="text-sm text-gray-500 font-medium mb-2">📍 {l.address}</p>
                       )}
                       {l.description && (
-                        <p className="text-sm text-gray-600 leading-relaxed line-clamp-3 mb-3">
-                          {l.description}
-                        </p>
+                        <div
+                          className="prose prose-sm max-w-none text-gray-600 line-clamp-3 mb-3"
+                          dangerouslySetInnerHTML={{ __html: l.description }}
+                        />
                       )}
 
                       {/* Contact info */}

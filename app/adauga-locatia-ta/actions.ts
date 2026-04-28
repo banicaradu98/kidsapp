@@ -130,14 +130,58 @@ export async function submitListingRequest(
     return { success: false, error: `Eroare la salvare: ${error.message}` };
   }
 
-  // Email de confirmare — non-blocking
+  // Email de confirmare + notificare admin — non-blocking
   if (process.env.BREVO_API_KEY) {
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.moosey.ro";
+    const apiKey = process.env.BREVO_API_KEY;
+
+    // 1. Confirmare către organizator
     fetch(`${siteUrl}/api/send-confirmation`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: contactEmail, name }),
     }).catch((err) => console.error("[submitListingRequest] confirmation email error:", err));
+
+    // 2. Notificare admin
+    const categoryLabels: Record<string, string> = {
+      "loc-de-joaca": "Loc de joacă",
+      "educatie": "Educație",
+      "curs-atelier": "Curs & Atelier",
+      "sport": "Sport",
+      "spectacol": "Spectacol",
+      "eveniment": "Eveniment",
+    };
+    const categoryLabel = categoryLabels[category] ?? category;
+    fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "api-key": apiKey,
+      },
+      body: JSON.stringify({
+        sender: { name: "Moosey", email: "hello@moosey.ro" },
+        to: [{ email: "hello@moosey.ro", name: "Admin Moosey" }],
+        subject: `📋 Cerere nouă de listing: ${name}`,
+        htmlContent: `
+          <div style="font-family:sans-serif;max-width:600px;margin:0 auto">
+            <h2 style="color:#ff5a2e">Cerere nouă de listing</h2>
+            <table style="border-collapse:collapse;width:100%">
+              <tr><td style="padding:6px 12px;font-weight:bold;color:#555;width:130px">Locație</td><td style="padding:6px 12px">${name}</td></tr>
+              <tr style="background:#f9f9f9"><td style="padding:6px 12px;font-weight:bold;color:#555">Categorie</td><td style="padding:6px 12px">${categoryLabel}</td></tr>
+              <tr><td style="padding:6px 12px;font-weight:bold;color:#555">Adresă</td><td style="padding:6px 12px">${address}</td></tr>
+              <tr style="background:#f9f9f9"><td style="padding:6px 12px;font-weight:bold;color:#555">Contact</td><td style="padding:6px 12px">${contactName}</td></tr>
+              <tr><td style="padding:6px 12px;font-weight:bold;color:#555">Email</td><td style="padding:6px 12px">${contactEmail}</td></tr>
+              <tr style="background:#f9f9f9"><td style="padding:6px 12px;font-weight:bold;color:#555">Telefon</td><td style="padding:6px 12px">${phone}</td></tr>
+            </table>
+            <div style="margin-top:24px">
+              <a href="${siteUrl}/admin/aprobare" style="background:#ff5a2e;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block">
+                → Deschide panoul de aprobare
+              </a>
+            </div>
+          </div>
+        `,
+      }),
+    }).catch((err) => console.error("[submitListingRequest] admin notification error:", err));
   }
 
   return { success: true, error: null };

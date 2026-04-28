@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 
-export default function AdminNav({ claimsBadge = 0 }: { claimsBadge?: number }) {
+export default function AdminNav({ claimsBadge = 0, pendingBadge = 0 }: { claimsBadge?: number; pendingBadge?: number }) {
   const pathname = usePathname();
 
   const NAV = [
@@ -26,7 +26,7 @@ export default function AdminNav({ claimsBadge = 0 }: { claimsBadge?: number }) 
         </svg>
       ),
       label: "Spre aprobare",
-      badge: 0,
+      badge: pendingBadge,
     },
     {
       href: "/admin/revendicari",
