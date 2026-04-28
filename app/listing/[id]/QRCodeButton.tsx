@@ -1,11 +1,12 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { QRCodeCanvas } from "qrcode.react";
 
 export default function QRCodeButton({ url, name }: { url: string; name: string }) {
   const [open, setOpen] = useState(false);
   const canvasRef = useRef<HTMLDivElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
 
   function download() {
     const canvas = canvasRef.current?.querySelector("canvas");
@@ -16,10 +17,20 @@ export default function QRCodeButton({ url, name }: { url: string; name: string 
     link.click();
   }
 
+  useEffect(() => {
+    if (open) {
+      modalRef.current?.focus();
+    }
+  }, [open]);
+
   return (
     <>
       <button
-        onClick={() => setOpen(true)}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setOpen(true);
+        }}
         className="w-full flex items-center justify-center gap-2 border border-gray-200 hover:border-[#ff5a2e] hover:text-[#ff5a2e] text-gray-500 font-bold text-sm py-3 rounded-xl transition-all"
       >
         📱 QR Code
@@ -31,7 +42,10 @@ export default function QRCodeButton({ url, name }: { url: string; name: string 
           onClick={() => setOpen(false)}
         >
           <div
-            className="bg-white rounded-3xl p-6 max-w-xs w-full text-center shadow-2xl"
+            ref={modalRef}
+            id="qr-modal"
+            tabIndex={-1}
+            className="bg-white rounded-3xl p-6 max-w-xs w-full text-center shadow-2xl outline-none"
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="font-black text-[#1a1a2e] mb-1">QR Code</h3>

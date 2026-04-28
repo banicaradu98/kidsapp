@@ -80,8 +80,11 @@ export default function SearchBar({ initialQuery = "" }: { initialQuery?: string
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!query.trim()) return;
     setOpen(false);
+    if (!query.trim()) {
+      router.push("/cauta");
+      return;
+    }
     router.push(`/cauta?q=${encodeURIComponent(query.trim())}`);
   }
 

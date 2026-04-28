@@ -64,6 +64,15 @@ export default async function CautaPage({
 
   const POPULAR_SEARCHES = ["Robotică", "Loc de joacă", "Dans", "Înot", "Spectacole", "Balet", "Fotbal", "Șah"];
 
+  function popularPillHref(s: string) {
+    return q === s ? "/cauta" : `/cauta?q=${encodeURIComponent(s)}`;
+  }
+  function popularPillCls(s: string) {
+    return q === s
+      ? "bg-[#ff5a2e] text-white border-[#ff5a2e] font-bold text-sm px-4 py-2 rounded-full transition-all border"
+      : "bg-orange-50 hover:bg-[#ff5a2e] hover:text-white text-[#ff5a2e] border border-orange-200 font-bold text-sm px-4 py-2 rounded-full transition-all";
+  }
+
   const supabase = createClient(await cookies());
 
   let listings: ReturnType<typeof Array<object>> = [];
@@ -147,13 +156,7 @@ export default async function CautaPage({
             <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Căutări populare</p>
             <div className="flex flex-wrap justify-center gap-2 mb-8">
               {POPULAR_SEARCHES.map((s) => (
-                <a
-                  key={s}
-                  href={`/cauta?q=${encodeURIComponent(s)}`}
-                  className="bg-orange-50 hover:bg-[#ff5a2e] hover:text-white text-[#ff5a2e] border border-orange-200 font-bold text-sm px-4 py-2 rounded-full transition-all"
-                >
-                  {s}
-                </a>
+                <a key={s} href={popularPillHref(s)} className={popularPillCls(s)}>{s}</a>
               ))}
             </div>
             <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Categorii</p>
@@ -186,13 +189,7 @@ export default async function CautaPage({
               <p className="font-bold text-[#1a1a2e] mb-2">Încearcă și:</p>
               <div className="flex flex-wrap justify-center gap-2 mb-6">
                 {POPULAR_SEARCHES.map((s) => (
-                  <a
-                    key={s}
-                    href={`/cauta?q=${encodeURIComponent(s)}`}
-                    className="bg-orange-50 hover:bg-[#ff5a2e] hover:text-white text-[#ff5a2e] border border-orange-200 font-bold text-sm px-4 py-2 rounded-full transition-all"
-                  >
-                    {s}
-                  </a>
+                  <a key={s} href={popularPillHref(s)} className={popularPillCls(s)}>{s}</a>
                 ))}
               </div>
               <p className="text-sm text-gray-400 font-medium mb-4">Sau explorează categoriile:</p>
