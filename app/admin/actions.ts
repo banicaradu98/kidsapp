@@ -150,20 +150,20 @@ export async function approveClaim(claimId: string, listingId: string, userId: s
   if (claim?.email && listing?.name && process.env.BREVO_API_KEY) {
     const listingName = listing.name;
     const html = emailTemplate(
-      "Revendicare aprobată! 🎉",
-      `<p style="color:#5F5E5A;line-height:1.6;margin:0 0 12px 0;">
-        Felicitări! Cererea ta de revendicare pentru
-        <strong>${listingName}</strong> a fost aprobată.
+      "Revendicare aprobata! 🎉",
+      `<p style="color:#5F5E5A;line-height:1.6;margin:0 0 16px 0;">
+        Felicitari! Locatia <strong>${listingName}</strong> este acum asociata
+        contului tau pe Moosey.
       </p>
-      <p style="color:#5F5E5A;line-height:1.6;margin:0 0 12px 0;">
-        Locația este acum asociată contului tău. Intră în contul tău pe Moosey
-        și selectează locația din dashboard pentru a o gestiona.
+      <p style="color:#5F5E5A;line-height:1.6;margin:0 0 8px 0;">
+        Din dashboard poti:
       </p>
-      <p style="color:#5F5E5A;line-height:1.6;margin:0;">
-        Din dashboard poți edita informațiile, adăuga evenimente, răspunde
-        la recenzii și urmări statisticile de vizualizare.
-      </p>`,
-      "Accesează dashboard-ul →",
+      <ul style="color:#5F5E5A;line-height:1.8;margin:0 0 16px 0;padding-left:20px;">
+        <li>Edita informatiile locatiei</li>
+        <li>Adauga evenimente si noutati</li>
+        <li>Vedea statistici si recenzii</li>
+      </ul>`,
+      "Acceseaza Dashboard-ul →",
       "https://www.moosey.ro/dashboard"
     );
     sendBrevoEmail(

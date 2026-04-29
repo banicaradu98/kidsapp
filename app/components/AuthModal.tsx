@@ -31,6 +31,10 @@ export default function AuthModal({ onClose }: Props) {
     setTab(t);
     setError(null);
     setSuccess(null);
+    if (t === "register") {
+      setPassword("");
+      setConfirmPassword("");
+    }
   }
 
   async function handleGoogle() {
@@ -81,7 +85,7 @@ export default function AuthModal({ onClose }: Props) {
         if (error.message.includes("Email not confirmed") || error.message.includes("email_not_confirmed")) {
           setError("Contul tău nu a fost verificat încă. Verifică emailul și apasă pe linkul de confirmare.");
         } else if (error.message.includes("Invalid login credentials")) {
-          setError("Email sau parolă incorectă. Încearcă din nou.");
+          setError("Email sau parolă incorecte. Dacă nu ai cont, apasă pe \"Înregistrare\".");
         } else {
           setError(error.message);
         }

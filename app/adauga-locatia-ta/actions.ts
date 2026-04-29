@@ -165,7 +165,7 @@ export async function submitListingRequest(
     fetch(`${siteUrl}/api/send-confirmation`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: contactEmail, name }),
+      body: JSON.stringify({ email: contactEmail, name, category: categoryLabel }),
     }).catch((err) => console.error("[submitListingRequest] confirmation email error:", err));
 
     // 2. Notificare admin — table-based HTML
