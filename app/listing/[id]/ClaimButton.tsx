@@ -13,8 +13,6 @@ interface Props {
 type ClaimStatus = "none" | "pending" | "approved" | "rejected" | "loading";
 
 export default function ClaimButton({ listingId, listingName, claimedBy }: Props) {
-  // Already claimed by someone else — hide the button entirely
-  if (claimedBy) return null;
   const [status, setStatus] = useState<ClaimStatus>("loading");
   const [userId, setUserId] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -69,6 +67,9 @@ export default function ClaimButton({ listingId, listingName, claimedBy }: Props
       setSubmitting(false);
     }
   }
+
+  // Already claimed by someone else — hide the button entirely
+  if (claimedBy) return null;
 
   // Don't render anything during loading
   if (status === "loading") return null;
