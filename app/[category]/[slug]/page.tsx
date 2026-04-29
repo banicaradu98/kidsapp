@@ -188,7 +188,7 @@ export default async function ListingSlugPage({ params }: { params: { category: 
   const nowIso = new Date().toISOString();
   const { data: listingUpdatesRaw } = await supabase
     .from("listing_updates")
-    .select("id, type, title, message, expires_at, created_at")
+    .select("id, type, title, message, expires_at, created_at, images")
     .eq("listing_id", listing.id)
     .or(`expires_at.is.null,expires_at.gt.${nowIso}`)
     .order("created_at", { ascending: false })
@@ -362,6 +362,14 @@ export default async function ListingSlugPage({ params }: { params: { category: 
                               {upd.message && (
                                 <div className="text-sm font-medium text-gray-600 leading-relaxed">
                                   <RichTextDisplay html={upd.message} />
+                                </div>
+                              )}
+                              {upd.images && upd.images.length > 0 && (
+                                <div className="flex gap-2 flex-wrap mt-2">
+                                  {upd.images.map((img: string, i: number) => (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img key={i} src={img} alt="" className="w-20 h-20 rounded-xl object-cover border border-white/50" />
+                                  ))}
                                 </div>
                               )}
                             </div>

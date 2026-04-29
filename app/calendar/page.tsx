@@ -26,7 +26,7 @@ export default async function CalendarPage() {
   // Spectacole — fără limită temporală, doar viitoare
   const { data: spectacole } = await supabase
     .from("listings")
-    .select("id, name, images, category, event_date, event_end_date, start_time, price")
+    .select("id, name, images, category, event_date, event_end_date, start_time, price, slug")
     .eq("category", "spectacol")
     .eq("is_verified", true)
     .gte("event_date", now.toISOString())
@@ -36,7 +36,7 @@ export default async function CalendarPage() {
   // Evenimente one-time — fără limită temporală, doar viitoare
   const { data: evenimente } = await supabase
     .from("listings")
-    .select("id, name, images, category, event_date, event_end_date, start_time, price")
+    .select("id, name, images, category, event_date, event_end_date, start_time, price, slug")
     .eq("category", "eveniment")
     .eq("is_verified", true)
     .gte("event_date", now.toISOString())
@@ -54,7 +54,7 @@ export default async function CalendarPage() {
       price,
       thumbnail_url,
       listing_id,
-      listings(id, name, category)
+      listings(id, name, category, slug)
     `)
     .gte("event_date", now.toISOString())
     .order("event_date", { ascending: true })
@@ -68,7 +68,7 @@ export default async function CalendarPage() {
       endDate: l.event_end_date ? toUTCKey(new Date(l.event_end_date)) : null,
       time: l.start_time ?? null,
       image: l.images?.[0] ?? null,
-      href: `/listing/${l.id}`,
+      href: l.slug ? `/spectacol/${l.slug}` : `/listing/${l.id}`,
       category: "spectacol",
       locationName: null,
       price: l.price ?? null,
@@ -80,7 +80,7 @@ export default async function CalendarPage() {
       endDate: l.event_end_date ? toUTCKey(new Date(l.event_end_date)) : null,
       time: l.start_time ?? null,
       image: l.images?.[0] ?? null,
-      href: `/listing/${l.id}`,
+      href: l.slug ? `/eveniment/${l.slug}` : `/listing/${l.id}`,
       category: "eveniment",
       locationName: null,
       price: l.price ?? null,
@@ -93,7 +93,9 @@ export default async function CalendarPage() {
       endDate: null,
       time: e.start_time ?? null,
       image: e.thumbnail_url ?? null,
-      href: `/listing/${e.listing_id}`,
+      href: e.listings?.slug && e.listings?.category
+        ? `/${e.listings.category}/${e.listings.slug}`
+        : `/listing/${e.listing_id}`,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       category: (e.listings as any)?.category ?? null,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -85,7 +85,7 @@ export default async function Home() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: featuredRaw } = await supabase
     .from("listings")
-    .select("id, name, category, description, address, price, age_min, age_max, images, reviews(rating)")
+    .select("id, name, category, description, address, price, age_min, age_max, images, slug, reviews(rating)")
     .eq("is_featured", true)
     .eq("is_verified", true)
     .order("created_at", { ascending: false })
@@ -109,7 +109,7 @@ export default async function Home() {
   // Spectacole — 90 zile înainte
   const { data: calSpectacole } = await supabase
     .from("listings")
-    .select("id, name, category, price, images, event_date, event_end_date, start_time")
+    .select("id, name, category, price, images, event_date, event_end_date, start_time, slug")
     .eq("category", "spectacol")
     .eq("is_verified", true)
     .gte("event_date", calNow.toISOString())
@@ -120,7 +120,7 @@ export default async function Home() {
   // Evenimente one-time — 90 zile înainte
   const { data: calEvenimente } = await supabase
     .from("listings")
-    .select("id, name, category, price, images, event_date, event_end_date, start_time")
+    .select("id, name, category, price, images, event_date, event_end_date, start_time, slug")
     .eq("category", "eveniment")
     .eq("is_verified", true)
     .gte("event_date", calNow.toISOString())
@@ -131,7 +131,7 @@ export default async function Home() {
   // Evenimente din tabela events (adăugate de organizatori)
   const { data: calOrgEvents } = await adminClient
     .from("events")
-    .select("id, title, event_date, start_time, price, thumbnail_url, listing_id, listings(id, name, address, category)")
+    .select("id, title, event_date, start_time, price, thumbnail_url, listing_id, listings(id, name, address, category, slug)")
     .gte("event_date", calNow.toISOString())
     .lte("event_date", calIn90Days.toISOString())
     .order("event_date", { ascending: true })
@@ -146,7 +146,7 @@ export default async function Home() {
       endDate: l.event_end_date ?? null,
       time: l.start_time ?? null,
       image: l.images?.[0] ?? null,
-      href: `/listing/${l.id}`,
+      href: l.slug ? `/${l.category}/${l.slug}` : `/listing/${l.id}`,
       category: "spectacol",
       locationName: null,
       price: l.price ?? null,
@@ -158,7 +158,7 @@ export default async function Home() {
       endDate: l.event_end_date ?? null,
       time: l.start_time ?? null,
       image: l.images?.[0] ?? null,
-      href: `/listing/${l.id}`,
+      href: l.slug ? `/${l.category}/${l.slug}` : `/listing/${l.id}`,
       category: "eveniment",
       locationName: null,
       price: l.price ?? null,
@@ -171,7 +171,7 @@ export default async function Home() {
       endDate: null,
       time: e.start_time ?? null,
       image: e.thumbnail_url ?? null,
-      href: `/listing/${e.listing_id}`,
+      href: e.listings?.slug && e.listings?.category ? `/${e.listings.category}/${e.listings.slug}` : `/listing/${e.listing_id}`,
       category: e.listings?.category ?? null,
       locationName: e.listings?.name ?? null,
       price: e.price != null ? `${e.price} lei` : null,
@@ -385,7 +385,7 @@ export default async function Home() {
                     return (
                       <a
                         key={listing.id}
-                        href={`/listing/${listing.id}`}
+                        href={listing.slug && listing.category ? `/${listing.category}/${listing.slug}` : `/listing/${listing.id}`}
                         className="flex-none w-72 snap-start bg-white rounded-3xl shadow-[0_2px_16px_rgba(0,0,0,0.08)] border border-gray-100 overflow-hidden block active:scale-[.98] transition-transform"
                       >
                         <div className={`h-44 bg-gradient-to-br ${meta.gradientFrom} ${meta.gradientTo} overflow-hidden relative`}>
@@ -446,7 +446,7 @@ export default async function Home() {
                     return (
                       <a
                         key={listing.id}
-                        href={`/listing/${listing.id}`}
+                        href={listing.slug && listing.category ? `/${listing.category}/${listing.slug}` : `/listing/${listing.id}`}
                         className="bg-white rounded-3xl shadow-[0_2px_16px_rgba(0,0,0,0.07)] hover:shadow-[0_12px_40px_rgba(0,0,0,0.12)] border border-gray-100 overflow-hidden transition-all duration-300 hover:-translate-y-1.5 group block"
                       >
                         <div className={`h-48 bg-gradient-to-br ${meta.gradientFrom} ${meta.gradientTo} overflow-hidden relative`}>
