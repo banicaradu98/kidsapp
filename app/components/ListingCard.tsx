@@ -47,6 +47,7 @@ export interface Listing {
   event_end_date?: string | null;
   start_time?: string | null;
   hot_badge?: { type: string; label: string; emoji: string; bg: string; text: string } | null;
+  slug?: string | null;
 }
 
 export function formatAge(min: number | null, max: number | null) {
@@ -75,7 +76,7 @@ export default function ListingCard({ listing, variant = "default", highlight }:
     <div className="relative">
       <FavoriteButton listingId={listing.id} />
       <a
-        href={`/listing/${listing.id}`}
+        href={listing.slug && listing.category ? `/${listing.category}/${listing.slug}` : `/listing/${listing.id}`}
         className="flex flex-col sm:flex-row bg-white rounded-2xl shadow-sm hover:shadow-md hover:-translate-y-0.5 overflow-hidden transition-all duration-300 active:scale-[.99] group"
       >
       {/* Thumb — 4:3 pe mobil, w-32 full-height pe desktop */}

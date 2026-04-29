@@ -9,9 +9,14 @@ interface EventPayload {
   title: string;
   description: string | null;
   event_date: string;
+  event_end_date?: string | null;
   start_time: string | null;
   end_time: string | null;
   price: number | null;
+  event_type?: string | null;
+  age_recommendation?: string | null;
+  location_override?: string | null;
+  registration_url?: string | null;
   thumbnail_url?: string | null;
   gallery_urls?: string[];
 }
@@ -51,9 +56,14 @@ export async function addEvent(payload: EventPayload) {
       title: payload.title,
       description: payload.description,
       event_date: dateObj.toISOString(),
+      event_end_date: payload.event_end_date || null,
       start_time: payload.start_time,
       end_time: payload.end_time,
       price: payload.price,
+      event_type: payload.event_type || null,
+      age_recommendation: payload.age_recommendation || null,
+      location_override: payload.location_override || null,
+      registration_url: payload.registration_url || null,
       user_id: user.id,
       thumbnail_url: payload.thumbnail_url ?? null,
       gallery_urls: payload.gallery_urls ?? [],
@@ -79,9 +89,14 @@ export async function updateEvent(id: string, payload: EventPayload) {
       title: payload.title,
       description: payload.description,
       event_date: payload.event_date,
+      event_end_date: payload.event_end_date || null,
       start_time: payload.start_time,
       end_time: payload.end_time,
       price: payload.price,
+      event_type: payload.event_type || null,
+      age_recommendation: payload.age_recommendation || null,
+      location_override: payload.location_override || null,
+      registration_url: payload.registration_url || null,
     })
     .eq("id", id)
     .select()

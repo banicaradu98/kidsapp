@@ -5,6 +5,19 @@ import { adminClient } from "@/utils/supabase/admin";
 import { rateLimit, getIp } from "@/utils/rateLimiter";
 import { sanitizeText, sanitizeRichText, isValidEmail, isAllowedValue } from "@/utils/sanitize";
 import { sendBrevoEmail } from "@/utils/brevo";
+import { generateSlug } from "@/utils/slug";
+
+async function uniqueSlug(base: string): Promise<string> {
+  const { adminClient } = await import("@/utils/supabase/admin");
+  let slug = base;
+  let attempt = 0;
+  while (true) {
+    const { data } = await adminClient.from("listings").select("id").eq("slug", slug).maybeSingle();
+    if (!data) return slug;
+    attempt++;
+    slug = `${base}-${attempt + 1}`;
+  }
+}
 
 const ALLOWED_CATEGORIES = [
   "loc-de-joaca",
@@ -105,6 +118,8 @@ export async function submitListingRequest(
     ? `${description}\n\n<hr/><p><strong>Mesaj intern:</strong> ${notes}</p>`
     : description;
 
+  const slug = await uniqueSlug(generateSlug(name));
+
   const { error } = await adminClient.from("listings").insert({
     name,
     category,
@@ -122,6 +137,7 @@ export async function submitListingRequest(
     contact_name:  contactName,
     contact_email: contactEmail,
     images,
+    slug,
     is_verified:   false,
     is_featured:   false,
   });

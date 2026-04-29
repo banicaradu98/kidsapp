@@ -1,9 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { addUpdate, deleteUpdate } from "./updateActions";
 import RichTextEditor from "@/app/components/RichTextEditor";
 import RichTextDisplay from "@/app/components/RichTextDisplay";
+import imageCompression from "browser-image-compression";
+
+async function compressAndUpload(file: File, listingId: string, index: number): Promise<string | null> {
+  try {
+    const compressed = await imageCompression(file, { maxSizeMB: 1, maxWidthOrHeight: 1920, useWebWorker: true });
+    const fd = new FormData();
+    fd.append("file", compressed);
+    fd.append("listing_id", listingId);
+    fd.append("index", String(index));
+    const res = await fetch("/api/upload-update", { method: "POST", body: fd });
+    const json = await res.json();
+    return json.url ?? null;
+  } catch {
+    return null;
+  }
+}
 
 type UpdateType =
   | "noutate"
@@ -26,6 +42,7 @@ interface ListingUpdate {
   title: string;
   message: string;
   expires_at: string | null;
+  images?: string[];
   created_at: string;
 }
 
@@ -84,6 +101,23 @@ export default function UpdatesManager({ listingId, initialUpdates }: Props) {
   const [deleting, setDeleting] = useState<string | null>(null);
   const [formKey, setFormKey] = useState(0);
 
+  const [imgFiles, setImgFiles] = useState<File[]>([]);
+  const [imgPreviews, setImgPreviews] = useState<string[]>([]);
+  const imgInputRef = useRef<HTMLInputElement>(null);
+
+  function onImgChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    const toAdd = files.slice(0, 3 - imgFiles.length);
+    setImgFiles((p) => [...p, ...toAdd]);
+    setImgPreviews((p) => [...p, ...toAdd.map((f) => URL.createObjectURL(f))]);
+    e.target.value = "";
+  }
+
+  function removeImg(i: number) {
+    setImgFiles((p) => p.filter((_, idx) => idx !== i));
+    setImgPreviews((p) => p.filter((_, idx) => idx !== i));
+  }
+
   function set<K extends keyof typeof emptyForm>(k: K, v: (typeof emptyForm)[K]) {
     setForm((f) => ({ ...f, [k]: v }));
   }
@@ -96,12 +130,20 @@ export default function UpdatesManager({ listingId, initialUpdates }: Props) {
     setSaving(true);
     setError(null);
 
+    // Upload images first
+    const uploadedUrls: string[] = [];
+    for (let i = 0; i < imgFiles.length; i++) {
+      const url = await compressAndUpload(imgFiles[i], listingId, i);
+      if (url) uploadedUrls.push(url);
+    }
+
     const result = await addUpdate({
       listing_id: listingId,
       type: form.type,
       title: form.title,
       message: form.message,
       expires_at: form.expires_at || null,
+      images: uploadedUrls,
     });
 
     if (result.error || !result.data) {
@@ -113,6 +155,8 @@ export default function UpdatesManager({ listingId, initialUpdates }: Props) {
     setUpdates((prev) => [result.data as ListingUpdate, ...prev]);
     setForm(emptyForm);
     setFormKey((k) => k + 1);
+    setImgFiles([]);
+    setImgPreviews([]);
     setShowForm(false);
     setSaving(false);
   }
@@ -211,11 +255,46 @@ export default function UpdatesManager({ listingId, initialUpdates }: Props) {
             />
           </div>
 
+          {/* Images */}
+          <div>
+            <label className="block text-xs font-bold text-gray-500 mb-1.5">
+              Poze <span className="text-gray-400 font-medium">(opțional, max 3)</span>
+            </label>
+            <div className="flex items-center gap-2 flex-wrap">
+              {imgPreviews.map((url, i) => (
+                <div key={i} className="relative w-16 h-16">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={url} alt="" className="w-16 h-16 rounded-xl object-cover border border-gray-200" />
+                  <button
+                    type="button"
+                    onClick={() => removeImg(i)}
+                    className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center leading-none"
+                  >×</button>
+                </div>
+              ))}
+              {imgFiles.length < 3 && (
+                <button
+                  type="button"
+                  onClick={() => imgInputRef.current?.click()}
+                  className="w-16 h-16 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 hover:border-[#ff5a2e] hover:text-[#ff5a2e] transition-colors text-xl"
+                >+</button>
+              )}
+            </div>
+            <input
+              ref={imgInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              multiple
+              className="hidden"
+              onChange={onImgChange}
+            />
+          </div>
+
           {error && <p className="text-sm font-bold text-red-500">⚠️ {error}</p>}
 
           <div className="flex gap-3 justify-end">
             <button
-              onClick={() => { setShowForm(false); setError(null); setForm(emptyForm); setFormKey((k) => k + 1); }}
+              onClick={() => { setShowForm(false); setError(null); setForm(emptyForm); setFormKey((k) => k + 1); setImgFiles([]); setImgPreviews([]); }}
               className="text-sm font-bold text-gray-400 hover:text-gray-600"
             >
               Anulează

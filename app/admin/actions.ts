@@ -6,6 +6,22 @@ import { revalidatePath } from "next/cache";
 import { adminClient } from "@/utils/supabase/admin";
 import { rateLimit, getIp } from "@/utils/rateLimiter";
 import { emailTemplate, sendBrevoEmail } from "@/utils/brevo";
+import { generateSlug } from "@/utils/slug";
+
+async function uniqueSlug(base: string): Promise<string> {
+  let slug = base;
+  let attempt = 0;
+  while (true) {
+    const { data } = await adminClient
+      .from("listings")
+      .select("id")
+      .eq("slug", slug)
+      .maybeSingle();
+    if (!data) return slug;
+    attempt++;
+    slug = `${base}-${attempt + 1}`;
+  }
+}
 
 // ── AUTH ──────────────────────────────────────────────────────────
 export async function loginAction(
@@ -76,7 +92,9 @@ function extractData(formData: FormData) {
 }
 
 export async function createListing(formData: FormData) {
-  const { error } = await adminClient.from("listings").insert(extractData(formData));
+  const data = extractData(formData);
+  const slug = await uniqueSlug(generateSlug(data.name));
+  const { error } = await adminClient.from("listings").insert({ ...data, slug });
   if (error) throw new Error(error.message);
   redirect("/admin");
 }

@@ -1,21 +1,21 @@
-import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { adminClient } from "@/utils/supabase/admin";
 import type { Metadata } from "next";
-import DescriptionCollapse from "./DescriptionCollapse";
+import DescriptionCollapse from "@/app/listing/[id]/DescriptionCollapse";
 import RichTextDisplay from "@/app/components/RichTextDisplay";
-import ListingGallery from "./ListingGallery";
-import ReviewSection from "./ReviewSection";
+import ListingGallery from "@/app/listing/[id]/ListingGallery";
+import ReviewSection from "@/app/listing/[id]/ReviewSection";
 import FavoriteButton from "@/app/components/FavoriteButton";
 import Navbar from "@/app/components/Navbar";
 import ListingCard, { type Listing } from "@/app/components/ListingCard";
-import ClaimButton from "./ClaimButton";
-import ViewTracker from "./ViewTracker";
-import LiveViewers from "./LiveViewers";
-import QRCodeButton from "./QRCodeButton";
+import ClaimButton from "@/app/listing/[id]/ClaimButton";
+import ViewTracker from "@/app/listing/[id]/ViewTracker";
+import LiveViewers from "@/app/listing/[id]/LiveViewers";
+import QRCodeButton from "@/app/listing/[id]/QRCodeButton";
 import { getDynamicBadges } from "@/utils/getDynamicBadges";
 import { formatEventDate } from "@/utils/dateUtils";
+import { createClient } from "@/utils/supabase/server";
 
 const CATEGORY_META: Record<string, { emoji: string; label: string; href: string; tagColor: string; gradientFrom: string; gradientTo: string }> = {
   "loc-de-joaca": { emoji: "🛝", label: "Loc de joacă",   href: "/locuri-de-joaca",   tagColor: "bg-orange-100 text-orange-700", gradientFrom: "from-orange-100", gradientTo: "to-orange-200" },
@@ -86,30 +86,33 @@ function whatsappLink(phone: string | null) {
 }
 
 export async function generateMetadata(
-  { params }: { params: { id: string } }
+  { params }: { params: { category: string; slug: string } }
 ): Promise<Metadata> {
   const { data: listing } = await adminClient
     .from("listings")
-    .select("name, description, images, address, category")
-    .eq("id", params.id)
+    .select("name, description, images, category, slug")
+    .eq("slug", params.slug)
+    .eq("category", params.category)
     .single();
 
   if (!listing) return { title: "Locație negăsită" };
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.moosey.ro";
   const title = listing.name;
   const description = listing.description
     ? stripHtml(listing.description).slice(0, 160)
     : `${listing.name} — activitate pentru copii în Sibiu.`;
   const coverImg = listing.images?.[0] ?? null;
+  const canonicalUrl = `${siteUrl}/${params.category}/${params.slug}`;
 
   return {
     title,
     description,
-    alternates: { canonical: `https://www.moosey.ro/listing/${params.id}` },
+    alternates: { canonical: canonicalUrl },
     openGraph: {
       title: `${title} — Moosey`,
       description,
-      url: `/listing/${params.id}`,
+      url: canonicalUrl,
       type: "website",
       ...(coverImg
         ? { images: [{ url: coverImg, width: 1200, height: 630, alt: listing.name }] }
@@ -124,28 +127,24 @@ export async function generateMetadata(
   };
 }
 
-export default async function ListingDetailPage({ params }: { params: { id: string } }) {
+export default async function ListingSlugPage({ params }: { params: { category: string; slug: string } }) {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
 
-  const { data: listing } = await supabase
+  const { data: listing } = await adminClient
     .from("listings")
     .select("*")
-    .eq("id", params.id)
+    .eq("slug", params.slug)
+    .eq("category", params.category)
     .eq("is_verified", true)
     .single();
 
   if (!listing) notFound();
 
-  // Redirect to canonical slug URL if available
-  if (listing.slug && listing.category) {
-    redirect(`/${listing.category}/${listing.slug}`);
-  }
-
   const { data: reviews } = await supabase
     .from("reviews")
     .select("id, user_name, rating, text, created_at")
-    .eq("listing_id", params.id)
+    .eq("listing_id", listing.id)
     .order("created_at", { ascending: false });
 
   const reviewList = reviews ?? [];
@@ -161,28 +160,23 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
     ? formatEventDate(listing.event_date, listing.event_end_date, listing.start_time)
     : null;
   const wa = whatsappLink(listing.phone);
-
   const photos: string[] = listing.images ?? [];
 
-  // Fetch upcoming events for this listing (adminClient bypasses RLS on events table)
   const today = new Date().toISOString().split("T")[0];
   const { data: upcomingEventsRaw } = await adminClient
     .from("events")
     .select("id, title, description, event_date, start_time, end_time, price, thumbnail_url")
-    .eq("listing_id", params.id)
+    .eq("listing_id", listing.id)
     .gte("event_date", today)
     .order("event_date", { ascending: true })
     .limit(5);
-
   const upcomingEvents = upcomingEventsRaw ?? [];
 
-  // Dynamic badges for this listing
   const { allBadges: dynBadgesMap } = await getDynamicBadges([
     { id: listing.id, created_at: listing.created_at, claimed_by: listing.claimed_by },
   ]);
   const dynBadges = dynBadgesMap[listing.id] ?? [];
 
-  // Urgency: views today (server-side initial value; client refreshes every 30s)
   const todayStart = new Date();
   todayStart.setUTCHours(0, 0, 0, 0);
   const { count: todayViews } = await adminClient
@@ -191,30 +185,28 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
     .eq("listing_id", listing.id)
     .gte("viewed_at", todayStart.toISOString());
 
-  // Fetch active listing updates (public RLS allows anon read)
   const nowIso = new Date().toISOString();
   const { data: listingUpdatesRaw } = await supabase
     .from("listing_updates")
     .select("id, type, title, message, expires_at, created_at")
-    .eq("listing_id", params.id)
+    .eq("listing_id", listing.id)
     .or(`expires_at.is.null,expires_at.gt.${nowIso}`)
     .order("created_at", { ascending: false })
     .limit(10);
-
   const listingUpdates = listingUpdatesRaw ?? [];
 
-  // Similar listings — same category, verified, excluding current
   const { data: similarRaw } = await adminClient
     .from("listings")
-    .select("id, name, category, subcategory, images, is_verified, is_featured, address, price, age_min, age_max, schedule, phone, website, description, city, package")
+    .select("id, name, category, subcategory, images, is_verified, is_featured, address, price, age_min, age_max, schedule, phone, website, description, city, package, slug")
     .eq("category", listing.category)
     .eq("is_verified", true)
     .neq("id", listing.id)
     .limit(4);
   const similarListings = (similarRaw ?? []) as Listing[];
 
-  // JSON-LD structured data
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.moosey.ro";
+  const canonicalUrl = `${siteUrl}/${params.category}/${params.slug}`;
+
   const schemaType =
     listing.category === "educatie" ? "ChildCare" :
     listing.category === "spectacol" ? "PerformingArtsTheater" :
@@ -225,7 +217,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
     "@type": schemaType,
     name: listing.name,
     description: listing.description ?? undefined,
-    url: `${siteUrl}/listing/${listing.id}`,
+    url: canonicalUrl,
     ...(listing.address
       ? { address: { "@type": "PostalAddress", streetAddress: listing.address, addressLocality: listing.city ?? "Sibiu", addressCountry: "RO" } }
       : {}),
@@ -247,7 +239,6 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
       <ViewTracker listingId={listing.id} />
       <Navbar />
 
-      {/* ── GALLERY ── */}
       <ListingGallery
         images={photos}
         emoji={meta.emoji}
@@ -261,14 +252,11 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
       />
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6">
-
-
         <div className="flex flex-col lg:flex-row gap-8 pb-32 lg:pb-16">
 
           {/* ── MAIN COLUMN ── */}
           <div className="flex-1 min-w-0 pt-4 lg:pt-0">
 
-            {/* Breadcrumb */}
             <div className="flex items-center gap-1.5 text-xs text-gray-400 font-medium mb-4 flex-wrap">
               <a href="/" className="hover:text-[#ff5a2e] transition-colors">Acasă</a>
               <span>›</span>
@@ -277,7 +265,6 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
               <span className="text-gray-600 truncate max-w-[160px]">{listing.name}</span>
             </div>
 
-            {/* Dynamic badges */}
             {dynBadges.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-3">
                 {dynBadges.map((b) => (
@@ -288,7 +275,6 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
               </div>
             )}
 
-            {/* Rating */}
             <div className="flex items-center gap-2 text-sm font-semibold text-gray-500 mb-2 flex-wrap">
               {avgRating !== null ? (
                 <>
@@ -304,10 +290,8 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
               {listing.city && <span>· 📍 {listing.city}</span>}
             </div>
 
-            {/* Urgency signals — views today + live viewers */}
             <LiveViewers listingId={listing.id} initialToday={todayViews ?? 0} />
 
-            {/* Info chips — horizontal scroll on mobile */}
             <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1 mb-6">
               {listing.price && (
                 <div className="flex-none bg-orange-50 border border-orange-100 rounded-2xl px-4 py-3 min-w-[110px]">
@@ -338,7 +322,6 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
               )}
             </div>
 
-            {/* Description with collapse */}
             {listing.description && (
               <section className="mb-6">
                 <h3 className="text-lg font-black text-[#1a1a2e] mb-2">Despre loc</h3>
@@ -346,7 +329,6 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
               </section>
             )}
 
-            {/* Price details */}
             {listing.price_details && (
               <section className="mb-6">
                 <h3 className="text-lg font-black text-[#1a1a2e] mb-3">💰 Prețuri</h3>
@@ -358,7 +340,6 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
               </section>
             )}
 
-            {/* Noutăți & Statusuri */}
             {listingUpdates.length > 0 && (
               <section className="mb-6">
                 <h3 className="text-lg font-black text-[#1a1a2e] mb-3">📢 Noutăți & Statusuri</h3>
@@ -403,7 +384,6 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
               </section>
             )}
 
-            {/* Address + map */}
             {listing.address && (
               <section className="mb-6">
                 <h3 className="text-lg font-black text-[#1a1a2e] mb-2">Locație</h3>
@@ -433,7 +413,6 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
               </section>
             )}
 
-            {/* Upcoming events */}
             {upcomingEvents.length > 0 && (
               <section className="mb-6">
                 <h3 className="text-lg font-black text-[#1a1a2e] mb-3">📅 Evenimente viitoare</h3>
@@ -454,17 +433,11 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
                       <div key={ev.id} className="flex items-start gap-4 bg-orange-50 border border-orange-100 rounded-2xl p-4">
                         {ev.thumbnail_url ? (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={ev.thumbnail_url}
-                            alt=""
-                            className="w-14 h-14 rounded-xl object-cover shrink-0"
-                          />
+                          <img src={ev.thumbnail_url} alt="" className="w-14 h-14 rounded-xl object-cover shrink-0" />
                         ) : (
                           <div className="w-14 h-14 rounded-xl bg-orange-100 flex flex-col items-center justify-center shrink-0">
                             <span className="text-lg font-black text-[#ff5a2e] leading-none">{dayNum}</span>
-                            <span className="text-[10px] font-bold text-gray-500 uppercase">
-                              {monthStr}
-                            </span>
+                            <span className="text-[10px] font-bold text-gray-500 uppercase">{monthStr}</span>
                           </div>
                         )}
                         <div className="flex-1 min-w-0">
@@ -488,22 +461,13 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
               </section>
             )}
 
-            {/* Reviews */}
             <ReviewSection listingId={listing.id} initialReviews={reviewList} />
 
-            {/* Similar listings */}
             {similarListings.length > 0 && (
               <section className="mt-10 mb-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-black text-[#1a1a2e]">
-                    Alte locuri din {meta.label}
-                  </h3>
-                  <a
-                    href={meta.href}
-                    className="text-sm font-bold text-[#ff5a2e] hover:underline"
-                  >
-                    Vezi toate →
-                  </a>
+                  <h3 className="text-lg font-black text-[#1a1a2e]">Alte locuri din {meta.label}</h3>
+                  <a href={meta.href} className="text-sm font-bold text-[#ff5a2e] hover:underline">Vezi toate →</a>
                 </div>
                 <div className="flex flex-col gap-4 sm:grid sm:grid-cols-2">
                   {similarListings.map((l) => (
@@ -515,7 +479,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
 
           </div>
 
-          {/* ── DESKTOP SIDEBAR ── */}
+          {/* ── SIDEBAR ── */}
           <aside className="hidden lg:block w-80 shrink-0">
             <div className="sticky top-24">
               <div className="bg-white rounded-3xl border border-gray-200 shadow-[0_4px_24px_rgba(0,0,0,0.08)] overflow-hidden">
@@ -562,7 +526,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
                   )}
                   <FavoriteButton listingId={listing.id} variant="detail" />
                   <QRCodeButton
-                    url={`${process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.moosey.ro"}/listing/${listing.id}`}
+                    url={canonicalUrl}
                     name={listing.name}
                   />
                 </div>
@@ -571,7 +535,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
               <div className="mt-4 bg-gray-50 rounded-2xl p-4 border border-gray-100">
                 <p className="text-xs font-bold text-gray-400 mb-3">Informații rapide</p>
                 <div className="flex flex-col gap-2 text-sm font-semibold text-gray-600">
-                  {age      && <div className="flex items-center gap-2"><span>👶</span> Vârstă: {age}</div>}
+                  {age && <div className="flex items-center gap-2"><span>👶</span> Vârstă: {age}</div>}
                   {listing.address && <div className="flex items-center gap-2"><span>📍</span> {listing.address}</div>}
                 </div>
               </div>
@@ -585,7 +549,6 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
         </div>
       </main>
 
-      {/* ── STICKY BOTTOM BUTTONS (mobile only) ── */}
       {listing.phone && (
         <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 px-4 py-3 flex gap-3 safe-area-bottom">
           <a

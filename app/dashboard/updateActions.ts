@@ -24,6 +24,7 @@ interface UpdatePayload {
   title: string;
   message: string;
   expires_at: string | null;
+  images?: string[];
 }
 
 async function getVerifiedUser(listingId: string) {
@@ -56,6 +57,7 @@ export async function addUpdate(payload: UpdatePayload) {
       title: payload.title.trim(),
       message: payload.message,
       expires_at: payload.expires_at || null,
+      images: payload.images ?? [],
     })
     .select()
     .single();

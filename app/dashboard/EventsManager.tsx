@@ -19,15 +19,28 @@ async function compressFile(file: File): Promise<File> {
   }
 }
 
+const EVENT_TYPES = [
+  { value: "eveniment",  label: "Eveniment" },
+  { value: "spectacol",  label: "Spectacol" },
+  { value: "atelier",    label: "Atelier" },
+  { value: "curs",       label: "Curs punctual" },
+  { value: "alt",        label: "Alt program" },
+];
+
 interface Event {
   id: string;
   listing_id: string;
   title: string;
   description: string | null;
   event_date: string;
+  event_end_date: string | null;
   start_time: string | null;
   end_time: string | null;
   price: number | null;
+  event_type: string | null;
+  age_recommendation: string | null;
+  location_override: string | null;
+  registration_url: string | null;
   thumbnail_url: string | null;
   gallery_urls: string[];
   created_at: string;
@@ -41,8 +54,10 @@ interface Props {
 const inputCls = "w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700 outline-none focus:border-[#ff5a2e] focus:ring-2 focus:ring-[#ff5a2e]/20 transition-all bg-white";
 
 const emptyForm = {
-  title: "", description: "", event_date: "",
+  title: "", description: "", event_date: "", event_end_date: "",
   start_time: "", end_time: "", price: "",
+  event_type: "eveniment",
+  age_recommendation: "", location_override: "", registration_url: "",
 };
 
 function formatTime(t: string | null) {
@@ -64,7 +79,6 @@ function toInputDate(dateStr: string): string {
   return `${y}-${m}-${day}`;
 }
 
-// Upload a single image; supports both new events (listing_id only) and existing events (event_id)
 async function uploadImage(
   file: File,
   opts: { eventId: string; type: "thumbnail" | "gallery"; galleryIndex?: number } |
@@ -96,7 +110,6 @@ export default function EventsManager({ listingId, initialEvents }: Props) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Image state
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const [existingThumbnail, setExistingThumbnail] = useState<string | null>(null);
@@ -133,9 +146,14 @@ export default function EventsManager({ listingId, initialEvents }: Props) {
       title: ev.title,
       description: ev.description ?? "",
       event_date: toInputDate(ev.event_date),
+      event_end_date: ev.event_end_date ? toInputDate(ev.event_end_date) : "",
       start_time: formatTime(ev.start_time) ?? "",
       end_time: formatTime(ev.end_time) ?? "",
       price: ev.price != null ? String(ev.price) : "",
+      event_type: ev.event_type ?? "eveniment",
+      age_recommendation: ev.age_recommendation ?? "",
+      location_override: ev.location_override ?? "",
+      registration_url: ev.registration_url ?? "",
     });
     resetImageState();
     setExistingThumbnail(ev.thumbnail_url ?? null);
@@ -183,13 +201,17 @@ export default function EventsManager({ listingId, initialEvents }: Props) {
       title: form.title.trim(),
       description: form.description.trim() || null,
       event_date: form.event_date,
+      event_end_date: form.event_end_date || null,
       start_time: form.start_time || null,
       end_time: form.end_time || null,
       price: form.price !== "" ? Number(form.price) : null,
+      event_type: form.event_type || null,
+      age_recommendation: form.age_recommendation.trim() || null,
+      location_override: form.location_override.trim() || null,
+      registration_url: form.registration_url.trim() || null,
     };
 
     if (!editingId) {
-      // ── NEW EVENT: upload photos first, then insert with URLs ──
       let thumbUrl: string | null = null;
       const newGalleryUrls: string[] = [];
 
@@ -221,7 +243,6 @@ export default function EventsManager({ listingId, initialEvents }: Props) {
       setEvents((prev) => [...prev, newEvent].sort((a, b) => a.event_date.localeCompare(b.event_date)));
 
     } else {
-      // ── EDIT: update event, then upload new images with event_id ──
       const result = await updateEvent(editingId, basePayload);
 
       if (result.error || !result.data) {
@@ -243,7 +264,6 @@ export default function EventsManager({ listingId, initialEvents }: Props) {
         if (url) finalGallery = [...finalGallery, url];
       }
 
-      // Always sync images when editing (covers removal of existing images too)
       await updateEventImages(savedId, listingId, finalThumbnail, finalGallery);
 
       const updatedEvent: Event = {
@@ -299,10 +319,31 @@ export default function EventsManager({ listingId, initialEvents }: Props) {
             />
           </div>
 
-          {/* Date + Price */}
+          {/* Event type */}
+          <div>
+            <label className="block text-xs font-bold text-gray-500 mb-1.5">Tip eveniment</label>
+            <div className="flex flex-wrap gap-2">
+              {EVENT_TYPES.map((t) => (
+                <button
+                  key={t.value}
+                  type="button"
+                  onClick={() => set("event_type", t.value)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold border-2 transition-all ${
+                    form.event_type === t.value
+                      ? "border-[#ff5a2e] bg-orange-50 text-[#ff5a2e]"
+                      : "border-gray-200 text-gray-500 hover:border-gray-300"
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Date start + Date end */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-bold text-gray-500 mb-1.5">Data *</label>
+              <label className="block text-xs font-bold text-gray-500 mb-1.5">Data start *</label>
               <input
                 type="date"
                 value={form.event_date}
@@ -311,15 +352,13 @@ export default function EventsManager({ listingId, initialEvents }: Props) {
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-gray-500 mb-1.5">Preț (lei)</label>
+              <label className="block text-xs font-bold text-gray-500 mb-1.5">Data sfârșit <span className="text-gray-400 font-medium">(opțional)</span></label>
               <input
-                type="number"
-                min="0"
-                step="0.5"
-                value={form.price}
-                onChange={(e) => set("price", e.target.value)}
+                type="date"
+                value={form.event_end_date}
+                onChange={(e) => set("event_end_date", e.target.value)}
+                min={form.event_date}
                 className={inputCls}
-                placeholder="Ex: 30"
               />
             </div>
           </div>
@@ -346,6 +385,54 @@ export default function EventsManager({ listingId, initialEvents }: Props) {
             </div>
           </div>
 
+          {/* Price + Age recommendation */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-bold text-gray-500 mb-1.5">Preț (lei)</label>
+              <input
+                type="number"
+                min="0"
+                step="0.5"
+                value={form.price}
+                onChange={(e) => set("price", e.target.value)}
+                className={inputCls}
+                placeholder="Ex: 30"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-gray-500 mb-1.5">Vârstă recomandată</label>
+              <input
+                value={form.age_recommendation}
+                onChange={(e) => set("age_recommendation", e.target.value)}
+                className={inputCls}
+                placeholder="Ex: 5–12 ani"
+              />
+            </div>
+          </div>
+
+          {/* Location override */}
+          <div>
+            <label className="block text-xs font-bold text-gray-500 mb-1.5">Locație eveniment <span className="text-gray-400 font-medium">(dacă diferă de adresa locației)</span></label>
+            <input
+              value={form.location_override}
+              onChange={(e) => set("location_override", e.target.value)}
+              className={inputCls}
+              placeholder="Ex: Sala Thalia, Str. Cetății 1"
+            />
+          </div>
+
+          {/* Registration URL */}
+          <div>
+            <label className="block text-xs font-bold text-gray-500 mb-1.5">Link înscriere <span className="text-gray-400 font-medium">(opțional)</span></label>
+            <input
+              type="url"
+              value={form.registration_url}
+              onChange={(e) => set("registration_url", e.target.value)}
+              className={inputCls}
+              placeholder="https://..."
+            />
+          </div>
+
           {/* Description */}
           <div>
             <label className="block text-xs font-bold text-gray-500 mb-1.5">Descriere</label>
@@ -358,11 +445,10 @@ export default function EventsManager({ listingId, initialEvents }: Props) {
             />
           </div>
 
-          {/* ── FOTOGRAFII ── */}
+          {/* Photos */}
           <div className="border-t border-gray-200 pt-3">
             <p className="text-xs font-black text-gray-500 mb-3">Fotografii eveniment</p>
 
-            {/* Thumbnail */}
             <div className="mb-3">
               <label className="block text-xs font-bold text-gray-400 mb-1.5">Imagine principală</label>
               <div className="flex items-center gap-3">
@@ -407,7 +493,6 @@ export default function EventsManager({ listingId, initialEvents }: Props) {
               />
             </div>
 
-            {/* Gallery */}
             <div>
               <label className="block text-xs font-bold text-gray-400 mb-1.5">
                 Galerie ({totalGallery}/3 poze)
@@ -500,6 +585,7 @@ export default function EventsManager({ listingId, initialEvents }: Props) {
             const monthStr = d
               ? d.toLocaleDateString("ro-RO", { month: "short", timeZone: "UTC" })
               : "";
+            const typeLabel = EVENT_TYPES.find((t) => t.value === ev.event_type)?.label ?? null;
 
             return (
               <div key={ev.id} className={`py-3 flex items-start gap-3 ${isPast ? "opacity-40" : ""}`}>
@@ -518,14 +604,25 @@ export default function EventsManager({ listingId, initialEvents }: Props) {
                 )}
 
                 <div className="flex-1 min-w-0">
-                  <p className="font-black text-[#1a1a2e] text-sm">{ev.title}</p>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="font-black text-[#1a1a2e] text-sm">{ev.title}</p>
+                    {typeLabel && (
+                      <span className="text-[10px] font-bold bg-orange-50 text-[#ff5a2e] px-2 py-0.5 rounded-full">
+                        {typeLabel}
+                      </span>
+                    )}
+                  </div>
                   <p className="text-xs text-gray-400 font-medium mt-0.5">
                     {d
                       ? d.toLocaleDateString("ro-RO", { day: "numeric", month: "short", timeZone: "UTC" })
                       : "Dată invalidă"}
                     {timeStr ? ` · ${timeStr}` : ""}
                     {ev.price != null ? ` · ${ev.price} lei` : ""}
+                    {ev.age_recommendation ? ` · ${ev.age_recommendation}` : ""}
                   </p>
+                  {ev.location_override && (
+                    <p className="text-[11px] text-gray-400 font-medium mt-0.5">📍 {ev.location_override}</p>
+                  )}
                 </div>
                 <div className="flex gap-2 shrink-0">
                   <button
