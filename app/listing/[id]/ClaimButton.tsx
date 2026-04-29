@@ -62,6 +62,18 @@ export default function ClaimButton({ listingId, listingName, claimedBy }: Props
       setError(err.message.includes("unique") ? "Ai trimis deja o cerere pentru acest listing." : "Eroare. Încearcă din nou.");
       setSubmitting(false);
     } else {
+      // Notify admin — fire and forget
+      fetch("/api/claim-notify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          listingId,
+          listingName,
+          userEmail: contactEmail,
+          phone: phone || null,
+          message: message || null,
+        }),
+      }).catch(() => {});
       setSuccess(true);
       setStatus("pending");
       setSubmitting(false);

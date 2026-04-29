@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { adminClient } from "@/utils/supabase/admin";
 import { rateLimit, getIp } from "@/utils/rateLimiter";
 import { sanitizeText, sanitizeRichText, isValidEmail, isAllowedValue } from "@/utils/sanitize";
+import { sendBrevoEmail } from "@/utils/brevo";
 
 const ALLOWED_CATEGORIES = [
   "loc-de-joaca",
@@ -133,16 +134,7 @@ export async function submitListingRequest(
   // Email de confirmare + notificare admin — non-blocking
   if (process.env.BREVO_API_KEY) {
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.moosey.ro";
-    const apiKey = process.env.BREVO_API_KEY;
 
-    // 1. Confirmare către organizator
-    fetch(`${siteUrl}/api/send-confirmation`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: contactEmail, name }),
-    }).catch((err) => console.error("[submitListingRequest] confirmation email error:", err));
-
-    // 2. Notificare admin
     const categoryLabels: Record<string, string> = {
       "loc-de-joaca": "Loc de joacă",
       "educatie": "Educație",
@@ -152,36 +144,60 @@ export async function submitListingRequest(
       "eveniment": "Eveniment",
     };
     const categoryLabel = categoryLabels[category] ?? category;
-    fetch("https://api.brevo.com/v3/smtp/email", {
+
+    // 1. Confirmare către organizator
+    fetch(`${siteUrl}/api/send-confirmation`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "api-key": apiKey,
-      },
-      body: JSON.stringify({
-        sender: { name: "Moosey", email: "hello@moosey.ro" },
-        to: [{ email: "hello@moosey.ro", name: "Admin Moosey" }],
-        subject: `📋 Cerere nouă de listing: ${name}`,
-        htmlContent: `
-          <div style="font-family:sans-serif;max-width:600px;margin:0 auto">
-            <h2 style="color:#ff5a2e">Cerere nouă de listing</h2>
-            <table style="border-collapse:collapse;width:100%">
-              <tr><td style="padding:6px 12px;font-weight:bold;color:#555;width:130px">Locație</td><td style="padding:6px 12px">${name}</td></tr>
-              <tr style="background:#f9f9f9"><td style="padding:6px 12px;font-weight:bold;color:#555">Categorie</td><td style="padding:6px 12px">${categoryLabel}</td></tr>
-              <tr><td style="padding:6px 12px;font-weight:bold;color:#555">Adresă</td><td style="padding:6px 12px">${address}</td></tr>
-              <tr style="background:#f9f9f9"><td style="padding:6px 12px;font-weight:bold;color:#555">Contact</td><td style="padding:6px 12px">${contactName}</td></tr>
-              <tr><td style="padding:6px 12px;font-weight:bold;color:#555">Email</td><td style="padding:6px 12px">${contactEmail}</td></tr>
-              <tr style="background:#f9f9f9"><td style="padding:6px 12px;font-weight:bold;color:#555">Telefon</td><td style="padding:6px 12px">${phone}</td></tr>
-            </table>
-            <div style="margin-top:24px">
-              <a href="${siteUrl}/admin/aprobare" style="background:#ff5a2e;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block">
-                → Deschide panoul de aprobare
-              </a>
-            </div>
-          </div>
-        `,
-      }),
-    }).catch((err) => console.error("[submitListingRequest] admin notification error:", err));
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: contactEmail, name }),
+    }).catch((err) => console.error("[submitListingRequest] confirmation email error:", err));
+
+    // 2. Notificare admin — table-based HTML
+    const adminHtml = `
+<table width="100%" cellpadding="0" cellspacing="0"
+       style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+  <tr>
+    <td style="background: #ff5a2e; padding: 20px; text-align: center;">
+      <span style="color: white; font-size: 24px; font-weight: bold;">Moosey Admin</span>
+    </td>
+  </tr>
+  <tr>
+    <td style="padding: 24px; background: #ffffff;">
+      <h2 style="color: #2C2C2A; font-size: 20px; margin: 0 0 16px 0;">Locație nouă spre aprobare</h2>
+      <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse;">
+        <tr><td style="padding: 8px 12px; font-weight: bold; color: #555; width: 130px; border-bottom: 1px solid #f0f0f0;">Locație</td><td style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0;">${name}</td></tr>
+        <tr style="background:#f9f9f9;"><td style="padding: 8px 12px; font-weight: bold; color: #555; border-bottom: 1px solid #f0f0f0;">Categorie</td><td style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0;">${categoryLabel}</td></tr>
+        <tr><td style="padding: 8px 12px; font-weight: bold; color: #555; border-bottom: 1px solid #f0f0f0;">Adresă</td><td style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0;">${address}</td></tr>
+        <tr style="background:#f9f9f9;"><td style="padding: 8px 12px; font-weight: bold; color: #555; border-bottom: 1px solid #f0f0f0;">Contact</td><td style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0;">${contactName}</td></tr>
+        <tr><td style="padding: 8px 12px; font-weight: bold; color: #555; border-bottom: 1px solid #f0f0f0;">Email</td><td style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0;"><a href="mailto:${contactEmail}" style="color:#ff5a2e;">${contactEmail}</a></td></tr>
+        <tr style="background:#f9f9f9;"><td style="padding: 8px 12px; font-weight: bold; color: #555;">Telefon</td><td style="padding: 8px 12px;">${phone}</td></tr>
+      </table>
+    </td>
+  </tr>
+  <tr>
+    <td style="text-align: center; padding: 16px 32px 32px;">
+      <a href="${siteUrl}/admin/aprobare"
+         style="background: #ff5a2e; color: white; padding: 14px 28px;
+                border-radius: 25px; text-decoration: none;
+                font-weight: bold; font-size: 15px; display: inline-block;">
+        Mergi la Admin →
+      </a>
+    </td>
+  </tr>
+  <tr>
+    <td style="background: #fff5f3; padding: 16px; text-align: center; border-top: 1px solid #ffe4dc;">
+      <p style="color: #9ca3af; font-size: 12px; margin: 0;">
+        Moosey &middot; <a href="https://www.moosey.ro" style="color: #ff5a2e;">www.moosey.ro</a>
+      </p>
+    </td>
+  </tr>
+</table>`;
+
+    sendBrevoEmail(
+      "hello@moosey.ro",
+      `[Admin] Locație nouă spre aprobare: ${name}`,
+      adminHtml
+    ).catch((err) => console.error("[submitListingRequest] admin notification error:", err));
   }
 
   return { success: true, error: null };

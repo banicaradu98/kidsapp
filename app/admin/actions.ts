@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { adminClient } from "@/utils/supabase/admin";
 import { rateLimit, getIp } from "@/utils/rateLimiter";
+import { emailTemplate, sendBrevoEmail } from "@/utils/brevo";
 
 // ── AUTH ──────────────────────────────────────────────────────────
 export async function loginAction(
@@ -111,6 +112,12 @@ export async function rejectListing(id: string) {
 
 // ── CLAIMS ────────────────────────────────────────────────────────
 export async function approveClaim(claimId: string, listingId: string, userId: string) {
+  // Fetch claim email + listing name before updating
+  const [{ data: claim }, { data: listing }] = await Promise.all([
+    adminClient.from("claims").select("email").eq("id", claimId).single(),
+    adminClient.from("listings").select("name").eq("id", listingId).single(),
+  ]);
+
   await adminClient
     .from("claims")
     .update({ status: "approved" })
@@ -120,6 +127,33 @@ export async function approveClaim(claimId: string, listingId: string, userId: s
     .from("listings")
     .update({ claimed_by: userId, claimed_at: new Date().toISOString(), is_verified: true, package: "free" })
     .eq("id", listingId);
+
+  // Email confirmare către utilizator
+  if (claim?.email && listing?.name && process.env.BREVO_API_KEY) {
+    const listingName = listing.name;
+    const html = emailTemplate(
+      "Revendicare aprobată! 🎉",
+      `<p style="color:#5F5E5A;line-height:1.6;margin:0 0 12px 0;">
+        Felicitări! Cererea ta de revendicare pentru
+        <strong>${listingName}</strong> a fost aprobată.
+      </p>
+      <p style="color:#5F5E5A;line-height:1.6;margin:0 0 12px 0;">
+        Locația este acum asociată contului tău. Intră în contul tău pe Moosey
+        și selectează locația din dashboard pentru a o gestiona.
+      </p>
+      <p style="color:#5F5E5A;line-height:1.6;margin:0;">
+        Din dashboard poți edita informațiile, adăuga evenimente, răspunde
+        la recenzii și urmări statisticile de vizualizare.
+      </p>`,
+      "Accesează dashboard-ul →",
+      "https://www.moosey.ro/dashboard"
+    );
+    sendBrevoEmail(
+      claim.email,
+      `Revendicare aprobată! Accesează dashboard-ul tău Moosey 🎉`,
+      html
+    ).catch((err) => console.error("[approveClaim] email error:", err));
+  }
 
   revalidatePath("/admin/revendicari");
 }

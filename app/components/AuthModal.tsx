@@ -63,6 +63,13 @@ export default function AuthModal({ onClose }: Props) {
     setLoading(false);
   }
 
+  function validatePassword(pw: string): string | null {
+    if (pw.length < 8) return "Parola trebuie să aibă cel puțin 8 caractere";
+    if (!/[A-Z]/.test(pw)) return "Parola trebuie să conțină cel puțin o literă mare";
+    if (!/[0-9]/.test(pw)) return "Parola trebuie să conțină cel puțin o cifră";
+    return null;
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
@@ -71,7 +78,13 @@ export default function AuthModal({ onClose }: Props) {
     if (tab === "login") {
       const { error } = await signInWithEmail(email, password);
       if (error) {
-        setError("Email sau parolă incorectă.");
+        if (error.message.includes("Email not confirmed") || error.message.includes("email_not_confirmed")) {
+          setError("Contul tău nu a fost verificat încă. Verifică emailul și apasă pe linkul de confirmare.");
+        } else if (error.message.includes("Invalid login credentials")) {
+          setError("Email sau parolă incorectă. Încearcă din nou.");
+        } else {
+          setError(error.message);
+        }
         setLoading(false);
       } else {
         onClose();
@@ -86,8 +99,9 @@ export default function AuthModal({ onClose }: Props) {
       setLoading(false);
       return;
     }
-    if (password.length < 6) {
-      setError("Parola trebuie să aibă cel puțin 6 caractere.");
+    const pwError = validatePassword(password);
+    if (pwError) {
+      setError(pwError);
       setLoading(false);
       return;
     }
@@ -244,6 +258,19 @@ export default function AuthModal({ onClose }: Props) {
                   >
                     Ai uitat parola?
                   </button>
+                )}
+                {tab === "register" && password.length > 0 && (
+                  <div className="mt-2 flex flex-col gap-1">
+                    {[
+                      { ok: password.length >= 8,     label: "Cel puțin 8 caractere" },
+                      { ok: /[A-Z]/.test(password),   label: "Cel puțin o literă mare" },
+                      { ok: /[0-9]/.test(password),   label: "Cel puțin o cifră" },
+                    ].map(({ ok, label }) => (
+                      <span key={label} className={`text-xs font-semibold flex items-center gap-1 ${ok ? "text-green-600" : "text-gray-400"}`}>
+                        {ok ? "✓" : "✗"} {label}
+                      </span>
+                    ))}
+                  </div>
                 )}
               </div>
               {tab === "register" && (
