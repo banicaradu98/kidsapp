@@ -23,7 +23,7 @@ export default function ClaimActions({ claimId, listingId, userId }: Props) {
 
   async function handleReject() {
     setLoading("reject");
-    await rejectClaim(claimId);
+    await rejectClaim(claimId, listingId);
     router.refresh();
     setLoading(null);
   }

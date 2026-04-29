@@ -415,7 +415,7 @@ export default async function Home() {
                           )}
                           {listing.description && (
                             <p className="text-gray-500 text-sm font-medium leading-relaxed mb-3 line-clamp-2">
-                              {listing.description}
+                              {listing.description.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120)}...
                             </p>
                           )}
                           <div className="flex items-center justify-between">
@@ -476,7 +476,7 @@ export default async function Home() {
                           )}
                           {listing.description && (
                             <p className="text-gray-500 text-sm font-medium leading-relaxed mb-4 line-clamp-2">
-                              {listing.description}
+                              {listing.description.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120)}...
                             </p>
                           )}
                           <div className="flex items-center justify-between">

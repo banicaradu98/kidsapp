@@ -176,10 +176,44 @@ export async function approveClaim(claimId: string, listingId: string, userId: s
   revalidatePath("/admin/revendicari");
 }
 
-export async function rejectClaim(claimId: string) {
+export async function rejectClaim(claimId: string, listingId: string) {
+  // Fetch claim email + listing name for the rejection email
+  const [{ data: claim }, { data: listing }] = await Promise.all([
+    adminClient.from("claims").select("email").eq("id", claimId).single(),
+    adminClient.from("listings").select("name").eq("id", listingId).single(),
+  ]);
+
   await adminClient
     .from("claims")
-    .update({ status: "rejected" })
+    .update({ status: "rejected", rejected_at: new Date().toISOString() })
     .eq("id", claimId);
+
+  // Email notificare respingere
+  if (claim?.email && listing?.name && process.env.BREVO_API_KEY) {
+    const listingName = listing.name;
+    const html = emailTemplate(
+      "Cererea ta de revendicare",
+      `<p style="color:#5F5E5A;line-height:1.6;margin:0 0 12px 0;">
+        Ne pare rău, cererea ta de revendicare pentru locația
+        <strong>${listingName}</strong> nu a putut fi aprobată momentan.
+      </p>
+      <p style="color:#5F5E5A;line-height:1.6;margin:0 0 12px 0;">
+        Pentru mai multe detalii sau pentru a clarifica situația,
+        te rugăm să ne contactezi direct la:
+      </p>
+      <p style="text-align:center;margin:24px 0;">
+        <a href="mailto:hello@moosey.ro"
+           style="color:#ff5a2e;font-size:16px;font-weight:bold;">
+          hello@moosey.ro
+        </a>
+      </p>`
+    );
+    sendBrevoEmail(
+      claim.email,
+      "Cerere de revendicare — răspuns Moosey",
+      html
+    ).catch((err) => console.error("[rejectClaim] email error:", err));
+  }
+
   revalidatePath("/admin/revendicari");
 }

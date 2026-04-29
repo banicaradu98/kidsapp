@@ -33,12 +33,24 @@ export default function ClaimButton({ listingId, listingName, claimedBy }: Props
 
       const { data } = await supabase
         .from("claims")
-        .select("status")
+        .select("id, status, created_at")
         .eq("listing_id", listingId)
         .eq("user_id", session.user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
         .maybeSingle();
 
-      setStatus((data?.status as ClaimStatus) ?? "none");
+      if (!data) { setStatus("none"); return; }
+
+      const isOldPending =
+        data.status === "pending" &&
+        new Date(data.created_at) < new Date(Date.now() - 48 * 60 * 60 * 1000);
+
+      if (data.status === "rejected" || isOldPending) {
+        setStatus("none");
+      } else {
+        setStatus(data.status as ClaimStatus);
+      }
     });
   }, [listingId]);
 
@@ -49,17 +61,43 @@ export default function ClaimButton({ listingId, listingName, claimedBy }: Props
     setError(null);
 
     const supabase = createClient();
-    const payload = {
+
+    // Verifică dacă există o cerere recentă pending (< 48h)
+    const { data: existing } = await supabase
+      .from("claims")
+      .select("id, status, created_at")
+      .eq("listing_id", listingId)
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const canClaim = !existing ||
+      existing.status === "rejected" ||
+      existing.status === "approved" ||
+      (existing.status === "pending" &&
+        new Date(existing.created_at) < new Date(Date.now() - 48 * 60 * 60 * 1000));
+
+    if (!canClaim) {
+      const hoursLeft = Math.ceil(
+        (new Date(existing!.created_at).getTime() + 48 * 60 * 60 * 1000 - Date.now()) / (60 * 60 * 1000)
+      );
+      setError(`Ai deja o cerere în așteptare. Poți re-aplica în ${hoursLeft} ore.`);
+      setSubmitting(false);
+      return;
+    }
+
+    // Inserează cerere nouă
+    const { error: err } = await supabase.from("claims").insert({
       listing_id: listingId,
       user_id: userId,
       email: contactEmail,
       phone: phone || null,
       message: message || null,
-    };
-    const { error: err } = await supabase.from("claims").insert(payload);
+    });
 
     if (err) {
-      setError(err.message.includes("unique") ? "Ai trimis deja o cerere pentru acest listing." : "Eroare. Încearcă din nou.");
+      setError("Eroare. Încearcă din nou.");
       setSubmitting(false);
     } else {
       // Notify admin — fire and forget
