@@ -7,11 +7,14 @@ import AuthModal from "@/app/components/AuthModal";
 interface Props {
   listingId: string;
   listingName: string;
+  claimedBy?: string | null;
 }
 
 type ClaimStatus = "none" | "pending" | "approved" | "rejected" | "loading";
 
-export default function ClaimButton({ listingId, listingName }: Props) {
+export default function ClaimButton({ listingId, listingName, claimedBy }: Props) {
+  // Already claimed by someone else — hide the button entirely
+  if (claimedBy) return null;
   const [status, setStatus] = useState<ClaimStatus>("loading");
   const [userId, setUserId] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);

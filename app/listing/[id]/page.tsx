@@ -572,7 +572,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
               </div>
 
               <div className="mt-4 text-center">
-                <ClaimButton listingId={listing.id} listingName={listing.name} />
+                <ClaimButton listingId={listing.id} listingName={listing.name} claimedBy={listing.claimed_by} />
               </div>
             </div>
           </aside>
