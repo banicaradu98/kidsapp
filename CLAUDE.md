@@ -630,12 +630,16 @@ Clasele din `CATEGORY_META` (gradiente, tagColor) trebuie adăugate manual în `
 
 ## Update-uri recente (Aprilie 2026)
 
-### Sistem pachete (pregătit, neactivat public)
-- `utils/packages.ts` — configurație completă Free/Standard/Pro
-- Coloana `profiles.package` și `profiles.package_expires_at` (rulează SQL dacă nu există)
-- `hasFeature()` utility pentru verificare permisiuni per tier
-- Dashboard statistici: graficul 30 zile vizibil doar Standard/Pro; Free vede banner discret
-- Prețuri: Free=0, Standard=50lei/lună sau 500lei/an, Pro=100lei/lună sau 1000lei/an
+### Sistem pachete (pregătit, NEACTIVAT public)
+- `utils/packages.ts` — configurație Free/Standard/Pro
+- `getPackage()` și `hasFeature()` utilities
+- Toți utilizatorii sunt pe Free momentan
+- Standard: 50 lei/lună, 500 lei/an
+- Pro: 100 lei/lună, 1000 lei/an
+- Dashboard statistici afișează date per tier (Free: 7 zile; Standard: 30 zile; Pro: 90 zile)
+- Free vede banner discret: "Statistici avansate... vor fi disponibile în curând."
+- Activare: schimbi `package` în `profiles` pentru un user specific
+- Pagina de prețuri: de implementat după 2-3 luni de trafic
 
 **SQL pentru coloane noi (rulează în Supabase SQL Editor dacă nu s-a rulat):**
 ```sql

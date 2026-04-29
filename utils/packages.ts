@@ -11,13 +11,14 @@ export const PACKAGES = {
       reviews: true,
       stats_basic: true,
       stats_advanced: false,
+      stats_days: 7,
       featured_category: false,
       featured_homepage: false,
+      featured_categories_count: 0,
       status_updates: false,
       newsletter_mention: false,
       instagram_post: false,
-      featured_categories_count: 0,
-      stats_days: 7,
+      promo_discount: 0,
     }
   },
   standard: {
@@ -30,13 +31,13 @@ export const PACKAGES = {
       reviews: true,
       stats_basic: true,
       stats_advanced: true,
+      stats_days: 30,
       featured_category: true,
       featured_homepage: false,
+      featured_categories_count: 1,
       status_updates: true,
       newsletter_mention: false,
       instagram_post: false,
-      featured_categories_count: 1,
-      stats_days: 30,
       promo_discount: 10,
     }
   },
@@ -50,19 +51,20 @@ export const PACKAGES = {
       reviews: true,
       stats_basic: true,
       stats_advanced: true,
+      stats_days: 90,
       featured_category: true,
       featured_homepage: true,
+      featured_categories_count: 2,
       status_updates: true,
       newsletter_mention: true,
       instagram_post: true,
-      featured_categories_count: 2,
-      stats_days: 90,
       promo_discount: 15,
     }
   }
 } as const
 
-export function getPackage(profile: { package?: string | null; package_expires_at?: string | null } | null | undefined): Package {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function getPackage(profile: any): Package {
   if (!profile?.package) return 'free'
   if (profile.package_expires_at &&
       new Date(profile.package_expires_at) < new Date()) {
@@ -72,7 +74,8 @@ export function getPackage(profile: { package?: string | null; package_expires_a
 }
 
 export function hasFeature(
-  profile: { package?: string | null; package_expires_at?: string | null } | null | undefined,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  profile: any,
   feature: keyof typeof PACKAGES.free.features
 ): boolean {
   const pkg = getPackage(profile)

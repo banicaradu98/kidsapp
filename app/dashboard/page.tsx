@@ -87,21 +87,21 @@ export default async function DashboardPage({
     .eq("listing_id", activeListingId)
     .order("created_at", { ascending: false });
 
-  // Stats: total views + last 30 days + week comparison
-  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-  const sevenDaysAgo  = new Date(Date.now() -  7 * 24 * 60 * 60 * 1000).toISOString();
+  // Stats: total views + last 90 days (filtered per tier in StatsPanel) + week comparison
+  const ninetyDaysAgo   = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
+  const sevenDaysAgo    = new Date(Date.now() -  7 * 24 * 60 * 60 * 1000).toISOString();
   const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
 
   const [
     { count: totalViews },
-    { data: recentViews },
+    { data: allRecentViews },
     { count: thisWeekViews },
     { count: lastWeekViews },
     { count: favCount },
     { count: activeEventsCount },
   ] = await Promise.all([
     adminClient.from("listing_views").select("id", { count: "exact", head: true }).eq("listing_id", activeListingId),
-    adminClient.from("listing_views").select("viewed_at").eq("listing_id", activeListingId).gte("viewed_at", thirtyDaysAgo),
+    adminClient.from("listing_views").select("viewed_at").eq("listing_id", activeListingId).gte("viewed_at", ninetyDaysAgo),
     adminClient.from("listing_views").select("id", { count: "exact", head: true }).eq("listing_id", activeListingId).gte("viewed_at", sevenDaysAgo),
     adminClient.from("listing_views").select("id", { count: "exact", head: true }).eq("listing_id", activeListingId).gte("viewed_at", fourteenDaysAgo).lt("viewed_at", sevenDaysAgo),
     adminClient.from("user_favorites").select("id", { count: "exact", head: true }).eq("listing_id", activeListingId),
@@ -169,7 +169,7 @@ export default async function DashboardPage({
 
         <StatsPanel
           totalViews={totalViews ?? 0}
-          recentViews={recentViews ?? []}
+          allRecentViews={allRecentViews ?? []}
           thisWeekViews={thisWeekViews ?? 0}
           lastWeekViews={lastWeekViews ?? 0}
           reviewCount={reviewList.length}
