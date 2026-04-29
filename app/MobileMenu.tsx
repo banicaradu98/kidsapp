@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { createPortal } from "react-dom";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/utils/supabase/client";
@@ -54,7 +55,7 @@ function MenuPanel({ onClose, user, onSignOut, onOpenAuth }: { onClose: () => vo
         flexShrink: 0,
       }}>
         <a href="/" onClick={onClose} style={{ display: "flex", alignItems: "center", textDecoration: "none" }}>
-          <img src="/images/logo-moosey.png" alt="Moosey" style={{ height: 40, width: "auto", objectFit: "contain" }} />
+          <Image src="/images/logo-moosey.png" alt="Moosey" width={120} height={40} style={{ height: 40, width: "auto", objectFit: "contain" }} />
         </a>
         <button
           onClick={onClose}
