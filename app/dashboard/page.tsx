@@ -177,7 +177,7 @@ export default async function DashboardPage({
           profile={profile}
         />
 
-        <PromoSection listingId={listing.id} listingName={listing.name} siteUrl={siteUrl} />
+        <PromoSection listingId={listing.id} listingName={listing.name} listingSlug={listing.slug} listingCategory={listing.category} siteUrl={siteUrl} />
 
         <ListingEditor listing={listing} />
 

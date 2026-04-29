@@ -3,12 +3,16 @@
 import { useRef, useState } from "react";
 import { QRCodeCanvas } from "qrcode.react";
 
-export default function PromoSection({ listingId, listingName, siteUrl }: {
+export default function PromoSection({ listingId, listingName, listingSlug, listingCategory, siteUrl }: {
   listingId: string;
   listingName: string;
+  listingSlug?: string | null;
+  listingCategory?: string | null;
   siteUrl: string;
 }) {
-  const url = `${siteUrl}/listing/${listingId}`;
+  const url = listingSlug && listingCategory
+    ? `${siteUrl}/${listingCategory}/${listingSlug}`
+    : `${siteUrl}/listing/${listingId}`;
   const canvasRef = useRef<HTMLDivElement>(null);
   const [copied, setCopied] = useState(false);
 
