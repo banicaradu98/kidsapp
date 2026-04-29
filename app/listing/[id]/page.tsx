@@ -570,7 +570,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
                   )}
                   <FavoriteButton listingId={listing.id} variant="detail" />
                   <QRCodeButton
-                    url={`${process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.moosey.ro"}/listing/${listing.id}`}
+                    url={`${process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.moosey.ro"}${listing.slug && listing.category ? `/${listing.category}/${listing.slug}` : `/listing/${listing.id}`}`}
                     name={listing.name}
                   />
                 </div>
