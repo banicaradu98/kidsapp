@@ -108,6 +108,13 @@ export default async function DashboardPage({
     adminClient.from("events").select("id", { count: "exact", head: true }).eq("listing_id", activeListingId).gte("event_date", new Date().toISOString().split("T")[0]),
   ]);
 
+  // Fetch profile for package tier checks
+  const { data: profile } = await adminClient
+    .from("profiles")
+    .select("package, package_expires_at")
+    .eq("id", user.id)
+    .single();
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const reviewList = (reviews ?? []) as any[];
   const avgRating = reviewList.length > 0
@@ -169,6 +176,7 @@ export default async function DashboardPage({
           avgRating={avgRating}
           favCount={favCount ?? 0}
           activeEventsCount={activeEventsCount ?? 0}
+          profile={profile}
         />
 
         <PromoSection listingId={listing.id} listingName={listing.name} siteUrl={siteUrl} />

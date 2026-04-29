@@ -1,3 +1,5 @@
+import { hasFeature } from "@/utils/packages";
+
 interface Props {
   totalViews: number;
   recentViews: { viewed_at: string }[];
@@ -7,12 +9,15 @@ interface Props {
   avgRating: number | null;
   favCount: number;
   activeEventsCount: number;
+  profile?: { package?: string | null; package_expires_at?: string | null } | null;
 }
 
 export default function StatsPanel({
   totalViews, recentViews, thisWeekViews, lastWeekViews,
-  reviewCount, avgRating, favCount, activeEventsCount,
+  reviewCount, avgRating, favCount, activeEventsCount, profile,
 }: Props) {
+  const hasAdvanced = hasFeature(profile, 'stats_advanced');
+
   // Build daily counts for last 30 days
   const today = new Date();
   const days: { label: string; count: number }[] = [];
@@ -90,27 +95,37 @@ export default function StatsPanel({
       </div>
 
       {/* Bar chart — last 30 days */}
-      <p className="text-xs font-bold text-gray-400 mb-2">Vizualizări ultimele 30 zile</p>
-      <div className="flex items-end gap-0.5 h-16">
-        {days.map((d, i) => (
-          <div
-            key={i}
-            className="flex-1 bg-[#ff5a2e]/20 hover:bg-[#ff5a2e]/50 rounded-sm transition-colors relative group cursor-default"
-            style={{ height: `${Math.max(4, Math.round((d.count / maxCount) * 100))}%` }}
-          >
-            {d.count > 0 && (
-              <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 text-[9px] font-bold text-[#ff5a2e] opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none bg-white px-1 rounded shadow-sm z-10">
-                {d.label}: {d.count}
-              </span>
-            )}
+      {hasAdvanced ? (
+        <>
+          <p className="text-xs font-bold text-gray-400 mb-2">Vizualizări ultimele 30 zile</p>
+          <div className="flex items-end gap-0.5 h-16">
+            {days.map((d, i) => (
+              <div
+                key={i}
+                className="flex-1 bg-[#ff5a2e]/20 hover:bg-[#ff5a2e]/50 rounded-sm transition-colors relative group cursor-default"
+                style={{ height: `${Math.max(4, Math.round((d.count / maxCount) * 100))}%` }}
+              >
+                {d.count > 0 && (
+                  <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 text-[9px] font-bold text-[#ff5a2e] opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none bg-white px-1 rounded shadow-sm z-10">
+                    {d.label}: {d.count}
+                  </span>
+                )}
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
-      <div className="flex justify-between mt-1 text-[10px] text-gray-300 font-medium">
-        <span>{days[0]?.label}</span>
-        <span>{days[14]?.label}</span>
-        <span>{days[29]?.label}</span>
-      </div>
+          <div className="flex justify-between mt-1 text-[10px] text-gray-300 font-medium">
+            <span>{days[0]?.label}</span>
+            <span>{days[14]?.label}</span>
+            <span>{days[29]?.label}</span>
+          </div>
+        </>
+      ) : (
+        <div className="mt-4 p-3 bg-gray-50 rounded-xl border border-dashed border-gray-200 text-center">
+          <p className="text-xs text-gray-400">
+            Statistici avansate disponibile în pachetul Standard
+          </p>
+        </div>
+      )}
     </section>
   );
 }

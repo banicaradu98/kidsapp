@@ -625,3 +625,42 @@ Clasele din `CATEGORY_META` (gradiente, tagColor) trebuie adăugate manual în `
 - `createClient` din `server.ts` necesită `cookieStore`: `createClient(await cookies())`
 - `is_featured` → secțiunea "Recomandate" pe homepage (max 6)
 - Tabel `profiles` cu trigger automat la înregistrare user nou
+
+---
+
+## Update-uri recente (Aprilie 2026)
+
+### Sistem pachete (pregătit, neactivat public)
+- `utils/packages.ts` — configurație completă Free/Standard/Pro
+- Coloana `profiles.package` și `profiles.package_expires_at` (rulează SQL dacă nu există)
+- `hasFeature()` utility pentru verificare permisiuni per tier
+- Dashboard statistici: graficul 30 zile vizibil doar Standard/Pro; Free vede banner discret
+- Prețuri: Free=0, Standard=50lei/lună sau 500lei/an, Pro=100lei/lună sau 1000lei/an
+
+**SQL pentru coloane noi (rulează în Supabase SQL Editor dacă nu s-a rulat):**
+```sql
+ALTER TABLE profiles
+ADD COLUMN IF NOT EXISTS package TEXT DEFAULT 'free'
+CHECK (package IN ('free', 'standard', 'pro'));
+
+ALTER TABLE profiles
+ADD COLUMN IF NOT EXISTS package_expires_at TIMESTAMPTZ;
+```
+
+### Flux adăugare locație publică
+- Formularul `/adauga-locatia-ta` salvează cu `is_verified=false`
+- Email confirmare trimis organizatorului via Brevo
+- Email notificare trimis la hello@moosey.ro la fiecare submit
+- La aprobare din admin: email automat organizator + notificare admin
+- API route: `/api/approve-listing` și `/api/send-confirmation`
+
+### Alte fix-uri recente
+- Badge "Verificat" ascuns temporar (reimplementat în pachetul Standard)
+- Filtrare `is_verified=true` pe toate paginile publice
+- Calendar homepage: fetch 90 zile, filtrare client-side corectă
+- Evenimente multi-zi apar pe toate săptămânile din interval
+- Validare obligatorie `event_date` pentru spectacole/evenimente în admin
+- Emoji support în TipTap editor și RichTextDisplay
+- CSP headers actualizate pentru Google Analytics
+- Canonical URLs pe toate paginile pentru SEO
+- Sitemap complet cu toate rutele
