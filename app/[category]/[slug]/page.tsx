@@ -143,7 +143,7 @@ export default async function ListingSlugPage({ params }: { params: { category: 
 
   const { data: reviews } = await supabase
     .from("reviews")
-    .select("id, user_name, rating, text, created_at")
+    .select("id, user_name, rating, text, created_at, review_replies(id, text, created_at)")
     .eq("listing_id", listing.id)
     .order("created_at", { ascending: false });
 

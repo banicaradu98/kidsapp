@@ -5,12 +5,19 @@ import { createClient } from "@/utils/supabase/client";
 import AuthModal from "@/app/components/AuthModal";
 import { triggerCelebration } from "@/app/components/MascotCelebration";
 
+interface ReviewReply {
+  id: string;
+  text: string;
+  created_at: string;
+}
+
 interface Review {
   id: string;
   user_name: string;
   rating: number;
   text: string | null;
   created_at: string;
+  review_replies?: ReviewReply[];
 }
 
 interface Props {
@@ -93,10 +100,10 @@ export default function ReviewSection({ listingId, initialReviews }: Props) {
     const supabase = createClient();
     const { data } = await supabase
       .from("reviews")
-      .select("id, user_name, rating, text, created_at")
+      .select("id, user_name, rating, text, created_at, review_replies(id, text, created_at)")
       .eq("listing_id", listingId)
       .order("created_at", { ascending: false });
-    setReviews(data ?? []);
+    setReviews((data ?? []) as Review[]);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -269,6 +276,12 @@ export default function ReviewSection({ listingId, initialReviews }: Props) {
               </div>
               {r.text && (
                 <p className="text-gray-600 text-sm font-medium leading-relaxed">{r.text}</p>
+              )}
+              {r.review_replies?.[0] && (
+                <div className="ml-6 mt-3 p-3 bg-orange-50 rounded-xl border-l-2 border-[#ff5a2e]">
+                  <p className="text-xs text-[#ff5a2e] font-bold mb-1">Răspuns organizator</p>
+                  <p className="text-sm text-gray-700">{r.review_replies[0].text}</p>
+                </div>
               )}
             </div>
           ))}
